@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: setorial-postgres
+    environment:
+      POSTGRES_USER: setorial_user
+      POSTGRES_PASSWORD: setorial_password
+      POSTGRES_DB: setorial_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - setorial_pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: setorial-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - setorial_redisdata:/data
+    restart: unless-stopped
+
+volumes:
+  setorial_pgdata:
+  setorial_redisdata:

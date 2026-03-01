@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+enum Tier {
+  FREE
+  BRONZE
+  SILVER
+  GOLD
+}
+
+model User {
+  id             String         @id @default(uuid())
+  email          String         @unique
+  password       String
+  role           Role           @default(STUDENT)
+  tier           Tier           @default(FREE)
+  isVerified     Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  pointsLedgers  PointsLedger[]
+  walletLedgers  WalletLedger[]
+}
+
+model Subject {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  topics      Topic[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Topic {
+  id          String   @id @default(uuid())
+  name        String
+  subjectId   String
+  subject     Subject  @relation(fields: [subjectId], references: [id])
+  lessons     Lesson[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Lesson {
+  id          String   @id @default(uuid())
+  name        String
+  topicId     String
+  topic       Topic    @relation(fields: [topicId], references: [id])
+  quizzes     Quiz[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Quiz {
+  id          String     @id @default(uuid())
+  title       String
+  lessonId    String
+  lesson      Lesson     @relation(fields: [lessonId], references: [id])
+  questions   Question[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Question {
+  id            String   @id @default(uuid())
+  quizId        String
+  quiz          Quiz     @relation(fields: [quizId], references: [id])
+  text          String
+  options       Json
+  correctOption Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+enum WalletTxType {
+  EARN
+  ELIGIBLE_MOVE
+  PAYOUT
+  ADJUSTMENT
+}
+
+model WalletLedger {
+  id        String       @id @default(uuid())
+  userId    String
+  user      User         @relation(fields: [userId], references: [id])
+  type      WalletTxType
+  amount    Decimal
+  reference String?
+  createdAt DateTime     @default(now())
+}
+
+model PointsLedger {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  action    String
+  points    Int
+  createdAt DateTime @default(now())
+}

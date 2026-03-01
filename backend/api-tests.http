@@ -1,0 +1,50 @@
+### Register a new user
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+    "email": "student1@example.com",
+    "password": "securepassword123"
+}
+
+###
+
+### Login to get JWT Token
+# @name login
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+    "email": "student1@example.com",
+    "password": "securepassword123"
+}
+
+###
+
+### Save Token Variable (Requires REST Client extension)
+@authToken = {{login.response.body.access_token}}
+
+###
+
+### Get User Profile (using token)
+# Replace id with the actual user ID returned from login/register if needed
+GET http://localhost:3000/users/1
+Authorization: Bearer {{authToken}}
+
+###
+
+### Get All Subjects (Public Authenticated Route)
+GET http://localhost:3000/learning/subjects
+Authorization: Bearer {{authToken}}
+
+###
+
+### Admin: Create a Subject (WILL FAIL if user is not ADMIN)
+POST http://localhost:3000/learning/subjects
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "name": "Mathematics",
+    "description": "Core mathematics lessons"
+}

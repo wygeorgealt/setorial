@@ -41,6 +41,21 @@ export class LearningService {
         return this.prisma.subject.findMany({ include: { topics: true } });
     }
 
+    async getSubject(id: string) {
+        return this.prisma.subject.findUnique({
+            where: { id },
+            include: {
+                topics: {
+                    include: {
+                        lessons: {
+                            include: { quizzes: true }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
     async getQuiz(id: string) {
         const quiz = await this.prisma.quiz.findUnique({
             where: { id },

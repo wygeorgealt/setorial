@@ -4,11 +4,13 @@ export declare class AuthController {
     private authService;
     constructor(authService: AuthService);
     register(registerDto: RegisterDto): Promise<{
-        access_token: string;
+        user: any;
+        token: string;
         refresh_token: string;
     }>;
     login(loginDto: LoginDto): Promise<{
-        access_token: string;
+        user: any;
+        token: string;
         refresh_token: string;
     }>;
 }

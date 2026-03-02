@@ -17,4 +17,12 @@ export class UsersService {
     async findById(id: string): Promise<User | null> {
         return this.prisma.user.findUnique({ where: { id } });
     }
+
+    async getPoints(userId: string): Promise<number> {
+        const result = await this.prisma.pointsLedger.aggregate({
+            where: { userId },
+            _sum: { points: true },
+        });
+        return result._sum.points || 0;
+    }
 }

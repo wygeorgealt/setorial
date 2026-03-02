@@ -4,21 +4,21 @@ export declare class LearningController {
     private readonly learningService;
     constructor(learningService: LearningService);
     createSubject(dto: CreateSubjectDto): Promise<{
-        name: string;
         id: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
     }>;
     createTopic(dto: CreateTopicDto): Promise<{
-        name: string;
         id: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
         subjectId: string;
     }>;
     createLesson(dto: CreateLessonDto): Promise<{
-        name: string;
         id: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
         topicId: string;
@@ -42,18 +42,48 @@ export declare class LearningController {
     }>;
     getSubjects(): Promise<({
         topics: {
-            name: string;
             id: string;
+            name: string;
             createdAt: Date;
             updatedAt: Date;
             subjectId: string;
         }[];
     } & {
-        name: string;
         id: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
     })[]>;
+    getSubject(id: string): Promise<({
+        topics: ({
+            lessons: ({
+                quizzes: {
+                    id: string;
+                    createdAt: Date;
+                    updatedAt: Date;
+                    title: string;
+                    lessonId: string;
+                }[];
+            } & {
+                id: string;
+                name: string;
+                createdAt: Date;
+                updatedAt: Date;
+                topicId: string;
+            })[];
+        } & {
+            id: string;
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
+            subjectId: string;
+        })[];
+    } & {
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+    }) | null>;
     getQuiz(id: string): Promise<{
         questions: {
             id: string;

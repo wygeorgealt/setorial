@@ -12,4 +12,12 @@ export declare class WalletService {
         amount: import("@prisma/client-runtime-utils").Decimal;
         reference: string | null;
     }>;
+    getTransactions(userId: string): Promise<{
+        id: string;
+        createdAt: Date;
+        userId: string;
+        type: import("@prisma/client").$Enums.WalletTxType;
+        amount: import("@prisma/client-runtime-utils").Decimal;
+        reference: string | null;
+    }[]>;
 }

@@ -50,6 +50,11 @@ export class GamificationService implements OnModuleDestroy {
         return currentStreak;
     }
 
+    async getStreak(userId: string): Promise<number> {
+        const count = await this.redis.hget(`streak:${userId}`, 'count');
+        return parseInt(count || '0', 10);
+    }
+
     async getLeaderboard(limit: number = 10) {
         return this.redis.zrevrange('leaderboard:global', 0, limit - 1, 'WITHSCORES');
     }

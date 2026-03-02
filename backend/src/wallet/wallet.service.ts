@@ -44,4 +44,12 @@ export class WalletService {
             return entry;
         });
     }
+
+    async getTransactions(userId: string) {
+        return this.prisma.walletLedger.findMany({
+            where: { userId },
+            orderBy: { createdAt: 'desc' },
+            take: 20,
+        });
+    }
 }

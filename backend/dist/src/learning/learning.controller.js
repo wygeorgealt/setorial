@@ -40,6 +40,9 @@ let LearningController = class LearningController {
     async getSubjects() {
         return this.learningService.getSubjects();
     }
+    async getSubject(id) {
+        return this.learningService.getSubject(id);
+    }
     async getQuiz(id) {
         return this.learningService.getQuiz(id);
     }
@@ -86,6 +89,13 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], LearningController.prototype, "getSubjects", null);
+__decorate([
+    (0, common_1.Get)('subjects/:id'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], LearningController.prototype, "getSubject", null);
 __decorate([
     (0, common_1.Get)('quizzes/:id'),
     __param(0, (0, common_1.Param)('id')),

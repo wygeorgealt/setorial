@@ -12,4 +12,9 @@ export class WalletController {
         const balance = await this.walletService.getBalance(req.user.userId);
         return { balance };
     }
+
+    @Get('transactions')
+    async getTransactions(@Request() req: any) {
+        return this.walletService.getTransactions(req.user.userId);
+    }
 }

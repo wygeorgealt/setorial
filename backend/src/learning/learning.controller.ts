@@ -40,6 +40,11 @@ export class LearningController {
         return this.learningService.getSubjects();
     }
 
+    @Get('subjects/:id')
+    async getSubject(@Param('id') id: string) {
+        return this.learningService.getSubject(id);
+    }
+
     @Get('quizzes/:id')
     async getQuiz(@Param('id') id: string) {
         return this.learningService.getQuiz(id);

@@ -63,8 +63,9 @@ let AuthService = class AuthService {
         const user = await this.usersService.createUser({
             email: registerDto.email,
             password: hashedPassword,
+            name: registerDto.name,
         });
-        return this.generateTokens(user.id, user.email, user.role, user.tier);
+        return this.generateAuthResponse(user);
     }
     async login(loginDto) {
         const user = await this.usersService.findByEmail(loginDto.email);
@@ -75,12 +76,20 @@ let AuthService = class AuthService {
         if (!isPasswordValid) {
             throw new common_1.UnauthorizedException('Invalid credentials');
         }
-        return this.generateTokens(user.id, user.email, user.role, user.tier);
+        return this.generateAuthResponse(user);
     }
-    generateTokens(userId, email, role, tier) {
-        const payload = { sub: userId, email, role, tier };
+    generateAuthResponse(user) {
+        const payload = { sub: user.id, email: user.email, role: user.role, tier: user.tier };
+        const { password, ...userWithoutPassword } = user;
+        const frontendUser = {
+            ...userWithoutPassword,
+            name: user.name || user.email.split('@')[0],
+            points: 0,
+            avatarUrl: 'https://i.pravatar.cc/150?u=' + user.id
+        };
         return {
-            access_token: this.jwtService.sign(payload),
+            user: frontendUser,
+            token: this.jwtService.sign(payload),
             refresh_token: this.jwtService.sign(payload, {
                 secret: process.env.JWT_REFRESH_SECRET,
                 expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',

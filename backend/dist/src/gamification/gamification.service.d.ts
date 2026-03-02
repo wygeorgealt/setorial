@@ -7,5 +7,6 @@ export declare class GamificationService implements OnModuleDestroy {
     onModuleDestroy(): void;
     awardPoints(userId: string, points: number, action: string): Promise<void>;
     incrementStreak(userId: string): Promise<number>;
+    getStreak(userId: string): Promise<number>;
     getLeaderboard(limit?: number): Promise<string[]>;
 }

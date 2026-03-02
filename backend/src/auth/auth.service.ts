@@ -3,12 +3,14 @@ import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
+import { PrismaService } from '../prisma.service';
 
 @Injectable()
 export class AuthService {
     constructor(
         private usersService: UsersService,
         private jwtService: JwtService,
+        private prisma: PrismaService,
     ) { }
 
     async register(registerDto: RegisterDto) {
@@ -35,6 +37,22 @@ export class AuthService {
             throw new UnauthorizedException('Invalid credentials');
         }
         return this.generateAuthResponse(user);
+    }
+
+    async changePassword(userId: string, currentPassword: string, newPassword: string) {
+        const user = await this.usersService.findById(userId);
+        if (!user) throw new UnauthorizedException('User not found');
+
+        const isValid = await bcrypt.compare(currentPassword, user.password);
+        if (!isValid) throw new BadRequestException('Current password is incorrect');
+
+        const hashed = await bcrypt.hash(newPassword, 10);
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: { password: hashed },
+        });
+
+        return { message: 'Password updated successfully' };
     }
 
     private generateAuthResponse(user: any) {

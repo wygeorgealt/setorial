@@ -1,12 +1,19 @@
-import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Switch } from 'react-native';
-import { ChevronLeft, User, Bell, Shield, CircleHelp, Info } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Switch, useColorScheme } from 'react-native';
+import { ChevronLeft, User, Bell, Shield, CircleHelp, Info, Moon } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import * as SecureStore from 'expo-secure-store';
 
 export default function SettingsScreen() {
     const router = useRouter();
+    const colorScheme = useColorScheme();
     const [notifications, setNotifications] = useState(true);
-    const [biometrics, setBiometrics] = useState(false);
+    const [darkMode, setDarkMode] = useState(colorScheme === 'dark');
+
+    const handleDarkModeToggle = async (value: boolean) => {
+        setDarkMode(value);
+        await SecureStore.setItemAsync('theme', value ? 'dark' : 'light');
+    };
 
     return (
         <SafeAreaView className="flex-1 bg-white">
@@ -22,7 +29,11 @@ export default function SettingsScreen() {
             <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false}>
                 {/* Account Section */}
                 <Text className="text-gray-400 font-bold mb-4 uppercase text-xs tracking-widest">Account</Text>
-                <SettingRow icon={<User size={20} color="#000" />} label="Edit Profile" />
+                <SettingRow
+                    icon={<User size={20} color="#000" />}
+                    label="Edit Profile"
+                    onPress={() => router.push('/edit-profile')}
+                />
                 <SettingRow icon={<Bell size={20} color="#000" />} label="Notifications">
                     <Switch
                         value={notifications}
@@ -30,7 +41,23 @@ export default function SettingsScreen() {
                         trackColor={{ false: '#E2E8F0', true: '#000' }}
                     />
                 </SettingRow>
-                <SettingRow icon={<Shield size={20} color="#000" />} label="Security & Privacy" />
+                <SettingRow
+                    icon={<Shield size={20} color="#000" />}
+                    label="Security & Privacy"
+                    onPress={() => router.push('/security')}
+                />
+
+                <View className="h-10" />
+
+                {/* Appearance Section */}
+                <Text className="text-gray-400 font-bold mb-4 uppercase text-xs tracking-widest">Appearance</Text>
+                <SettingRow icon={<Moon size={20} color="#000" />} label="Dark Mode">
+                    <Switch
+                        value={darkMode}
+                        onValueChange={handleDarkModeToggle}
+                        trackColor={{ false: '#E2E8F0', true: '#000' }}
+                    />
+                </SettingRow>
 
                 <View className="h-10" />
 
@@ -40,11 +67,6 @@ export default function SettingsScreen() {
                     icon={<CircleHelp size={20} color="#000" />}
                     label="Help Center"
                     onPress={() => router.push('/help')}
-                />
-                <SettingRow
-                    icon={<Info size={20} color="#000" />}
-                    label="About Setorial"
-                    onPress={() => router.push('/about')}
                 />
 
                 <View className="h-10" />
@@ -64,7 +86,7 @@ function SettingRow({ icon, label, children, onPress }: { icon?: any, label: str
     return (
         <TouchableOpacity
             onPress={onPress}
-            disabled={!onPress}
+            disabled={!onPress && !children}
             className="flex-row items-center py-5 border-b border-gray-100"
         >
             {icon && <View className="mr-4">{icon}</View>}
@@ -73,3 +95,4 @@ function SettingRow({ icon, label, children, onPress }: { icon?: any, label: str
         </TouchableOpacity>
     );
 }
+

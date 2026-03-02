@@ -35,6 +35,9 @@ export const authApi = {
     login: (data: any) => api.post('/auth/login', data),
     register: (data: any) => api.post('/auth/register', data),
     getMe: () => api.get('/users/me'),
+    updateProfile: (data: any) => api.patch('/users/me', data),
+    changePassword: (data: any) => api.patch('/auth/password', data),
+    getProgress: () => api.get('/users/me/progress'),
 };
 
 export const walletApi = {
@@ -44,6 +47,11 @@ export const walletApi = {
 
 export const gamificationApi = {
     getLeaderboard: () => api.get('/gamification/leaderboard'),
+};
+
+export const subscriptionApi = {
+    initialize: (tier: string) => api.post('/subscriptions/initialize', { tier }),
+    verify: (reference: string) => api.get(`/subscriptions/verify/${reference}`),
 };
 
 export const learningApi = {

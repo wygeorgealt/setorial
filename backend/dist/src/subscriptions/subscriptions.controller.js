@@ -15,16 +15,40 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SubscriptionsController = void 0;
 const common_1 = require("@nestjs/common");
 const subscriptions_service_1 = require("./subscriptions.service");
+const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
 let SubscriptionsController = class SubscriptionsController {
     subscriptionsService;
     constructor(subscriptionsService) {
         this.subscriptionsService = subscriptionsService;
+    }
+    async initialize(req, body) {
+        return this.subscriptionsService.initializeTransaction(req.user.userId, body.tier);
+    }
+    async verify(reference) {
+        return this.subscriptionsService.verifyTransaction(reference);
     }
     async paystackWebhook(signature, payload) {
         return this.subscriptionsService.handlePaystackWebhook(signature, payload);
     }
 };
 exports.SubscriptionsController = SubscriptionsController;
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Post)('initialize'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
+], SubscriptionsController.prototype, "initialize", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Get)('verify/:reference'),
+    __param(0, (0, common_1.Param)('reference')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], SubscriptionsController.prototype, "verify", null);
 __decorate([
     (0, common_1.Post)('webhook/paystack'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),

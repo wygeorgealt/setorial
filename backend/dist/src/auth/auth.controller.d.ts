@@ -13,4 +13,10 @@ export declare class AuthController {
         token: string;
         refresh_token: string;
     }>;
+    changePassword(req: any, body: {
+        currentPassword: string;
+        newPassword: string;
+    }): Promise<{
+        message: string;
+    }>;
 }

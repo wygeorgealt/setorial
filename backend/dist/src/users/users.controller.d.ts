@@ -17,6 +17,27 @@ export declare class UsersController {
         tier?: import("@prisma/client").$Enums.Tier | undefined;
         isVerified?: boolean | undefined;
     }>;
+    updateMe(req: any, body: {
+        name?: string;
+    }): Promise<{
+        id: string;
+        name: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        email: string;
+        password: string;
+        role: import("@prisma/client").$Enums.Role;
+        tier: import("@prisma/client").$Enums.Tier;
+        isVerified: boolean;
+    }>;
+    getProgress(req: any): Promise<{
+        id: string;
+        name: string;
+        totalTopics: number;
+        totalQuizzes: number;
+        completedQuizzes: number;
+        progress: number;
+    }[]>;
     getUser(id: string): Promise<{
         id: string;
         name: string | null;

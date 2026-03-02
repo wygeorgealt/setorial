@@ -46,10 +46,70 @@ exports.SubscriptionsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma.service");
 const crypto = __importStar(require("crypto"));
+const TIER_PRICES = {
+    BRONZE: 100000,
+    SILVER: 200000,
+    GOLD: 500000,
+};
 let SubscriptionsService = class SubscriptionsService {
     prisma;
     constructor(prisma) {
         this.prisma = prisma;
+    }
+    async initializeTransaction(userId, tier) {
+        const secret = process.env.PAYSTACK_SECRET_KEY;
+        if (!secret)
+            throw new common_1.BadRequestException('Paystack not configured');
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user)
+            throw new common_1.BadRequestException('User not found');
+        const amount = TIER_PRICES[tier.toUpperCase()];
+        if (!amount)
+            throw new common_1.BadRequestException('Invalid tier');
+        const response = await fetch('https://api.paystack.co/transaction/initialize', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${secret}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                email: user.email,
+                amount,
+                metadata: {
+                    userId: user.id,
+                    tier: tier.toUpperCase(),
+                },
+                callback_url: `setorial://payment-callback`,
+            }),
+        });
+        const data = await response.json();
+        if (!data.status)
+            throw new common_1.BadRequestException(data.message || 'Payment initialization failed');
+        return {
+            authorization_url: data.data.authorization_url,
+            access_code: data.data.access_code,
+            reference: data.data.reference,
+        };
+    }
+    async verifyTransaction(reference) {
+        const secret = process.env.PAYSTACK_SECRET_KEY;
+        if (!secret)
+            throw new common_1.BadRequestException('Paystack not configured');
+        const response = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
+            headers: { 'Authorization': `Bearer ${secret}` },
+        });
+        const data = await response.json();
+        if (!data.status || data.data.status !== 'success') {
+            return { status: 'failed', message: 'Payment not verified' };
+        }
+        const metadata = data.data.metadata;
+        if (metadata?.userId && metadata?.tier) {
+            await this.prisma.user.update({
+                where: { id: metadata.userId },
+                data: { tier: metadata.tier },
+            });
+        }
+        return { status: 'success', tier: metadata?.tier };
     }
     async handlePaystackWebhook(signature, payload) {
         const secret = process.env.PAYSTACK_SECRET_KEY;
@@ -61,19 +121,11 @@ let SubscriptionsService = class SubscriptionsService {
         }
         const event = payload.event;
         if (event === 'charge.success') {
-            const email = payload.data.customer.email;
-            const amount = payload.data.amount;
-            let newTier = 'FREE';
-            if (amount >= 500000)
-                newTier = 'GOLD';
-            else if (amount >= 200000)
-                newTier = 'SILVER';
-            else if (amount >= 100000)
-                newTier = 'BRONZE';
-            if (newTier !== 'FREE') {
+            const metadata = payload.data.metadata;
+            if (metadata?.userId && metadata?.tier) {
                 await this.prisma.user.update({
-                    where: { email },
-                    data: { tier: newTier }
+                    where: { id: metadata.userId },
+                    data: { tier: metadata.tier },
                 });
             }
         }

@@ -1,4 +1,4 @@
-import { Controller, Get, Param, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Patch, Param, Body, UseGuards, Request } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { GamificationService } from '../gamification/gamification.service';
@@ -27,6 +27,20 @@ export class UsersController {
             points,
             streak,
         };
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Patch('me')
+    async updateMe(@Request() req: any, @Body() body: { name?: string }) {
+        const user = await this.usersService.updateProfile(req.user.userId, body);
+        delete (user as any).password;
+        return user;
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get('me/progress')
+    async getProgress(@Request() req: any) {
+        return this.usersService.getLearningProgress(req.user.userId);
     }
 
     @Get(':id')

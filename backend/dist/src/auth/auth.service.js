@@ -47,12 +47,15 @@ const common_1 = require("@nestjs/common");
 const users_service_1 = require("../users/users.service");
 const jwt_1 = require("@nestjs/jwt");
 const bcrypt = __importStar(require("bcrypt"));
+const prisma_service_1 = require("../prisma.service");
 let AuthService = class AuthService {
     usersService;
     jwtService;
-    constructor(usersService, jwtService) {
+    prisma;
+    constructor(usersService, jwtService, prisma) {
         this.usersService = usersService;
         this.jwtService = jwtService;
+        this.prisma = prisma;
     }
     async register(registerDto) {
         const existing = await this.usersService.findByEmail(registerDto.email);
@@ -78,6 +81,20 @@ let AuthService = class AuthService {
         }
         return this.generateAuthResponse(user);
     }
+    async changePassword(userId, currentPassword, newPassword) {
+        const user = await this.usersService.findById(userId);
+        if (!user)
+            throw new common_1.UnauthorizedException('User not found');
+        const isValid = await bcrypt.compare(currentPassword, user.password);
+        if (!isValid)
+            throw new common_1.BadRequestException('Current password is incorrect');
+        const hashed = await bcrypt.hash(newPassword, 10);
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: { password: hashed },
+        });
+        return { message: 'Password updated successfully' };
+    }
     generateAuthResponse(user) {
         const payload = { sub: user.id, email: user.email, role: user.role, tier: user.tier };
         const { password, ...userWithoutPassword } = user;
@@ -101,6 +118,7 @@ exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [users_service_1.UsersService,
-        jwt_1.JwtService])
+        jwt_1.JwtService,
+        prisma_service_1.PrismaService])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map

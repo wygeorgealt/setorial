@@ -40,24 +40,36 @@ export default function ProfileScreen() {
                 <Text className="text-black text-[28px] font-bold tracking-tight mb-8">Manage</Text>
 
                 {/* Profile Header */}
-                <View className="flex-row items-center mb-10">
+                <TouchableOpacity
+                    onPress={() => router.push('/edit-profile')}
+                    className="flex-row items-center mb-10"
+                >
                     <View className="relative mr-4">
                         <View className="w-16 h-16 rounded-full bg-gray-100 items-center justify-center overflow-hidden border border-gray-200">
                             <Image source={{ uri: user?.avatarUrl || 'https://i.pravatar.cc/150?u=placeholder' }} className="w-full h-full" />
                         </View>
                         <View className={`absolute bottom-0 right-0 w-4 h-4 border-2 border-white rounded-full ${user?.isVerified ? 'bg-blue-500' : 'bg-green-500'}`} />
                     </View>
-                    <View>
+                    <View className="flex-1">
                         <Text className="text-black text-[22px] font-bold tracking-tight">{user?.name || 'Student'}</Text>
                         <Text className="text-gray-500 font-medium">{user?.email || 'student@setorial.com'}</Text>
                     </View>
-                </View>
+                    <ChevronRight size={20} color="#9CA3AF" />
+                </TouchableOpacity>
 
                 {/* Action List */}
                 <Text className="text-black font-bold text-xl tracking-tight mb-4">Account</Text>
                 <View className="border-t border-gray-100 mb-8">
-                    <ActionRow icon={<BookOpen size={20} color="#000" />} label="My Learning Path" />
-                    <ActionRow icon={<Star size={20} color="#000" />} label="Achievements" />
+                    <ActionRow
+                        icon={<BookOpen size={20} color="#000" />}
+                        label="My Learning Path"
+                        onPress={() => router.push('/learning-path')}
+                    />
+                    <ActionRow
+                        icon={<Star size={20} color="#000" />}
+                        label="Achievements"
+                        onPress={() => router.push('/achievements')}
+                    />
                     <ActionRow
                         icon={<ShieldCheck size={20} color="#000" />}
                         label="Subscription Tier"

@@ -15,10 +15,28 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsersController = void 0;
 const common_1 = require("@nestjs/common");
 const users_service_1 = require("./users.service");
+const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
+const gamification_service_1 = require("../gamification/gamification.service");
 let UsersController = class UsersController {
     usersService;
-    constructor(usersService) {
+    gamificationService;
+    constructor(usersService, gamificationService) {
         this.usersService = usersService;
+        this.gamificationService = gamificationService;
+    }
+    async getMe(req) {
+        const userId = req.user.userId;
+        const user = await this.usersService.findById(userId);
+        const points = await this.usersService.getPoints(userId);
+        const streak = await this.gamificationService.getStreak(userId);
+        if (user) {
+            delete user.password;
+        }
+        return {
+            ...user,
+            points,
+            streak,
+        };
     }
     async getUser(id) {
         const user = await this.usersService.findById(id);
@@ -30,6 +48,14 @@ let UsersController = class UsersController {
 };
 exports.UsersController = UsersController;
 __decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Get)('me'),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "getMe", null);
+__decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
@@ -38,6 +64,7 @@ __decorate([
 ], UsersController.prototype, "getUser", null);
 exports.UsersController = UsersController = __decorate([
     (0, common_1.Controller)('users'),
-    __metadata("design:paramtypes", [users_service_1.UsersService])
+    __metadata("design:paramtypes", [users_service_1.UsersService,
+        gamification_service_1.GamificationService])
 ], UsersController);
 //# sourceMappingURL=users.controller.js.map

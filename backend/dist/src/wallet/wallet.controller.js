@@ -25,6 +25,9 @@ let WalletController = class WalletController {
         const balance = await this.walletService.getBalance(req.user.userId);
         return { balance };
     }
+    async getTransactions(req) {
+        return this.walletService.getTransactions(req.user.userId);
+    }
 };
 exports.WalletController = WalletController;
 __decorate([
@@ -34,6 +37,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], WalletController.prototype, "getBalance", null);
+__decorate([
+    (0, common_1.Get)('transactions'),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], WalletController.prototype, "getTransactions", null);
 exports.WalletController = WalletController = __decorate([
     (0, common_1.Controller)('wallet'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),

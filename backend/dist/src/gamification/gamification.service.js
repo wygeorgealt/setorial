@@ -53,6 +53,10 @@ let GamificationService = class GamificationService {
         await this.redis.hset(key, 'lastActive', today);
         return currentStreak;
     }
+    async getStreak(userId) {
+        const count = await this.redis.hget(`streak:${userId}`, 'count');
+        return parseInt(count || '0', 10);
+    }
     async getLeaderboard(limit = 10) {
         return this.redis.zrevrange('leaderboard:global', 0, limit - 1, 'WITHSCORES');
     }

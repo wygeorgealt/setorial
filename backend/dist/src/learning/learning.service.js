@@ -45,6 +45,20 @@ let LearningService = class LearningService {
     async getSubjects() {
         return this.prisma.subject.findMany({ include: { topics: true } });
     }
+    async getSubject(id) {
+        return this.prisma.subject.findUnique({
+            where: { id },
+            include: {
+                topics: {
+                    include: {
+                        lessons: {
+                            include: { quizzes: true }
+                        }
+                    }
+                }
+            }
+        });
+    }
     async getQuiz(id) {
         const quiz = await this.prisma.quiz.findUnique({
             where: { id },

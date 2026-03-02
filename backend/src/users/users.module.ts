@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
+import { PrismaService } from '../prisma.service';
+import { GamificationModule } from '../gamification/gamification.module';
 
 @Module({
-  providers: [UsersService],
+  imports: [GamificationModule],
+  providers: [UsersService, PrismaService],
   controllers: [UsersController],
   exports: [UsersService],
 })

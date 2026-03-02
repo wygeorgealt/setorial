@@ -50,6 +50,13 @@ let WalletService = class WalletService {
             return entry;
         });
     }
+    async getTransactions(userId) {
+        return this.prisma.walletLedger.findMany({
+            where: { userId },
+            orderBy: { createdAt: 'desc' },
+            take: 20,
+        });
+    }
 };
 exports.WalletService = WalletService;
 exports.WalletService = WalletService = __decorate([

@@ -16,7 +16,7 @@ export default function TermsScreen() {
             </View>
 
             <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false}>
-                <Text className="text-gray-500 leading-7 mb-10">
+                <Text className="text-[#AFAFAF] font-bold leading-7 text-[15px] mb-10">
                     Last updated: March 2026{'\n\n'}
                     Welcome to Setorial. By using our application, you agree to the following terms and conditions. Please read them carefully.{'\n\n'}
                     1. Use of Service: You must be at least 13 years old to use this service. You are responsible for maintaining the confidentiality of your account.{'\n\n'}

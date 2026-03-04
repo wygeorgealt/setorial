@@ -16,7 +16,7 @@ export default function PrivacyScreen() {
             </View>
 
             <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false}>
-                <Text className="text-gray-500 leading-7 mb-10">
+                <Text className="text-[#AFAFAF] font-bold leading-7 text-[15px] mb-10">
                     Last updated: March 2026{'\n\n'}
                     At Setorial, we take your privacy seriously. This policy explains how we collect and use your data.{'\n\n'}
                     1. Data Collection: We collect your email, name, and profile information to provide a personalized learning experience.{'\n\n'}

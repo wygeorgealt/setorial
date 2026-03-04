@@ -12,12 +12,13 @@ const users_service_1 = require("./users.service");
 const users_controller_1 = require("./users.controller");
 const prisma_service_1 = require("../prisma.service");
 const gamification_module_1 = require("../gamification/gamification.module");
+const axios_1 = require("@nestjs/axios");
 let UsersModule = class UsersModule {
 };
 exports.UsersModule = UsersModule;
 exports.UsersModule = UsersModule = __decorate([
     (0, common_1.Module)({
-        imports: [gamification_module_1.GamificationModule],
+        imports: [gamification_module_1.GamificationModule, axios_1.HttpModule],
         providers: [users_service_1.UsersService, prisma_service_1.PrismaService],
         controllers: [users_controller_1.UsersController],
         exports: [users_service_1.UsersService],

@@ -28,8 +28,8 @@ export declare class LearningController {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            text: string;
             options: import("@prisma/client/runtime/client").JsonValue;
+            text: string;
             correctOption: number;
             quizId: string;
         }[];
@@ -87,8 +87,8 @@ export declare class LearningController {
     getQuiz(id: string): Promise<{
         questions: {
             id: string;
-            text: string;
             options: import("@prisma/client/runtime/client").JsonValue;
+            text: string;
         }[];
     } & {
         id: string;

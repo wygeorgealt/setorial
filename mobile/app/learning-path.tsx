@@ -33,36 +33,36 @@ export default function LearningPathScreen() {
     }
 
     return (
-        <SafeAreaView className="flex-1 bg-white">
+        <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12]">
             <View className="flex-row items-center justify-between px-5 py-6">
                 <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 items-center justify-center">
-                    <ChevronLeft size={24} color="#000" />
+                    <ChevronLeft size={24} color="#AFAFAF" />
                 </TouchableOpacity>
-                <Text className="text-black font-bold text-xl">Learning Path</Text>
+                <Text className="text-black dark:text-white font-bold text-xl">Learning Path</Text>
                 <View className="w-10" />
             </View>
 
             <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false}>
                 {progress.map((subject) => (
-                    <View key={subject.id} className="mb-6 bg-gray-50 p-6 rounded-[32px] border border-gray-100">
+                    <View key={subject.id} className="mb-6 bg-white dark:bg-[#1E222B] p-6 rounded-[32px] border-2 border-b-4 border-[#E5E5E5] dark:border-[#272B36]">
                         <View className="flex-row items-center justify-between mb-4">
                             <View className="flex-row items-center">
-                                <View className="w-12 h-12 bg-white rounded-2xl items-center justify-center mr-4 border border-gray-100">
-                                    <BookOpen size={22} color="#000" />
+                                <View className="w-12 h-12 bg-[#F5F5F5] dark:bg-[#2A2E39] rounded-2xl items-center justify-center mr-4 border-2 border-[#E5E5E5] dark:border-[#272B36]">
+                                    <BookOpen size={22} color="#AFAFAF" />
                                 </View>
                                 <View>
-                                    <Text className="text-black font-bold text-lg">{subject.name}</Text>
-                                    <Text className="text-gray-400 text-sm">{subject.totalTopics} topics · {subject.totalQuizzes} quizzes</Text>
+                                    <Text className="text-[#4B4B4B] dark:text-white font-bold text-lg">{subject.name}</Text>
+                                    <Text className="text-[#AFAFAF] dark:text-gray-400 font-bold text-xs uppercase tracking-wider">{subject.totalTopics} topics · {subject.totalQuizzes} quizzes</Text>
                                 </View>
                             </View>
-                            <Text className="text-black font-extrabold text-xl">{subject.progress}%</Text>
+                            <Text className="text-[#58CC02] font-black text-2xl">{subject.progress}%</Text>
                         </View>
 
                         {/* Progress Bar */}
-                        <View className="h-3 bg-gray-200 rounded-full overflow-hidden">
+                        <View className="h-4 bg-[#F5F5F5] dark:bg-[#0B0D12] rounded-full overflow-hidden border-2 border-[#E5E5E5] dark:border-[#272B36]">
                             <View
                                 style={{ width: `${subject.progress}%` }}
-                                className="h-full bg-black rounded-full"
+                                className="h-full bg-[#58CC02] rounded-full"
                             />
                         </View>
 

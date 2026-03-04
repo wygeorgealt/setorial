@@ -9,21 +9,22 @@ export default function AboutScreen() {
     const isDark = colorScheme === "dark";
 
     return (
-        <SafeAreaView className="flex-1 bg-background-light dark:bg-background-dark">
-            <View className="px-5 py-4 flex-row items-center">
-                <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 bg-white dark:bg-card-dark rounded-full items-center justify-center shadow-sm">
-                    <ChevronLeft size={24} color={isDark ? "#FFF" : "#000"} />
+        <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12]">
+            <View className="flex-row items-center justify-between px-5 py-6">
+                <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 items-center justify-center">
+                    <ChevronLeft size={24} color="#AFAFAF" />
                 </TouchableOpacity>
-                <Text className="flex-1 text-center text-xl font-bold text-gray-900 dark:text-white mr-10">About Setorial</Text>
+                <Text className="text-black dark:text-white font-bold text-xl">About Setorial</Text>
+                <View className="w-10" />
             </View>
 
             <ScrollView className="flex-1 px-8 pt-10">
                 <View className="items-center mb-12">
-                    <View className="w-20 h-20 bg-primary/10 rounded-3xl items-center justify-center mb-6">
-                        <Info size={40} color="#3B82F6" />
+                    <View className="w-20 h-20 bg-[#1CB0F6]/10 dark:bg-[#1E222B] rounded-3xl items-center justify-center mb-6">
+                        <Info size={40} color="#1CB0F6" />
                     </View>
                     <Text className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Version 1.0.0</Text>
-                    <Text className="text-gray-500 dark:text-gray-400 text-center">Built for students who want to excel in their sectors through focused learning and gamified competition.</Text>
+                    <Text className="text-gray-500 dark:text-gray-400 text-center font-bold">Built for students who want to excel in their sectors through focused learning and gamified competition.</Text>
                 </View>
 
                 <AboutLink icon={<HelpCircle size={20} color="#64748B" />} label="Help & Support" />
@@ -40,10 +41,12 @@ export default function AboutScreen() {
 
 function AboutLink({ icon, label }: { icon: any, label: string }) {
     return (
-        <TouchableOpacity className="flex-row items-center bg-white dark:bg-card-dark p-5 rounded-2xl mb-4 border border-gray-100 dark:border-gray-800 shadow-sm">
-            <View className="mr-4">{icon}</View>
-            <Text className="flex-1 text-gray-700 dark:text-white font-bold">{label}</Text>
-            <ChevronLeft size={18} color="#94A3B8" style={{ transform: [{ rotate: '180deg' }] }} />
+        <TouchableOpacity activeOpacity={0.8} className="flex-row items-center bg-white dark:bg-[#1E222B] p-5 rounded-2xl mb-4 border-2 border-[#E5E5E5] dark:border-[#272B36] border-b-4">
+            <View className="w-10 h-10 rounded-xl bg-[#F5F5F5] dark:bg-[#2A2E39] border-2 border-[#E5E5E5] dark:border-[#272B36] items-center justify-center mr-4">
+                {icon}
+            </View>
+            <Text className="flex-1 text-[#4B4B4B] dark:text-white font-bold text-[17px]">{label}</Text>
+            <ChevronLeft size={20} color="#CECECE" style={{ transform: [{ rotate: '180deg' }] }} />
         </TouchableOpacity>
     );
 }

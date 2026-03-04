@@ -1,7 +1,8 @@
-import { Controller, Get, Patch, Param, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Patch, Post, Param, Body, Query, UseGuards, Request } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { GamificationService } from '../gamification/gamification.service';
+import { PayoutMethod } from '@prisma/client';
 
 @Controller('users')
 export class UsersController {
@@ -41,6 +42,30 @@ export class UsersController {
     @Get('me/progress')
     async getProgress(@Request() req: any) {
         return this.usersService.getLearningProgress(req.user.userId);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post('me/kyc')
+    async submitKyc(
+        @Request() req: any,
+        @Body() body: { payoutMethod: PayoutMethod; payoutAccount: Record<string, any> }
+    ) {
+        return this.usersService.submitKyc(req.user.userId, body);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get('me/kyc/banks')
+    async getBanks() {
+        return this.usersService.getBanks();
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get('me/kyc/resolve')
+    async resolveAccount(
+        @Query('accountNumber') accountNumber: string,
+        @Query('bankCode') bankCode: string
+    ) {
+        return this.usersService.resolveAccount(accountNumber, bankCode);
     }
 
     @Get(':id')

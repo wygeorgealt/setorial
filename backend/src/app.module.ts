@@ -9,10 +9,8 @@ import { WalletModule } from './wallet/wallet.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { EligibilityModule } from './eligibility/eligibility.module';
 import { AdminModule } from './admin/admin.module';
+import { PayoutsModule } from './payouts/payouts.module';
 import { ScheduleModule } from '@nestjs/schedule';
-// BullMQ (PayoutsModule) temporarily disabled: requires Redis >= 5.0
-// import { BullModule } from '@nestjs/bullmq';
-// import { PayoutsModule } from './payouts/payouts.module';
 
 @Module({
   imports: [
@@ -25,8 +23,10 @@ import { ScheduleModule } from '@nestjs/schedule';
     SubscriptionsModule,
     EligibilityModule,
     AdminModule,
+    PayoutsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule { }
+

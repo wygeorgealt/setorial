@@ -36,7 +36,7 @@ export default function StatisticsScreen() {
     }, []);
 
     return (
-        <SafeAreaView className="flex-1 bg-white">
+        <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12]">
             <ScrollView
                 className="flex-1 px-5 pt-4 pb-20"
                 refreshControl={
@@ -44,59 +44,59 @@ export default function StatisticsScreen() {
                 }
             >
                 {/* Header Section */}
-                <Text className="text-black text-[28px] font-bold tracking-tight mb-8">Wallet</Text>
+                <Text className="text-black dark:text-white text-[28px] font-bold tracking-tight mb-8">Wallet</Text>
 
-                {/* Balance Card */}
-                <View className="bg-black p-8 rounded-[40px] mb-10 overflow-hidden relative">
+                {/* Balance Card - Duolingo Gamified Style */}
+                <View className="bg-[#1CB0F6] border-2 border-b-4 border-[#1899D6] p-8 rounded-[32px] mb-10 overflow-hidden relative">
                     {/* Decorative Background */}
-                    <View className="absolute top-[-20] right-[-20] w-40 h-40 bg-white/10 rounded-full" />
+                    <View className="absolute top-[-20] right-[-20] w-40 h-40 bg-white/20 rounded-full" />
 
-                    <Text className="text-gray-400 font-medium mb-2">Total Monetizable Balance</Text>
-                    <Text className="text-white text-[42px] font-bold tracking-tighter mb-1">
+                    <Text className="text-white/90 font-bold uppercase tracking-widest text-xs mb-2">Total Monetizable Balance</Text>
+                    <Text className="text-white text-[42px] font-black tracking-tighter mb-1">
                         ₦{balance.ngn.toLocaleString()}
                     </Text>
-                    <Text className="text-gray-400 text-lg mb-8">${balance.usd.toFixed(2)} USD</Text>
+                    <Text className="text-white/80 font-bold text-lg mb-8">${balance.usd.toFixed(2)} USD</Text>
 
                     <View className="flex-row gap-x-4">
-                        <TouchableOpacity className="flex-1 bg-white py-4 rounded-3xl items-center justify-center flex-row">
-                            <ArrowUpRight size={18} color="#000" strokeWidth={2.5} />
-                            <Text className="text-black font-bold ml-2">Withdraw</Text>
+                        <TouchableOpacity activeOpacity={0.8} className="flex-1 bg-white border-b-4 border-[#E5E5E5] py-4 rounded-2xl items-center justify-center flex-row">
+                            <ArrowUpRight size={18} color="#1CB0F6" strokeWidth={3} />
+                            <Text className="text-[#1CB0F6] font-bold text-[15px] uppercase tracking-wider ml-2">Withdraw</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity className="flex-1 bg-gray-800 py-4 rounded-3xl items-center justify-center flex-row">
-                            <Clock size={18} color="#FFF" />
-                            <Text className="text-white font-bold ml-2">Notice</Text>
+                        <TouchableOpacity activeOpacity={0.8} className="flex-1 bg-black/20 border-b-4 border-black/30 py-4 rounded-2xl items-center justify-center flex-row">
+                            <Clock size={18} color="#FFF" strokeWidth={3} />
+                            <Text className="text-white font-bold text-[15px] uppercase tracking-wider ml-2">Notice</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
 
                 {/* Important Notice */}
-                <View className="bg-orange-50 p-5 rounded-3xl mb-10 border border-orange-100">
-                    <Text className="text-orange-800 font-bold mb-1">Payout Notice</Text>
-                    <Text className="text-orange-700/80 text-[13px] leading-5">
-                        Automatic payouts occur on the <Text className="font-bold">28th of every month</Text>. Ensure your Paystack verification is complete.
+                <View className="bg-[#FFC800] border-2 border-b-4 border-[#E5B400] p-6 rounded-3xl mb-10">
+                    <Text className="text-yellow-900 font-bold text-[17px] mb-2">Payout Notice</Text>
+                    <Text className="text-yellow-800 font-semibold text-[14px] leading-5">
+                        Automatic payouts occur on the <Text className="font-black">28th of every month</Text>. Ensure your Paystack verification is complete.
                     </Text>
                 </View>
 
                 {/* Activity */}
-                <Text className="text-black font-bold text-xl tracking-tight mb-4">Transaction History</Text>
+                <Text className="text-black dark:text-white font-bold text-xl tracking-tight mb-4">Transaction History</Text>
                 {transactions.length > 0 ? (
                     transactions.map((tx) => (
-                        <View key={tx.id} className="flex-row items-center justify-between py-4 border-b border-gray-50">
+                        <View key={tx.id} className="flex-row items-center justify-between p-5 mb-3 bg-white dark:bg-[#1E222B] border-2 border-[#E5E5E5] dark:border-[#272B36] border-b-4 rounded-2xl">
                             <View className="flex-row items-center">
-                                <View className={`w-10 h-10 rounded-full items-center justify-center ${tx.amount > 0 ? 'bg-green-100' : 'bg-red-100'
+                                <View className={`w-12 h-12 rounded-full items-center justify-center border-2 border-b-4 ${tx.amount > 0 ? 'bg-[#DDF4FF] border-[#1CB0F6] dark:bg-[#1CB0F6]/20' : 'bg-[#FFDFDF] border-[#FF4B4B] dark:bg-[#FF4B4B]/20'
                                     } mr-4`}>
                                     {tx.amount > 0 ? (
-                                        <ArrowDownLeft size={18} color="#20A68A" />
+                                        <ArrowDownLeft size={20} color="#1CB0F6" strokeWidth={3} />
                                     ) : (
-                                        <ArrowUpRight size={18} color="#EF4444" />
+                                        <ArrowUpRight size={20} color="#FF4B4B" strokeWidth={3} />
                                     )}
                                 </View>
                                 <View>
-                                    <Text className="text-black font-bold text-[15px]">{tx.type.replace('_', ' ')}</Text>
-                                    <Text className="text-gray-400 text-xs">{new Date(tx.createdAt).toLocaleDateString()}</Text>
+                                    <Text className="text-[#4B4B4B] dark:text-white font-bold text-[17px] mb-1 uppercase tracking-wider">{tx.type.replace('_', ' ')}</Text>
+                                    <Text className="text-[#AFAFAF] dark:text-gray-400 font-bold text-xs">{new Date(tx.createdAt).toLocaleDateString()}</Text>
                                 </View>
                             </View>
-                            <Text className={`font-bold text-[15px] ${tx.amount > 0 ? 'text-green-600' : 'text-red-600'
+                            <Text className={`font-black text-[17px] ${tx.amount > 0 ? 'text-[#58CC02]' : 'text-[#FF4B4B]'
                                 }`}>
                                 {tx.amount > 0 ? '+' : ''}₦{Math.abs(tx.amount).toLocaleString()}
                             </Text>

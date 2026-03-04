@@ -70,12 +70,12 @@ export default function AchievementsScreen() {
     const locked = BADGES.filter(b => !b.requirement(user));
 
     return (
-        <SafeAreaView className="flex-1 bg-white">
+        <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12]">
             <View className="flex-row items-center justify-between px-5 py-6">
                 <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 items-center justify-center">
-                    <ChevronLeft size={24} color="#000" />
+                    <ChevronLeft size={24} color="#AFAFAF" />
                 </TouchableOpacity>
-                <Text className="text-black font-bold text-xl">Achievements</Text>
+                <Text className="text-black dark:text-white font-bold text-xl">Achievements</Text>
                 <View className="w-10" />
             </View>
 
@@ -90,20 +90,20 @@ export default function AchievementsScreen() {
                 {/* Earned Badges */}
                 {earned.length > 0 && (
                     <>
-                        <Text className="text-black font-bold text-lg mb-4">Unlocked</Text>
+                        <Text className="text-black dark:text-white font-bold text-lg mb-4">Unlocked</Text>
                         <View className="flex-row flex-wrap gap-4 mb-10">
                             {earned.map((badge) => {
                                 const Icon = badge.icon;
                                 return (
-                                    <View key={badge.id} className="w-[47%] bg-gray-50 p-5 rounded-[28px] border border-gray-100">
+                                    <View key={badge.id} className="w-[47%] bg-white dark:bg-[#1E222B] p-5 rounded-[28px] border-2 border-b-4 border-[#E5E5E5] dark:border-[#272B36] justify-between">
                                         <View
                                             style={{ backgroundColor: badge.color + '20' }}
-                                            className="w-14 h-14 rounded-2xl items-center justify-center mb-3"
+                                            className="w-14 h-14 rounded-2xl items-center justify-center mb-3 border-2 border-[rgba(0,0,0,0.05)] dark:border-transparent"
                                         >
                                             <Icon size={28} color={badge.color} />
                                         </View>
-                                        <Text className="text-black font-bold mb-1">{badge.title}</Text>
-                                        <Text className="text-gray-400 text-xs">{badge.description}</Text>
+                                        <Text className="text-[#4B4B4B] dark:text-white font-bold text-[15px] mb-1">{badge.title}</Text>
+                                        <Text className="text-[#AFAFAF] dark:text-gray-400 font-bold text-[11px] leading-4">{badge.description}</Text>
                                     </View>
                                 );
                             })}
@@ -114,17 +114,17 @@ export default function AchievementsScreen() {
                 {/* Locked Badges */}
                 {locked.length > 0 && (
                     <>
-                        <Text className="text-gray-400 font-bold text-lg mb-4">Locked</Text>
+                        <Text className="text-gray-400 dark:text-gray-500 font-bold text-lg mb-4">Locked</Text>
                         <View className="flex-row flex-wrap gap-4 mb-20">
                             {locked.map((badge) => {
                                 const Icon = badge.icon;
                                 return (
-                                    <View key={badge.id} className="w-[47%] bg-gray-50/50 p-5 rounded-[28px] border border-gray-100 opacity-50">
-                                        <View className="w-14 h-14 rounded-2xl items-center justify-center mb-3 bg-gray-100">
-                                            <Icon size={28} color="#94A3B8" />
+                                    <View key={badge.id} className="w-[47%] bg-[#F5F5F5] dark:bg-[#13151A] p-5 rounded-[28px] border-2 border-b-4 border-[#E5E5E5] dark:border-[#272B36] opacity-60 justify-between">
+                                        <View className="w-14 h-14 rounded-2xl items-center justify-center mb-3 bg-[#E5E5E5] dark:bg-[#2A2E39]">
+                                            <Icon size={28} color="#AFAFAF" />
                                         </View>
-                                        <Text className="text-gray-400 font-bold mb-1">{badge.title}</Text>
-                                        <Text className="text-gray-300 text-xs">{badge.description}</Text>
+                                        <Text className="text-[#AFAFAF] dark:text-gray-400 font-bold text-[15px] mb-1">{badge.title}</Text>
+                                        <Text className="text-[#CECECE] dark:text-gray-600 font-bold text-[11px] leading-4">{badge.description}</Text>
                                     </View>
                                 );
                             })}

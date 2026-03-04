@@ -149,14 +149,18 @@ export default function RegisterScreen() {
 
                     {/* Continue Button */}
                     <TouchableOpacity
+                        activeOpacity={0.8}
                         onPress={handleRegister}
-                        disabled={loading}
-                        className={`bg-[#0F0F0F] rounded-full py-4 items-center ${loading || !agreed ? 'opacity-70' : ''}`}
+                        disabled={loading || !agreed}
+                        className={`py-4 rounded-2xl items-center border-b-4 ${loading || !agreed
+                            ? 'bg-[#E5E5E5] border-[#CECECE]'
+                            : 'bg-[#58CC02] border-[#58A700] border-t-[#58CC02] border-x-[#58CC02]'
+                            }`}
                     >
                         {loading ? (
                             <ActivityIndicator color="#FFF" />
                         ) : (
-                            <Text className="text-white font-bold text-[17px]">Continue</Text>
+                            <Text className={`font-bold text-[17px] uppercase tracking-wider ${loading || !agreed ? 'text-[#AFAFAF]' : 'text-white'}`}>Continue</Text>
                         )}
                     </TouchableOpacity>
                 </View>

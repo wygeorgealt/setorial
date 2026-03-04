@@ -27,17 +27,17 @@ export default function EditProfileScreen() {
     };
 
     return (
-        <SafeAreaView className="flex-1 bg-white">
+        <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12]">
             <View className="flex-row items-center justify-between px-5 py-6">
                 <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 items-center justify-center">
-                    <ChevronLeft size={24} color="#000" />
+                    <ChevronLeft size={24} color="#AFAFAF" />
                 </TouchableOpacity>
-                <Text className="text-black font-bold text-xl">Edit Profile</Text>
-                <TouchableOpacity onPress={handleSave} disabled={saving}>
+                <Text className="text-black dark:text-white font-bold text-xl">Edit Profile</Text>
+                <TouchableOpacity activeOpacity={0.8} onPress={handleSave} disabled={saving} className="bg-[#1CB0F6] px-5 py-2 rounded-xl border-b-4 border-[#1899D6]">
                     {saving ? (
-                        <ActivityIndicator size="small" color="#000" />
+                        <ActivityIndicator size="small" color="#FFF" />
                     ) : (
-                        <Text className="text-black font-bold text-lg">Save</Text>
+                        <Text className="text-white font-bold text-sm tracking-widest uppercase">Save</Text>
                     )}
                 </TouchableOpacity>
             </View>
@@ -46,35 +46,35 @@ export default function EditProfileScreen() {
                 {/* Avatar */}
                 <View className="items-center mb-10">
                     <View className="relative">
-                        <View className="w-28 h-28 rounded-full bg-gray-100 items-center justify-center border-4 border-white shadow-md">
-                            <Text className="text-4xl">{(user?.name || 'S')[0].toUpperCase()}</Text>
+                        <View className="w-28 h-28 rounded-full bg-gray-100 dark:bg-[#1E222B] items-center justify-center border-4 border-white dark:border-[#0B0D12] shadow-md">
+                            <Text className="text-4xl text-black dark:text-white">{(user?.name || 'S')[0].toUpperCase()}</Text>
                         </View>
-                        <TouchableOpacity className="absolute bottom-0 right-0 bg-black w-10 h-10 rounded-full items-center justify-center border-4 border-white">
+                        <TouchableOpacity className="absolute bottom-0 right-0 bg-black w-10 h-10 rounded-full items-center justify-center border-4 border-white dark:border-[#0B0D12]">
                             <Camera size={16} color="#FFF" />
                         </TouchableOpacity>
                     </View>
                 </View>
 
                 {/* Name */}
-                <Text className="text-gray-400 font-bold text-xs uppercase tracking-widest mb-2">Full Name</Text>
+                <Text className="text-[#AFAFAF] dark:text-gray-400 font-bold text-xs uppercase tracking-widest mb-2">Full Name</Text>
                 <TextInput
                     value={name}
                     onChangeText={setName}
-                    className="bg-gray-50 p-5 rounded-2xl text-black font-bold text-lg border border-gray-100 mb-6"
+                    className="bg-white dark:bg-[#1E222B] p-5 rounded-2xl text-[#4B4B4B] dark:text-white font-bold text-[17px] border-2 border-b-4 border-[#E5E5E5] dark:border-[#272B36] mb-6"
                     placeholder="Your name"
                     placeholderTextColor="#94A3B8"
                 />
 
                 {/* Email (read-only) */}
-                <Text className="text-gray-400 font-bold text-xs uppercase tracking-widest mb-2">Email</Text>
-                <View className="bg-gray-50 p-5 rounded-2xl border border-gray-100 mb-6">
-                    <Text className="text-gray-400 font-bold text-lg">{user?.email || ''}</Text>
+                <Text className="text-[#AFAFAF] dark:text-gray-400 font-bold text-xs uppercase tracking-widest mb-2">Email</Text>
+                <View className="bg-[#F5F5F5] dark:bg-[#2A2E39] p-5 rounded-2xl border-2 border-[#E5E5E5] dark:border-[#272B36] mb-6">
+                    <Text className="text-[#AFAFAF] dark:text-gray-400 font-bold text-[17px]">{user?.email || ''}</Text>
                 </View>
 
                 {/* Tier */}
-                <Text className="text-gray-400 font-bold text-xs uppercase tracking-widest mb-2">Current Tier</Text>
-                <View className="bg-gray-50 p-5 rounded-2xl border border-gray-100">
-                    <Text className="text-black font-bold text-lg">{user?.tier || 'FREE'}</Text>
+                <Text className="text-[#AFAFAF] dark:text-gray-400 font-bold text-xs uppercase tracking-widest mb-2">Current Tier</Text>
+                <View className="bg-[#F5F5F5] dark:bg-[#2A2E39] p-5 rounded-2xl border-2 border-[#E5E5E5] dark:border-[#272B36]">
+                    <Text className="text-[#AFAFAF] dark:text-gray-400 font-bold text-[17px]">{user?.tier || 'FREE'}</Text>
                 </View>
             </View>
         </SafeAreaView>

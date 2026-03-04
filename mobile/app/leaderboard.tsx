@@ -36,14 +36,14 @@ function LeaderboardScreen() {
     const others = leaderboard.slice(3);
 
     return (
-        <SafeAreaView className="flex-1 bg-white">
+        <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12]">
             <View className="flex-1 px-5">
                 {/* Header */}
                 <View className="flex-row items-center justify-between py-6">
                     <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 items-center justify-center">
-                        <ChevronLeft size={24} color="#000" />
+                        <ChevronLeft size={24} color="#AFAFAF" />
                     </TouchableOpacity>
-                    <Text className="text-black font-bold text-xl">Global Leaderboard</Text>
+                    <Text className="text-black dark:text-white font-bold text-xl">Global Leaderboard</Text>
                     <View className="w-10" />
                 </View>
 
@@ -83,22 +83,22 @@ function LeaderboardScreen() {
                     </View>
 
                     {/* Others List */}
-                    <View className="bg-gray-50 rounded-[40px] p-6 mb-10 min-h-[400px]">
-                        <Text className="text-gray-400 font-bold mb-6 text-sm">TOP PERFORMERS</Text>
+                    <View className="bg-white dark:bg-[#0B0D12] p-6 mb-10 min-h-[400px]">
+                        <Text className="text-[#AFAFAF] dark:text-gray-500 font-bold mb-6 text-sm uppercase tracking-widest text-center">Top Performers</Text>
                         {others.map((item, index) => (
-                            <View key={item.id} className="flex-row items-center justify-between mb-6">
+                            <View key={item.id} className="flex-row items-center justify-between p-4 mb-3 bg-white dark:bg-[#1E222B] border-2 border-b-4 border-[#E5E5E5] dark:border-[#272B36] rounded-2xl">
                                 <View className="flex-row items-center">
-                                    <Text className="text-gray-400 font-bold w-6">{index + 4}</Text>
-                                    <View className="w-12 h-12 rounded-full bg-white mr-4 overflow-hidden border border-gray-100 p-0.5">
+                                    <Text className="text-[#AFAFAF] dark:text-gray-400 font-black w-6 text-lg">{index + 4}</Text>
+                                    <View className="w-12 h-12 rounded-full bg-[#F5F5F5] dark:bg-[#2A2E39] mr-4 overflow-hidden border-2 border-[#E5E5E5] dark:border-[#272B36]">
                                         <Image source={{ uri: item.avatarUrl || `https://i.pravatar.cc/100?u=${item.id}` }} className="w-full h-full rounded-full" />
                                     </View>
                                     <View>
-                                        <Text className="text-black font-bold text-[15px]">{item.name || 'Student'}</Text>
-                                        <Text className="text-gray-400 text-xs font-medium">Rank #{index + 4}</Text>
+                                        <Text className="text-[#4B4B4B] dark:text-white font-bold text-[17px] uppercase tracking-wider">{item.name || 'Student'}</Text>
+                                        <Text className="text-[#AFAFAF] dark:text-gray-500 text-xs font-bold uppercase">Rank #{index + 4}</Text>
                                     </View>
                                 </View>
-                                <View className="bg-white px-4 py-2 rounded-full border border-gray-100">
-                                    <Text className="text-black font-bold ml-2">{item.points} pts</Text>
+                                <View className="bg-[#FFC800] px-4 py-2 rounded-xl border-b-4 border-[#E5B400]">
+                                    <Text className="text-yellow-900 font-extrabold uppercase tracking-widest">{item.points} pts</Text>
                                 </View>
                             </View>
                         ))}
@@ -110,20 +110,24 @@ function LeaderboardScreen() {
 }
 
 function PodiumItem({ user, rank, height, color, icon }: any) {
+    const isWinner = rank === 1;
     return (
-        <View className="items-center mx-1">
-            <View className="relative mb-4">
+        <View className="items-center mx-2 w-28">
+            <View className="relative mb-4 z-10">
                 <View className={`w-16 h-16 rounded-full border-4 border-white overflow-hidden shadow-sm ${color}`}>
                     <Image source={{ uri: user.avatarUrl || `https://i.pravatar.cc/100?u=${user.id}` }} className="w-full h-full" />
                 </View>
-                <View className="absolute top-[-15] self-center">
+                <View className="absolute top-[-20] self-center bg-white rounded-full p-1 border-2 border-[#E5E5E5]">
                     {icon}
                 </View>
             </View>
-            <View style={{ height }} className={`${color} w-24 rounded-t-3xl items-center pt-4 shadow-sm`}>
-                <Text className="text-black font-bold mb-1">{rank === 1 ? 'Winner' : rank === 2 ? 'Silver' : 'Bronze'}</Text>
-                <Text className="text-black font-extrabold text-xl">{user.points}</Text>
-                <Text className="text-black/40 text-[10px] font-bold mt-1 uppercase">{user.name?.split(' ')[0] || 'User'}</Text>
+            <View
+                style={{ height }}
+                className={`${color} w-full rounded-t-3xl items-center pt-8 border-2 border-b-0 ${isWinner ? 'border-[#E5B400] z-0' : 'border-[#CECECE] opacity-90 -mt-8'}`}
+            >
+                <Text className="text-black/60 font-black uppercase tracking-widest text-sm mb-1">{rank === 1 ? 'Winner' : rank === 2 ? 'Silver' : 'Bronze'}</Text>
+                <Text className="text-black font-extrabold text-2xl">{user.points}</Text>
+                <Text className="text-black/50 text-[11px] font-black mt-2 uppercase tracking-wide">{user.name?.split(' ')[0] || 'User'}</Text>
             </View>
         </View>
     );

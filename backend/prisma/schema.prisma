@@ -18,6 +18,18 @@ enum Tier {
   GOLD
 }
 
+enum KycStatus {
+  UNVERIFIED
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PayoutMethod {
+  NGN_BANK
+  USD_PAYPAL
+}
+
 model User {
   id             String         @id @default(uuid())
   email          String         @unique
@@ -26,6 +38,9 @@ model User {
   role           Role           @default(STUDENT)
   tier           Tier           @default(FREE)
   isVerified     Boolean        @default(false)
+  kycStatus      KycStatus      @default(UNVERIFIED)
+  payoutMethod   PayoutMethod?
+  payoutAccount  Json?          // { "bankName": "...", "accountNumber": "..." }
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
@@ -106,4 +121,20 @@ model PointsLedger {
   action    String
   points    Int
   createdAt DateTime @default(now())
+}
+
+enum PayoutStatus {
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model PayoutBatch {
+  id              String       @id @default(uuid())
+  month           String       // e.g "2024-10"
+  totalLiability  Decimal
+  totalPaid       Decimal
+  status          PayoutStatus @default(PROCESSING)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 }

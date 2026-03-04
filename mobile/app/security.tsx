@@ -43,28 +43,28 @@ export default function SecurityScreen() {
     };
 
     return (
-        <SafeAreaView className="flex-1 bg-white">
+        <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12]">
             <View className="flex-row items-center justify-between px-5 py-6">
                 <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 items-center justify-center">
-                    <ChevronLeft size={24} color="#000" />
+                    <ChevronLeft size={24} color="#AFAFAF" />
                 </TouchableOpacity>
-                <Text className="text-black font-bold text-xl">Security</Text>
+                <Text className="text-black dark:text-white font-bold text-xl">Security</Text>
                 <View className="w-10" />
             </View>
 
             <View className="px-5">
-                <Text className="text-black font-bold text-lg mb-6">Change Password</Text>
+                <Text className="text-black dark:text-white font-bold text-lg mb-6">Change Password</Text>
 
                 {/* Current Password */}
-                <Text className="text-gray-400 font-bold text-xs uppercase tracking-widest mb-2">Current Password</Text>
-                <View className="flex-row items-center bg-gray-50 rounded-2xl border border-gray-100 mb-6">
+                <Text className="text-gray-400 dark:text-gray-500 font-bold text-xs uppercase tracking-widest mb-2">Current Password</Text>
+                <View className="flex-row items-center bg-gray-50 dark:bg-[#1E222B] rounded-2xl border border-gray-100 dark:border-[#272B36] mb-6">
                     <TextInput
                         value={currentPassword}
                         onChangeText={setCurrentPassword}
                         secureTextEntry={!showCurrent}
-                        className="flex-1 p-5 text-black font-bold text-lg"
+                        className="flex-1 p-5 text-black dark:text-white font-bold text-lg"
                         placeholder="••••••••"
-                        placeholderTextColor="#D1D5DB"
+                        placeholderTextColor="#94A3B8"
                     />
                     <TouchableOpacity onPress={() => setShowCurrent(!showCurrent)} className="pr-5">
                         {showCurrent ? <EyeOff size={20} color="#94A3B8" /> : <Eye size={20} color="#94A3B8" />}
@@ -72,15 +72,15 @@ export default function SecurityScreen() {
                 </View>
 
                 {/* New Password */}
-                <Text className="text-gray-400 font-bold text-xs uppercase tracking-widest mb-2">New Password</Text>
-                <View className="flex-row items-center bg-gray-50 rounded-2xl border border-gray-100 mb-6">
+                <Text className="text-gray-400 dark:text-gray-500 font-bold text-xs uppercase tracking-widest mb-2">New Password</Text>
+                <View className="flex-row items-center bg-gray-50 dark:bg-[#1E222B] rounded-2xl border border-gray-100 dark:border-[#272B36] mb-6">
                     <TextInput
                         value={newPassword}
                         onChangeText={setNewPassword}
                         secureTextEntry={!showNew}
-                        className="flex-1 p-5 text-black font-bold text-lg"
+                        className="flex-1 p-5 text-black dark:text-white font-bold text-lg"
                         placeholder="••••••••"
-                        placeholderTextColor="#D1D5DB"
+                        placeholderTextColor="#94A3B8"
                     />
                     <TouchableOpacity onPress={() => setShowNew(!showNew)} className="pr-5">
                         {showNew ? <EyeOff size={20} color="#94A3B8" /> : <Eye size={20} color="#94A3B8" />}
@@ -88,26 +88,29 @@ export default function SecurityScreen() {
                 </View>
 
                 {/* Confirm Password */}
-                <Text className="text-gray-400 font-bold text-xs uppercase tracking-widest mb-2">Confirm New Password</Text>
+                <Text className="text-gray-400 dark:text-gray-500 font-bold text-xs uppercase tracking-widest mb-2">Confirm New Password</Text>
                 <TextInput
                     value={confirmPassword}
                     onChangeText={setConfirmPassword}
                     secureTextEntry
-                    className="bg-gray-50 p-5 rounded-2xl text-black font-bold text-lg border border-gray-100 mb-10"
+                    className="bg-gray-50 dark:bg-[#1E222B] p-5 rounded-2xl text-black dark:text-white font-bold text-lg border border-gray-100 dark:border-[#272B36] mb-10"
                     placeholder="••••••••"
-                    placeholderTextColor="#D1D5DB"
+                    placeholderTextColor="#94A3B8"
                 />
 
                 {/* Submit */}
                 <TouchableOpacity
+                    activeOpacity={0.8}
                     onPress={handleChangePassword}
                     disabled={saving}
-                    className={`py-5 rounded-3xl items-center ${saving ? 'bg-gray-200' : 'bg-black'}`}
+                    className={`py-4 rounded-2xl items-center border-b-4 ${saving
+                        ? 'bg-[#E5E5E5] border-[#CECECE]'
+                        : 'bg-[#58CC02] border-[#58A700] border-t-[#58CC02] border-x-[#58CC02]'}`}
                 >
                     {saving ? (
                         <ActivityIndicator color="#FFF" />
                     ) : (
-                        <Text className="text-white font-bold text-lg">Update Password</Text>
+                        <Text className={`font-bold text-[17px] uppercase tracking-wider ${saving ? 'text-[#AFAFAF]' : 'text-white'}`}>Update Password</Text>
                     )}
                 </TouchableOpacity>
             </View>

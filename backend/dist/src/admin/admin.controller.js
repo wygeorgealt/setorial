@@ -31,25 +31,66 @@ let AdminController = class AdminController {
     }
     async getDashboardStats() {
         const currentMonthRevenue = 5000000;
-        const balances = await this.prisma.walletLedger.groupBy({
-            by: ['userId'],
+        const rewardPoolCap = currentMonthRevenue * 0.20;
+        const eligAggregate = await this.prisma.walletLedger.aggregate({
+            where: { type: 'ELIGIBLE_MOVE' },
             _sum: { amount: true },
         });
-        const totalLiability = balances.reduce((acc, curr) => acc + Number(curr._sum.amount), 0);
-        const flaggedUsers = await this.prisma.user.findMany({
-            where: {
-                tier: { not: 'FREE' },
-                isVerified: false,
-            },
+        const payoutAggregate = await this.prisma.walletLedger.aggregate({
+            where: { type: 'PAYOUT' },
+            _sum: { amount: true },
         });
+        const totalEarned = Number(eligAggregate._sum.amount ?? 0);
+        const totalPaidOut = Number(payoutAggregate._sum.amount ?? 0);
+        const totalLiability = totalEarned - totalPaidOut;
+        const pendingKycCount = await this.prisma.user.count({ where: { kycStatus: 'PENDING' } });
+        const approvedKycCount = await this.prisma.user.count({ where: { kycStatus: 'APPROVED' } });
+        const totalUsers = await this.prisma.user.count();
+        const latestBatch = await this.prisma.payoutBatch.findFirst({ orderBy: { createdAt: 'desc' } });
         return {
             currentMonthRevenue,
-            rewardPoolSize: currentMonthRevenue * 0.20,
+            rewardPoolCap,
             totalLiability,
             liabilityRatio: totalLiability / currentMonthRevenue,
-            flaggedUsersCount: flaggedUsers.length,
-            alert: totalLiability > (currentMonthRevenue * 0.20) ? 'LIABILITY EXCEEDS SAFE THRESHOLD' : 'SAFE',
+            alert: totalLiability > rewardPoolCap ? 'LIABILITY EXCEEDS SAFE THRESHOLD' : 'SAFE',
+            pendingKycCount,
+            approvedKycCount,
+            totalUsers,
+            latestPayoutBatch: latestBatch ?? null,
         };
+    }
+    async getPendingKyc() {
+        return this.prisma.user.findMany({
+            where: { kycStatus: 'PENDING' },
+            select: { id: true, name: true, email: true, tier: true, payoutMethod: true, payoutAccount: true, createdAt: true },
+            orderBy: { updatedAt: 'asc' },
+        });
+    }
+    async approveKyc(userId) {
+        return this.prisma.user.update({
+            where: { id: userId },
+            data: { kycStatus: 'APPROVED', isVerified: true },
+            select: { id: true, name: true, email: true, kycStatus: true, isVerified: true },
+        });
+    }
+    async rejectKyc(userId, reason) {
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: { kycStatus: 'REJECTED' },
+        });
+        return { success: true, userId, reason };
+    }
+    async getAllUsers(tier, kycStatus) {
+        const where = {};
+        if (tier)
+            where.tier = tier.toUpperCase();
+        if (kycStatus)
+            where.kycStatus = kycStatus.toUpperCase();
+        return this.prisma.user.findMany({
+            where,
+            select: { id: true, name: true, email: true, tier: true, kycStatus: true, isVerified: true, createdAt: true },
+            orderBy: { createdAt: 'desc' },
+        });
     }
     async freezeUserWallet(userId, reason) {
         await this.prisma.user.update({
@@ -57,6 +98,12 @@ let AdminController = class AdminController {
             data: { isVerified: false },
         });
         return { success: true, message: `User ${userId} wallet frozen. Reason: ${reason}` };
+    }
+    async getPayoutBatches() {
+        return this.prisma.payoutBatch.findMany({ orderBy: { createdAt: 'desc' } });
+    }
+    async triggerPayout(month, revenue) {
+        return this.payoutsService.processPayout(month, revenue);
     }
 };
 exports.AdminController = AdminController;
@@ -75,6 +122,35 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "getDashboardStats", null);
 __decorate([
+    (0, common_1.Get)('kyc'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "getPendingKyc", null);
+__decorate([
+    (0, common_1.Post)('kyc/:id/approve'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "approveKyc", null);
+__decorate([
+    (0, common_1.Post)('kyc/:id/reject'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)('reason')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "rejectKyc", null);
+__decorate([
+    (0, common_1.Get)('users'),
+    __param(0, (0, common_1.Query)('tier')),
+    __param(1, (0, common_1.Query)('kycStatus')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "getAllUsers", null);
+__decorate([
     (0, common_1.Post)('users/:id/freeze'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)('reason')),
@@ -82,6 +158,20 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "freezeUserWallet", null);
+__decorate([
+    (0, common_1.Get)('payout-batches'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "getPayoutBatches", null);
+__decorate([
+    (0, common_1.Post)('payout/trigger'),
+    __param(0, (0, common_1.Query)('month')),
+    __param(1, (0, common_1.Query)('revenue', common_1.ParseFloatPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Number]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "triggerPayout", null);
 exports.AdminController = AdminController = __decorate([
     (0, common_1.Controller)('admin'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),

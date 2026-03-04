@@ -133,9 +133,12 @@ export default function CourseDetailScreen() {
             </ScrollView>
 
             {/* Floating Bottom Action */}
-            <SafeAreaView className="absolute bottom-0 left-0 right-0 p-5 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md">
-                <TouchableOpacity className="bg-black p-5 rounded-3xl items-center shadow-lg">
-                    <Text className="text-white font-bold text-lg">Start Learning</Text>
+            <SafeAreaView className="absolute bottom-0 left-0 right-0 p-5 bg-white/95 dark:bg-background-dark/95 backdrop-blur-md border-t border-gray-100 dark:border-gray-800">
+                <TouchableOpacity
+                    activeOpacity={0.8}
+                    className="bg-[#1CB0F6] p-4 rounded-2xl items-center border-b-4 border-[#1899D6] border-t-[#1CB0F6] border-l-[#1CB0F6] border-r-[#1CB0F6]"
+                >
+                    <Text className="text-white font-bold text-[17px] uppercase tracking-wider">Start Learning</Text>
                 </TouchableOpacity>
             </SafeAreaView>
         </View>

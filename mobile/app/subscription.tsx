@@ -81,12 +81,12 @@ export default function SubscriptionScreen() {
     };
 
     return (
-        <SafeAreaView className="flex-1 bg-white">
+        <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12]">
             <View className="flex-row items-center justify-between px-5 py-6">
                 <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 items-center justify-center">
-                    <ChevronLeft size={24} color="#000" />
+                    <ChevronLeft size={24} color="#AFAFAF" />
                 </TouchableOpacity>
-                <Text className="text-black font-bold text-xl">Subscription</Text>
+                <Text className="text-black dark:text-white font-bold text-xl">Subscription</Text>
                 <View className="w-10" />
             </View>
 
@@ -103,7 +103,7 @@ export default function SubscriptionScreen() {
                     return (
                         <View
                             key={tier.name}
-                            className={`mb-6 p-6 rounded-[32px] border-2 ${isActive ? 'border-black bg-black' : 'border-gray-100 bg-white'}`}
+                            className={`mb-6 p-6 rounded-[32px] border-2 border-b-4 ${isActive ? 'border-black bg-black dark:border-white dark:bg-[#13151A]' : 'border-gray-100 bg-white dark:border-[#272B36] dark:bg-[#1E222B]'}`}
                         >
                             <View className="flex-row items-center justify-between mb-4">
                                 <View className="flex-row items-center">
@@ -114,7 +114,7 @@ export default function SubscriptionScreen() {
                                         <Icon size={24} color={tier.accent} />
                                     </View>
                                     <View>
-                                        <Text className={`font-bold text-xl ${isActive ? 'text-white' : 'text-black'}`}>
+                                        <Text className={`font-bold text-xl ${isActive ? 'text-white' : 'text-black dark:text-white'}`}>
                                             {tier.name}
                                         </Text>
                                         <Text className={`font-bold ${isActive ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -123,8 +123,8 @@ export default function SubscriptionScreen() {
                                     </View>
                                 </View>
                                 {isActive && (
-                                    <View className="bg-white px-3 py-1.5 rounded-full">
-                                        <Text className="text-black font-bold text-xs">ACTIVE</Text>
+                                    <View className="bg-white dark:bg-[#272B36] px-3 py-1.5 rounded-full">
+                                        <Text className="text-black dark:text-white font-bold text-xs">ACTIVE</Text>
                                     </View>
                                 )}
                             </View>
@@ -140,15 +140,22 @@ export default function SubscriptionScreen() {
 
                             {!isActive && tier.name !== 'Free' && (
                                 <TouchableOpacity
+                                    activeOpacity={0.8}
                                     onPress={() => handleUpgrade(tier.name)}
                                     disabled={isLoading}
-                                    className="mt-4 py-4 rounded-2xl items-center"
-                                    style={{ backgroundColor: isLoading ? '#D1D5DB' : tier.accent }}
+                                    className="mt-4 py-4 rounded-2xl items-center border-b-4"
+                                    style={{
+                                        backgroundColor: isLoading ? '#E5E5E5' : tier.accent,
+                                        borderColor: isLoading ? '#CECECE' : tier.accent + 'CC', // Slightly darker shade logic representation
+                                        borderTopColor: isLoading ? '#E5E5E5' : tier.accent,
+                                        borderLeftColor: isLoading ? '#E5E5E5' : tier.accent,
+                                        borderRightColor: isLoading ? '#E5E5E5' : tier.accent,
+                                    }}
                                 >
                                     {isLoading ? (
                                         <ActivityIndicator color="#FFF" />
                                     ) : (
-                                        <Text className="text-white font-bold text-lg">Upgrade to {tier.name}</Text>
+                                        <Text className="text-white font-bold text-[17px] uppercase tracking-wider">Upgrade to {tier.name}</Text>
                                     )}
                                 </TouchableOpacity>
                             )}
@@ -157,11 +164,11 @@ export default function SubscriptionScreen() {
                 })}
 
                 {/* Payout Info */}
-                <View className="bg-gray-50 p-6 rounded-[32px] mb-20 border border-gray-100">
-                    <Text className="text-black font-bold text-lg mb-2">💰 About Payouts</Text>
-                    <Text className="text-gray-500 leading-6">
+                <View className="bg-gray-50 dark:bg-[#1E222B] p-6 rounded-[32px] mb-20 border-2 border-gray-100 dark:border-[#272B36] border-b-4">
+                    <Text className="text-black dark:text-white font-bold text-lg mb-2">💰 About Payouts</Text>
+                    <Text className="text-gray-500 dark:text-gray-400 leading-6">
                         Payouts are processed automatically on the{' '}
-                        <Text className="text-black font-bold">28th of every month</Text>.
+                        <Text className="text-black dark:text-white font-bold">28th of every month</Text>.
                         You cannot request manual withdrawals. Eligible Silver & Gold tier users
                         with 12+ months of consistent activity will have their monetizable balance
                         paid out automatically.

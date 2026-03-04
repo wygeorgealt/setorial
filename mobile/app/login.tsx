@@ -114,14 +114,18 @@ export default function LoginScreen() {
                 <View className="px-5 pb-8 pt-4 border-t border-transparent">
                     {/* Continue Button */}
                     <TouchableOpacity
+                        activeOpacity={0.8}
                         onPress={handleLogin}
                         disabled={loading}
-                        className={`bg-[#0F0F0F] rounded-full py-4 items-center ${loading ? 'opacity-70' : ''}`}
+                        className={`py-4 rounded-2xl items-center border-b-4 ${loading
+                            ? 'bg-[#E5E5E5] border-[#CECECE]'
+                            : 'bg-[#58CC02] border-[#58A700] border-t-[#58CC02] border-x-[#58CC02]'
+                            }`}
                     >
                         {loading ? (
                             <ActivityIndicator color="#FFF" />
                         ) : (
-                            <Text className="text-white font-bold text-[17px]">Log In</Text>
+                            <Text className={`font-bold text-[17px] uppercase tracking-wider ${loading ? 'text-[#AFAFAF]' : 'text-white'}`}>Log In</Text>
                         )}
                     </TouchableOpacity>
                 </View>

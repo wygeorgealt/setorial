@@ -18,6 +18,7 @@ const wallet_module_1 = require("./wallet/wallet.module");
 const subscriptions_module_1 = require("./subscriptions/subscriptions.module");
 const eligibility_module_1 = require("./eligibility/eligibility.module");
 const admin_module_1 = require("./admin/admin.module");
+const payouts_module_1 = require("./payouts/payouts.module");
 const schedule_1 = require("@nestjs/schedule");
 let AppModule = class AppModule {
 };
@@ -34,6 +35,7 @@ exports.AppModule = AppModule = __decorate([
             subscriptions_module_1.SubscriptionsModule,
             eligibility_module_1.EligibilityModule,
             admin_module_1.AdminModule,
+            payouts_module_1.PayoutsModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

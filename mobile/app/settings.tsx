@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Switch, useColorScheme } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Switch } from 'react-native';
+import { useColorScheme } from 'nativewind';
 import { ChevronLeft, User, Bell, Shield, CircleHelp, Info, Moon } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useState, useEffect } from 'react';
@@ -6,23 +7,25 @@ import * as SecureStore from 'expo-secure-store';
 
 export default function SettingsScreen() {
     const router = useRouter();
-    const colorScheme = useColorScheme();
+    const { colorScheme, setColorScheme } = useColorScheme();
     const [notifications, setNotifications] = useState(true);
     const [darkMode, setDarkMode] = useState(colorScheme === 'dark');
 
     const handleDarkModeToggle = async (value: boolean) => {
         setDarkMode(value);
-        await SecureStore.setItemAsync('theme', value ? 'dark' : 'light');
+        const newTheme = value ? 'dark' : 'light';
+        setColorScheme(newTheme);
+        await SecureStore.setItemAsync('theme', newTheme);
     };
 
     return (
-        <SafeAreaView className="flex-1 bg-white">
+        <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12]">
             {/* Header */}
             <View className="flex-row items-center justify-between px-5 py-6">
                 <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 items-center justify-center">
-                    <ChevronLeft size={24} color="#000" />
+                    <ChevronLeft size={24} color="#AFAFAF" />
                 </TouchableOpacity>
-                <Text className="text-black font-bold text-xl">Settings</Text>
+                <Text className="text-black dark:text-white font-bold text-xl">Settings</Text>
                 <View className="w-10" />
             </View>
 
@@ -85,13 +88,18 @@ export default function SettingsScreen() {
 function SettingRow({ icon, label, children, onPress }: { icon?: any, label: string, children?: any, onPress?: () => void }) {
     return (
         <TouchableOpacity
+            activeOpacity={0.8}
             onPress={onPress}
             disabled={!onPress && !children}
-            className="flex-row items-center py-5 border-b border-gray-100"
+            className="flex-row items-center p-5 mb-3 bg-white dark:bg-[#1E222B] border-2 border-[#E5E5E5] dark:border-[#272B36] border-b-4 rounded-2xl"
         >
-            {icon && <View className="mr-4">{icon}</View>}
-            <Text className="flex-1 text-black font-semibold text-lg">{label}</Text>
-            {children || (onPress && <ChevronLeft size={20} color="#94A3B8" style={{ transform: [{ rotate: '180deg' }] }} />)}
+            {icon && (
+                <View className="w-10 h-10 rounded-xl bg-[#F5F5F5] dark:bg-[#2A2E39] border-2 border-[#E5E5E5] dark:border-[#272B36] items-center justify-center mr-4">
+                    {icon}
+                </View>
+            )}
+            <Text className="flex-1 text-[#4B4B4B] dark:text-white font-bold text-[17px]">{label}</Text>
+            {children || (onPress && <ChevronLeft size={20} color="#CECECE" style={{ transform: [{ rotate: '180deg' }] }} />)}
         </TouchableOpacity>
     );
 }

@@ -60,3 +60,11 @@ export const learningApi = {
     getQuiz: (id: string) => api.get(`/learning/quizzes/${id}`),
     submitQuiz: (data: any) => api.post('/learning/quizzes/submit', data),
 };
+
+export const kycApi = {
+    submitKyc: (data: { payoutMethod: 'NGN_BANK' | 'USD_PAYPAL'; payoutAccount: Record<string, any> }) =>
+        api.post('/users/me/kyc', data),
+    getBanks: () => api.get('/users/me/kyc/banks'),
+    resolveAccount: (accountNumber: string, bankCode: string) =>
+        api.get(`/users/me/kyc/resolve?accountNumber=${accountNumber}&bankCode=${bankCode}`),
+};

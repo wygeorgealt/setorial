@@ -1,54 +1,58 @@
+import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
+import * as bcrypt from 'bcrypt';
 
-const prisma = new PrismaClient();
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter } as any);
 
 async function main() {
-    const math = await prisma.subject.upsert({
+    await prisma.subject.upsert({
         where: { name: 'Mathematics' },
         update: {},
         create: {
             name: 'Mathematics',
-            topics: {
-                create: [
-                    { name: 'Algebra' },
-                    { name: 'Calculus' },
-                    { name: 'Geometry' },
-                ],
-            },
+            topics: { create: [{ name: 'Algebra' }, { name: 'Calculus' }, { name: 'Geometry' }] },
         },
     });
 
-    const english = await prisma.subject.upsert({
+    await prisma.subject.upsert({
         where: { name: 'English Language' },
         update: {},
         create: {
             name: 'English Language',
-            topics: {
-                create: [
-                    { name: 'Grammar' },
-                    { name: 'Literature' },
-                    { name: 'Composition' },
-                ],
-            },
+            topics: { create: [{ name: 'Grammar' }, { name: 'Literature' }, { name: 'Composition' }] },
         },
     });
 
-    const physics = await prisma.subject.upsert({
+    await prisma.subject.upsert({
         where: { name: 'Physics' },
         update: {},
         create: {
             name: 'Physics',
-            topics: {
-                create: [
-                    { name: 'Mechanics' },
-                    { name: 'Thermodynamics' },
-                    { name: 'Optics' },
-                ],
-            },
+            topics: { create: [{ name: 'Mechanics' }, { name: 'Thermodynamics' }, { name: 'Optics' }] },
         },
     });
 
-    console.log('Seed data created successfully');
+    console.log('Subjects seeded successfully');
+
+    const hashedPassword = await bcrypt.hash('admin123', 10);
+    const admin = await (prisma.user as any).upsert({
+        where: { email: 'admin@setorial.com' },
+        update: {},
+        create: {
+            email: 'admin@setorial.com',
+            password: hashedPassword,
+            name: 'Setorial Admin',
+            role: 'ADMIN',
+            isVerified: true,
+            tier: 'GOLD',
+            kycStatus: 'APPROVED',
+        },
+    });
+    console.log('Admin user seeded:', admin.email);
 }
 
 main()
@@ -58,4 +62,5 @@ main()
     })
     .finally(async () => {
         await prisma.$disconnect();
+        await pool.end();
     });

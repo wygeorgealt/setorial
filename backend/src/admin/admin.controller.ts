@@ -22,45 +22,114 @@ export class AdminController {
         return this.payoutsService.simulatePayout(month, revenue);
     }
 
+    // ─── Financial Dashboard ─────────────────────────────────────────────────
+
     @Get('dashboard')
     async getDashboardStats() {
-        // Total Revenue (dummy for now, normally computed from DB)
-        const currentMonthRevenue = 5000000;
+        const currentMonthRevenue = 5000000; // Mocked — replace with real revenue calc
+        const rewardPoolCap = currentMonthRevenue * 0.20;
 
-        // Total Monetizable Liability
-        const balances = await (this.prisma as any).walletLedger.groupBy({
-            by: ['userId'],
+        // Sum all eligible (ELIGIBLE_MOVE) wallet entries
+        const eligAggregate = await this.prisma.walletLedger.aggregate({
+            where: { type: 'ELIGIBLE_MOVE' },
             _sum: { amount: true },
         });
-        const totalLiability = balances.reduce((acc: any, curr: any) => acc + Number(curr._sum.amount), 0);
-
-        // Flagged users (isVerified = false but tier > FREE)
-        // In production we'd add an explicit isFrozen or flag flag to DB.
-        const flaggedUsers = await (this.prisma as any).user.findMany({
-            where: {
-                tier: { not: 'FREE' },
-                isVerified: false,
-            },
+        // Sum all payouts
+        const payoutAggregate = await this.prisma.walletLedger.aggregate({
+            where: { type: 'PAYOUT' },
+            _sum: { amount: true },
         });
+        const totalEarned = Number(eligAggregate._sum.amount ?? 0);
+        const totalPaidOut = Number(payoutAggregate._sum.amount ?? 0);
+        const totalLiability = totalEarned - totalPaidOut;
+
+        const pendingKycCount = await this.prisma.user.count({ where: { kycStatus: 'PENDING' } });
+        const approvedKycCount = await this.prisma.user.count({ where: { kycStatus: 'APPROVED' } });
+        const totalUsers = await this.prisma.user.count();
+
+        const latestBatch = await this.prisma.payoutBatch.findFirst({ orderBy: { createdAt: 'desc' } });
 
         return {
             currentMonthRevenue,
-            rewardPoolSize: currentMonthRevenue * 0.20,
+            rewardPoolCap,
             totalLiability,
             liabilityRatio: totalLiability / currentMonthRevenue,
-            flaggedUsersCount: flaggedUsers.length,
-            alert: totalLiability > (currentMonthRevenue * 0.20) ? 'LIABILITY EXCEEDS SAFE THRESHOLD' : 'SAFE',
+            alert: totalLiability > rewardPoolCap ? 'LIABILITY EXCEEDS SAFE THRESHOLD' : 'SAFE',
+            pendingKycCount,
+            approvedKycCount,
+            totalUsers,
+            latestPayoutBatch: latestBatch ?? null,
         };
+    }
+
+    // ─── KYC Management ─────────────────────────────────────────────────────
+
+    @Get('kyc')
+    async getPendingKyc() {
+        return this.prisma.user.findMany({
+            where: { kycStatus: 'PENDING' },
+            select: { id: true, name: true, email: true, tier: true, payoutMethod: true, payoutAccount: true, createdAt: true },
+            orderBy: { updatedAt: 'asc' },
+        });
+    }
+
+    @Post('kyc/:id/approve')
+    async approveKyc(@Param('id') userId: string) {
+        return this.prisma.user.update({
+            where: { id: userId },
+            data: { kycStatus: 'APPROVED', isVerified: true },
+            select: { id: true, name: true, email: true, kycStatus: true, isVerified: true },
+        });
+    }
+
+    @Post('kyc/:id/reject')
+    async rejectKyc(@Param('id') userId: string, @Body('reason') reason: string) {
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: { kycStatus: 'REJECTED' },
+        });
+        return { success: true, userId, reason };
+    }
+
+    // ─── User Management ────────────────────────────────────────────────────
+
+    @Get('users')
+    async getAllUsers(
+        @Query('tier') tier?: string,
+        @Query('kycStatus') kycStatus?: string,
+    ) {
+        const where: any = {};
+        if (tier) where.tier = tier.toUpperCase();
+        if (kycStatus) where.kycStatus = kycStatus.toUpperCase();
+        return this.prisma.user.findMany({
+            where,
+            select: { id: true, name: true, email: true, tier: true, kycStatus: true, isVerified: true, createdAt: true },
+            orderBy: { createdAt: 'desc' },
+        });
     }
 
     @Post('users/:id/freeze')
     async freezeUserWallet(@Param('id') userId: string, @Body('reason') reason: string) {
-        // In actual schema, add an isFrozen boolean flag to User or Wallet.
-        // For now, we update isVerified = false to prevent points conversion.
-        await (this.prisma as any).user.update({
+        await this.prisma.user.update({
             where: { id: userId },
-            data: { isVerified: false }, // Simulating freeze
+            data: { isVerified: false },
         });
         return { success: true, message: `User ${userId} wallet frozen. Reason: ${reason}` };
+    }
+
+    // ─── Payout Batches ─────────────────────────────────────────────────────
+
+    @Get('payout-batches')
+    async getPayoutBatches() {
+        return this.prisma.payoutBatch.findMany({ orderBy: { createdAt: 'desc' } });
+    }
+
+    /** Manual trigger for testing — production version runs on cron */
+    @Post('payout/trigger')
+    async triggerPayout(
+        @Query('month') month: string,
+        @Query('revenue', ParseFloatPipe) revenue: number,
+    ) {
+        return this.payoutsService.processPayout(month, revenue);
     }
 }

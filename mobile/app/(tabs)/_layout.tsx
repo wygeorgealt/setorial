@@ -12,19 +12,23 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#FFFFFF',
-          borderTopWidth: 1,
-          borderTopColor: '#F3F4F6', // light gray border
+          backgroundColor: isDark ? '#13151A' : '#FFFFFF',
+          borderTopWidth: 2,
+          borderTopColor: isDark ? '#272B36' : '#E5E5E5', // Thicker gray/slate border
           height: 85,
           paddingBottom: 30,
           paddingTop: 10,
+          elevation: 0,
+          shadowOpacity: 0,
         },
-        tabBarActiveTintColor: '#000000',
-        tabBarInactiveTintColor: '#9CA3AF', // Gray-400
+        tabBarActiveTintColor: '#1CB0F6', // Duolingo Blue for active
+        tabBarInactiveTintColor: '#AFAFAF',
         tabBarLabelStyle: {
           fontSize: 10,
-          fontWeight: '500',
+          fontWeight: 'bold',
           marginTop: 4,
+          textTransform: 'uppercase',
+          letterSpacing: 0.5,
         }
       }}>
       <Tabs.Screen

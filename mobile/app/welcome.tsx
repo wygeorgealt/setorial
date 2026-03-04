@@ -115,17 +115,19 @@ export default function WelcomeScreen() {
                             </View>
 
                             <TouchableOpacity
+                                activeOpacity={0.8}
                                 onPress={() => router.push('/register')}
-                                className="w-full bg-white py-4 rounded-full items-center mb-4"
+                                className="w-full bg-[#58CC02] border-b-4 border-[#58A700] border-t-[#58CC02] border-x-[#58CC02] py-4 rounded-2xl items-center mb-4"
                             >
-                                <Text className="text-black font-semibold text-lg">Create account</Text>
+                                <Text className="text-white font-bold text-[17px] uppercase tracking-wider">Get Started</Text>
                             </TouchableOpacity>
 
                             <TouchableOpacity
+                                activeOpacity={0.8}
                                 onPress={() => router.push('/login')}
-                                className="w-full py-4 items-center"
+                                className="w-full bg-white/10 border-2 border-white/20 border-b-4 py-4 rounded-2xl items-center"
                             >
-                                <Text className="text-white font-semibold text-lg">Log in</Text>
+                                <Text className="text-white font-bold text-[17px] uppercase tracking-wider">I Already Have An Account</Text>
                             </TouchableOpacity>
                         </View>
                     </View>

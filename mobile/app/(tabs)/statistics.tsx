@@ -44,7 +44,7 @@ export default function StatisticsScreen() {
                 }
             >
                 {/* Header Section */}
-                <Text className="text-black dark:text-white text-[28px] font-bold tracking-tight mb-8">Wallet</Text>
+                <Text className="text-black dark:text-white text-[28px] font-black tracking-tight mb-8">Wallet</Text>
 
                 {/* Balance Card - Duolingo Gamified Style */}
                 <View className="bg-[#1CB0F6] border-2 border-b-4 border-[#1899D6] p-8 rounded-[32px] mb-10 overflow-hidden relative">
@@ -55,30 +55,11 @@ export default function StatisticsScreen() {
                     <Text className="text-white text-[42px] font-black tracking-tighter mb-1">
                         ₦{balance.ngn.toLocaleString()}
                     </Text>
-                    <Text className="text-white/80 font-bold text-lg mb-8">${balance.usd.toFixed(2)} USD</Text>
-
-                    <View className="flex-row gap-x-4">
-                        <TouchableOpacity activeOpacity={0.8} className="flex-1 bg-white border-b-4 border-[#E5E5E5] py-4 rounded-2xl items-center justify-center flex-row">
-                            <ArrowUpRight size={18} color="#1CB0F6" strokeWidth={3} />
-                            <Text className="text-[#1CB0F6] font-bold text-[15px] uppercase tracking-wider ml-2">Withdraw</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity activeOpacity={0.8} className="flex-1 bg-black/20 border-b-4 border-black/30 py-4 rounded-2xl items-center justify-center flex-row">
-                            <Clock size={18} color="#FFF" strokeWidth={3} />
-                            <Text className="text-white font-bold text-[15px] uppercase tracking-wider ml-2">Notice</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-
-                {/* Important Notice */}
-                <View className="bg-[#FFC800] border-2 border-b-4 border-[#E5B400] p-6 rounded-3xl mb-10">
-                    <Text className="text-yellow-900 font-bold text-[17px] mb-2">Payout Notice</Text>
-                    <Text className="text-yellow-800 font-semibold text-[14px] leading-5">
-                        Automatic payouts occur on the <Text className="font-black">28th of every month</Text>. Ensure your Paystack verification is complete.
-                    </Text>
+                    <Text className="text-white/80 font-bold text-lg mb-2">${balance.usd.toFixed(2)} USD</Text>
                 </View>
 
                 {/* Activity */}
-                <Text className="text-black dark:text-white font-bold text-xl tracking-tight mb-4">Transaction History</Text>
+                <Text className="text-black dark:text-white font-bold text-xl tracking-tight mb-4">Payout History</Text>
                 {transactions.length > 0 ? (
                     transactions.map((tx) => (
                         <View key={tx.id} className="flex-row items-center justify-between p-5 mb-3 bg-white dark:bg-[#1E222B] border-2 border-[#E5E5E5] dark:border-[#272B36] border-b-4 rounded-2xl">

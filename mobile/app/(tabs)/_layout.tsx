@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Home, Search, Layers, MoreHorizontal, LayoutGrid } from 'lucide-react-native';
+import { LayoutGrid, Search, Wallet, MoreHorizontal, Star, ShoppingBag } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { View } from 'react-native';
 
@@ -13,50 +13,113 @@ export default function TabLayout() {
         headerShown: false,
         tabBarStyle: {
           backgroundColor: isDark ? '#13151A' : '#FFFFFF',
-          borderTopWidth: 2,
-          borderTopColor: isDark ? '#272B36' : '#E5E5E5', // Thicker gray/slate border
+          borderTopWidth: 0,
           height: 85,
-          paddingBottom: 30,
-          paddingTop: 10,
-          elevation: 0,
-          shadowOpacity: 0,
+          paddingHorizontal: 12,
+          paddingBottom: 25,
+          paddingTop: 12,
+          elevation: 10,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.05,
+          shadowRadius: 10,
         },
-        tabBarActiveTintColor: '#1CB0F6', // Duolingo Blue for active
+        tabBarActiveTintColor: isDark ? '#FFFFFF' : '#000000',
         tabBarInactiveTintColor: '#AFAFAF',
         tabBarLabelStyle: {
-          fontSize: 10,
-          fontWeight: 'bold',
-          marginTop: 4,
-          textTransform: 'uppercase',
-          letterSpacing: 0.5,
+          fontSize: 11,
+          fontWeight: '700',
+          marginTop: 2,
         }
       }}>
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Learn',
-          tabBarIcon: ({ color }) => <LayoutGrid size={24} color={color} strokeWidth={2} />,
+          title: 'Home',
+          tabBarIcon: ({ color, focused }) => (
+            <View style={{
+              backgroundColor: focused ? (isDark ? '#272B36' : '#F3F4F6') : 'transparent',
+              paddingHorizontal: 20,
+              paddingVertical: 8,
+              borderRadius: 20,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <LayoutGrid size={22} color={color} strokeWidth={focused ? 2.5 : 2} />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
         name="courses"
         options={{
           title: 'Discover',
-          tabBarIcon: ({ color }) => <Search size={24} color={color} strokeWidth={2} />,
+          tabBarIcon: ({ color, focused }) => (
+            <View style={{
+              backgroundColor: focused ? (isDark ? '#272B36' : '#F3F4F6') : 'transparent',
+              paddingHorizontal: 20,
+              paddingVertical: 8,
+              borderRadius: 20,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <Search size={22} color={color} strokeWidth={focused ? 2.5 : 2} />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
         name="statistics"
         options={{
-          title: 'Accumulate',
-          tabBarIcon: ({ color }) => <Layers size={24} color={color} strokeWidth={2} />,
+          title: 'Wallet',
+          tabBarIcon: ({ color, focused }) => (
+            <View style={{
+              backgroundColor: focused ? (isDark ? '#272B36' : '#F3F4F6') : 'transparent',
+              paddingHorizontal: 20,
+              paddingVertical: 8,
+              borderRadius: 20,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <Wallet size={22} color={color} strokeWidth={focused ? 2.5 : 2} />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="store"
+        options={{
+          title: 'Store',
+          tabBarIcon: ({ color, focused }) => (
+            <View style={{
+              backgroundColor: focused ? (isDark ? '#272B36' : '#F3F4F6') : 'transparent',
+              paddingHorizontal: 20,
+              paddingVertical: 8,
+              borderRadius: 20,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <ShoppingBag size={22} color={color} strokeWidth={focused ? 2.5 : 2} />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Manage',
-          tabBarIcon: ({ color }) => <MoreHorizontal size={24} color={color} strokeWidth={2} />,
+          title: 'Profile',
+          tabBarIcon: ({ color, focused }) => (
+            <View style={{
+              backgroundColor: focused ? (isDark ? '#272B36' : '#F3F4F6') : 'transparent',
+              paddingHorizontal: 20,
+              paddingVertical: 8,
+              borderRadius: 20,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <MoreHorizontal size={22} color={color} strokeWidth={focused ? 2.5 : 2} />
+            </View>
+          ),
         }}
       />
     </Tabs>

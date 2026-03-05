@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
     LayoutDashboard,
     Users,
@@ -9,42 +9,114 @@ import {
     TrendingUp,
     Clock,
     CheckCircle2,
-    XCircle
+    XCircle,
+    Search,
+    DollarSign,
+    UserCheck,
+    Globe,
+    Map,
+    Edit2,
+    Trash2,
+    Plus,
+    RefreshCcw
 } from 'lucide-react';
 import { adminApi } from './api';
 
-const SidebarItem = ({ icon: Icon, label, active, onClick }: { icon: any, label: string, active: boolean, onClick: () => void }) => (
+/* ─── Reusable Components ──────────────────────────────────────────────────── */
+
+const SidebarItem = ({ icon: Icon, label, active, onClick, badge }: { icon: any; label: string; active: boolean; onClick: () => void; badge?: number }) => (
     <button
         onClick={onClick}
-        className={`w-full flex items-center space-x-3 p-4 rounded-2xl font-bold transition-all ${active
-            ? 'bg-primary border-2 border-b-4 border-primary-dark text-white'
-            : 'text-gray-400 hover:text-white hover:bg-slate-800'
+        className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg font-medium transition-all relative ${active
+            ? 'bg-zinc-100/80 text-zinc-900'
+            : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100/50'
             }`}
     >
-        <Icon size={20} />
-        <span>{label}</span>
+        <Icon size={18} />
+        <span className="text-sm">{label}</span>
+        {badge !== undefined && badge > 0 && (
+            <span className="ml-auto bg-red-50 text-red-600 ring-1 ring-inset ring-red-600/10 text-[10px] font-medium px-2 py-0.5 rounded-full flex items-center justify-center">{badge}</span>
+        )}
     </button>
 );
 
-const StatCard = ({ icon: Icon, label, value, colorClass }: { icon: any, label: string, value: string | number, colorClass: string }) => (
+const StatCard = ({ icon: Icon, label, value }: { icon: any; label: string; value: string | number }) => (
     <div className="card">
-        <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${colorClass}`}>
-            <Icon size={24} className="text-white" />
+        <div className="flex items-center space-x-4 mb-2 -mt-1">
+            <div className={`w-10 h-10 rounded-lg flex items-center justify-center bg-zinc-100`}>
+                <Icon size={20} className="text-zinc-700" />
+            </div>
+            <p className="text-zinc-500 font-medium text-sm">{label}</p>
         </div>
-        <p className="text-gray-400 font-bold uppercase text-xs tracking-widest">{label}</p>
-        <h3 className="text-3xl font-black mt-1">{value}</h3>
+        <h3 className="text-3xl font-semibold text-zinc-900 mt-2 tracking-tight">{value}</h3>
     </div>
 );
+
+const tierBadge = (tier: string) => {
+    const styles: Record<string, string> = {
+        FREE: 'bg-zinc-100 text-zinc-700 ring-zinc-500/10',
+        BRONZE: 'bg-amber-50 text-amber-700 ring-amber-600/20',
+        SILVER: 'bg-slate-100 text-slate-700 ring-slate-500/20',
+        GOLD: 'bg-yellow-50 text-yellow-800 ring-yellow-600/20',
+    };
+    const style = styles[tier] || styles.FREE;
+    return <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${style}`}>{tier}</span>;
+};
+
+const kycBadge = (status: string) => {
+    const styles: Record<string, string> = {
+        UNVERIFIED: 'bg-zinc-100 text-zinc-700 ring-zinc-500/10',
+        PENDING: 'bg-yellow-50 text-yellow-800 ring-yellow-600/20',
+        APPROVED: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
+        REJECTED: 'bg-red-50 text-red-700 ring-red-600/10',
+    };
+    const style = styles[status] || styles.UNVERIFIED;
+    return <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${style}`}>{status}</span>;
+};
+
+/* ─── Main Dashboard ───────────────────────────────────────────────────────── */
 
 export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState('overview');
     const [stats, setStats] = useState<any>(null);
     const [kycRequests, setKycRequests] = useState<any[]>([]);
+    const [users, setUsers] = useState<any[]>([]);
+    const [payoutBatches, setPayoutBatches] = useState<any[]>([]);
+    const [pricingList, setPricingList] = useState<any[]>([]);
+    const [regionalStats, setRegionalStats] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+
+    // Filters
+    const [tierFilter, setTierFilter] = useState('');
+    const [kycFilter, setKycFilter] = useState('');
+    const [userSearch, setUserSearch] = useState('');
+
+    // Payout trigger
+    const [payoutMonth, setPayoutMonth] = useState('');
+    const [payoutRevenue, setPayoutRevenue] = useState('');
+    const [triggeringPayout, setTriggeringPayout] = useState(false);
+
+    // Pricing Modal
+    const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
+    const [editingPricing, setEditingPricing] = useState<any>(null);
+    const [pricingForm, setPricingForm] = useState({
+        countryCode: '',
+        countryName: '',
+        economicTier: 'TIER_C',
+        multiplier: '1.0',
+        currency: 'USD',
+        bronzeMonthly: '0',
+        silverMonthly: '0',
+        goldMonthly: '0',
+        bronzeAnnual: '0',
+        silverAnnual: '0',
+        goldAnnual: '0',
+        isActive: true
+    });
 
     useEffect(() => {
         fetchData();
-    }, [activeTab]);
+    }, [activeTab, tierFilter, kycFilter]);
 
     const fetchData = async () => {
         setLoading(true);
@@ -55,6 +127,21 @@ export default function AdminDashboard() {
             } else if (activeTab === 'kyc') {
                 const res = await adminApi.getPendingKyc();
                 setKycRequests(res.data);
+            } else if (activeTab === 'users') {
+                const params: any = {};
+                if (tierFilter) params.tier = tierFilter;
+                if (kycFilter) params.kycStatus = kycFilter;
+                const res = await adminApi.getUsers(params);
+                setUsers(res.data);
+            } else if (activeTab === 'payouts') {
+                const res = await adminApi.getPayoutBatches();
+                setPayoutBatches(res.data);
+            } else if (activeTab === 'pricing') {
+                const res = await adminApi.getPricing();
+                setPricingList(res.data);
+            } else if (activeTab === 'regions') {
+                const res = await adminApi.getRegionalStats();
+                setRegionalStats(res.data);
             }
         } catch (error) {
             console.error('Fetch error:', error);
@@ -68,9 +155,7 @@ export default function AdminDashboard() {
         try {
             await adminApi.approveKyc(id);
             fetchData();
-        } catch (err) {
-            alert('Failed to approve');
-        }
+        } catch (err) { alert('Failed to approve'); }
     };
 
     const handleRejectKyc = async (id: string) => {
@@ -79,92 +164,216 @@ export default function AdminDashboard() {
         try {
             await adminApi.rejectKyc(id, reason);
             fetchData();
-        } catch (err) {
-            alert('Failed to reject');
+        } catch (err) { alert('Failed to reject'); }
+    };
+
+    const handleFreezeUser = async (id: string, name: string) => {
+        const reason = prompt(`Why freeze ${name}'s wallet?`);
+        if (!reason) return;
+        try {
+            await adminApi.freezeUser(id, reason);
+            fetchData();
+        } catch (err) { alert('Failed to freeze user'); }
+    };
+
+    const handleTriggerPayout = async () => {
+        if (!payoutMonth || !payoutRevenue) { alert('Enter month (e.g. 2026-03) and revenue amount.'); return; }
+        if (!confirm(`Trigger payout for ${payoutMonth} with ₦${Number(payoutRevenue).toLocaleString()} revenue?`)) return;
+        setTriggeringPayout(true);
+        try {
+            await adminApi.triggerPayout(payoutMonth, Number(payoutRevenue));
+            alert('Payout triggered successfully!');
+            setPayoutMonth('');
+            setPayoutRevenue('');
+            fetchData();
+        } catch (err: any) {
+            alert(err.response?.data?.message || 'Payout failed');
+        } finally {
+            setTriggeringPayout(false);
         }
     };
+
+    const openPricingModal = (pricing: any = null) => {
+        if (pricing) {
+            setEditingPricing(pricing);
+            setPricingForm({
+                ...pricing,
+                multiplier: String(pricing.multiplier),
+                bronzeMonthly: String(pricing.bronzeMonthly),
+                silverMonthly: String(pricing.silverMonthly),
+                goldMonthly: String(pricing.goldMonthly),
+                bronzeAnnual: String(pricing.bronzeAnnual),
+                silverAnnual: String(pricing.silverAnnual),
+                goldAnnual: String(pricing.goldAnnual),
+            });
+        } else {
+            setEditingPricing(null);
+            setPricingForm({
+                countryCode: '',
+                countryName: '',
+                economicTier: 'TIER_C',
+                multiplier: '1.0',
+                currency: 'USD',
+                bronzeMonthly: '0',
+                silverMonthly: '0',
+                goldMonthly: '0',
+                bronzeAnnual: '0',
+                silverAnnual: '0',
+                goldAnnual: '0',
+                isActive: true
+            });
+        }
+        setIsPricingModalOpen(true);
+    };
+
+    const handleSavePricing = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const payload = {
+                ...pricingForm,
+                multiplier: Number(pricingForm.multiplier),
+                bronzeMonthly: Number(pricingForm.bronzeMonthly),
+                silverMonthly: Number(pricingForm.silverMonthly),
+                goldMonthly: Number(pricingForm.goldMonthly),
+                bronzeAnnual: Number(pricingForm.bronzeAnnual),
+                silverAnnual: Number(pricingForm.silverAnnual),
+                goldAnnual: Number(pricingForm.goldAnnual),
+            };
+
+            if (editingPricing) {
+                await adminApi.updatePricing(editingPricing.id, payload);
+            } else {
+                await adminApi.createPricing(payload);
+            }
+            setIsPricingModalOpen(false);
+            fetchData();
+        } catch (err: any) {
+            alert(err.response?.data?.message || 'Failed to save pricing configuration');
+        }
+    };
+
+    const handleDeletePricing = async (id: string, countryName: string) => {
+        if (!confirm(`Are you sure you want to delete pricing for ${countryName}? This will permanently remove the configuration for this region.`)) return;
+        try {
+            await adminApi.deletePricing(id);
+            fetchData();
+        } catch (err: any) {
+            alert(err.response?.data?.message || 'Failed to delete pricing');
+        }
+    };
+
+    const filteredUsers = users.filter(u =>
+        !userSearch || u.name?.toLowerCase().includes(userSearch.toLowerCase()) || u.email?.toLowerCase().includes(userSearch.toLowerCase())
+    );
+
+
+    /* ─── Tab Content ──────────────────────────────────────────────────────── */
 
     const renderContent = () => {
         if (loading) return <div className="flex-1 flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>;
 
         switch (activeTab) {
+
+            /* ── OVERVIEW ───────────────────────────────────────────────── */
             case 'overview':
                 return (
-                    <div className="space-y-8 animate-in fade-in duration-500">
-                        <h2 className="text-4xl font-black">Platform Overview</h2>
+                    <div className="space-y-10">
+                        <div>
+                            <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">Platform Overview</h2>
+                            <p className="text-sm text-zinc-500 mt-1">Real-time health and financial metrics for Setorial.</p>
+                        </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            <StatCard icon={TrendingUp} label="Month Revenue" value={`₦${stats?.currentMonthRevenue?.toLocaleString()}`} colorClass="bg-secondary" />
-                            <StatCard icon={CreditCard} label="Total Liability" value={`₦${stats?.totalLiability?.toLocaleString()}`} colorClass="bg-primary" />
-                            <StatCard icon={Clock} label="Pending KYC" value={stats?.pendingKycCount} colorClass="bg-accent" />
-                            <StatCard icon={Users} label="Total Students" value={stats?.totalUsers} colorClass="bg-slate-700" />
+                            <StatCard icon={TrendingUp} label="Month Revenue" value={`₦${(stats?.currentMonthRevenue ?? 0).toLocaleString()}`} />
+                            <StatCard icon={CreditCard} label="Total Liability" value={`₦${(stats?.totalLiability ?? 0).toLocaleString()}`} />
+                            <StatCard icon={Clock} label="Pending KYC" value={stats?.pendingKycCount ?? 0} />
+                            <StatCard icon={Users} label="Total Students" value={stats?.totalUsers ?? 0} />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <StatCard icon={UserCheck} label="Approved KYC" value={stats?.approvedKycCount ?? 0} />
+                            <StatCard icon={DollarSign} label="Reward Pool Cap" value={`₦${(stats?.rewardPoolCap ?? 0).toLocaleString()}`} />
                         </div>
 
                         {stats?.alert === 'LIABILITY EXCEEDS SAFE THRESHOLD' && (
-                            <div className="bg-red-500/20 border-2 border-red-500 p-6 rounded-3xl flex items-center space-x-4">
-                                <AlertTriangle size={32} className="text-red-500" />
+                            <div className="bg-amber-50 ring-1 ring-inset ring-amber-600/20 p-5 rounded-xl flex items-center space-x-4">
+                                <AlertTriangle size={24} className="text-amber-600" />
                                 <div>
-                                    <h4 className="text-red-500 font-black text-xl">FINANCIAL ALERT</h4>
-                                    <p className="font-bold">Total liability exceeds the 20% reward pool cap. Distribution ratio will be applied.</p>
+                                    <h4 className="text-amber-900 font-semibold text-sm">Financial Alert: Liability Ratio High</h4>
+                                    <p className="text-amber-800 text-sm mt-0.5">Total liability exceeds the 20% reward pool cap. Distribution ratio: {((stats?.liabilityRatio ?? 0) * 100).toFixed(1)}%</p>
                                 </div>
                             </div>
                         )}
 
-                        <div className="card">
-                            <h3 className="text-xl font-bold mb-4">Latest Payout Batch</h3>
-                            {stats?.latestPayoutBatch ? (
-                                <div className="flex justify-between items-center p-4 bg-slate-900 rounded-2xl border-2 border-slate-700">
-                                    <div>
-                                        <p className="text-sm font-bold text-gray-400">BATCH {stats.latestPayoutBatch.month}</p>
-                                        <p className="text-lg font-black">{stats.latestPayoutBatch.status}</p>
+                        <div className="card !p-0 overflow-hidden">
+                            <div className="px-6 py-4 border-b border-zinc-100 bg-zinc-50/50">
+                                <h3 className="text-sm font-semibold text-zinc-900">Latest Payout Batch</h3>
+                            </div>
+                            <div className="p-6">
+                                {stats?.latestPayoutBatch ? (
+                                    <div className="flex justify-between items-center bg-zinc-50 p-4 rounded-lg ring-1 ring-zinc-200">
+                                        <div>
+                                            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">MONTH {stats.latestPayoutBatch.month}</p>
+                                            <p className="text-sm font-semibold text-zinc-900 mt-0.5 capitalize">{stats.latestPayoutBatch.status.toLowerCase()}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Total Paid</p>
+                                            <p className="text-sm font-bold text-secondary mt-0.5">₦{Number(stats.latestPayoutBatch.totalPaid).toLocaleString()}</p>
+                                        </div>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="text-sm font-bold text-gray-400">Total Paid</p>
-                                        <p className="text-lg font-black text-secondary">₦{Number(stats.latestPayoutBatch.totalPaid).toLocaleString()}</p>
-                                    </div>
-                                </div>
-                            ) : (
-                                <p className="text-gray-400 font-bold">No payout batches recorded yet.</p>
-                            )}
+                                ) : (
+                                    <p className="text-zinc-500 text-sm italic">No payout batches recorded yet.</p>
+                                )}
+                            </div>
                         </div>
                     </div>
                 );
 
+            /* ── KYC REVIEW ─────────────────────────────────────────────── */
             case 'kyc':
                 return (
-                    <div className="space-y-8 animate-in fade-in duration-500">
-                        <h2 className="text-4xl font-black">KYC Review Queue</h2>
+                    <div className="space-y-10">
+                        <div>
+                            <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">KYC Review Queue</h2>
+                            <p className="text-sm text-zinc-500 mt-1">Manual verification for student payout accounts.</p>
+                        </div>
+
                         {kycRequests.length === 0 ? (
-                            <div className="card text-center py-20">
-                                <CheckCircle2 size={64} className="mx-auto text-secondary mb-4 opacity-20" />
-                                <p className="text-gray-400 font-bold text-xl">Queue is empty. Great job!</p>
+                            <div className="card flex flex-col items-center justify-center py-24 bg-zinc-50/50 border-dashed">
+                                <CheckCircle2 size={40} className="text-zinc-300 mb-3" />
+                                <p className="text-zinc-500 font-medium">No pending requests. All clear!</p>
                             </div>
                         ) : (
-                            <div className="grid gap-6">
+                            <div className="grid gap-4">
                                 {kycRequests.map((req: any) => (
-                                    <div key={req.id} className="card flex flex-col md:flex-row justify-between items-start md:items-center">
-                                        <div className="space-y-1">
-                                            <div className="flex items-center space-x-2">
-                                                <span className="bg-primary/20 text-primary text-[10px] font-black px-2 py-0.5 rounded-full uppercase">{req.tier}</span>
-                                                <h4 className="font-black text-xl">{req.name}</h4>
+                                    <div key={req.id} className="card flex flex-col md:flex-row justify-between items-start md:items-center py-5">
+                                        <div className="space-y-1.5 flex-1 w-full">
+                                            <div className="flex items-center space-x-3">
+                                                <h4 className="font-semibold text-zinc-900">{req.name || 'Unnamed Student'}</h4>
+                                                {tierBadge(req.tier)}
                                             </div>
-                                            <p className="font-bold text-gray-400">{req.email}</p>
-                                            <div className="mt-2 text-sm bg-slate-900 p-3 rounded-xl border border-slate-700">
-                                                <p className="text-gray-500 text-[10px] uppercase font-bold mb-1">Payout Account ({req.payoutMethod})</p>
-                                                {req.payoutMethod === 'NGN_BANK' ? (
-                                                    <p className="font-bold">{req.payoutAccount.bankName} • {req.payoutAccount.accountNumber} • <span className="text-white uppercase">{req.payoutAccount.accountName}</span></p>
-                                                ) : (
-                                                    <p className="font-bold">{req.payoutAccount.email}</p>
-                                                )}
+                                            <p className="text-sm text-zinc-500">{req.email} • <span className="text-[10px]">SUBMITTED {new Date(req.createdAt).toLocaleDateString()}</span></p>
+
+                                            <div className="mt-4 flex flex-col md:flex-row md:items-center gap-4 bg-zinc-50 p-4 rounded-lg ring-1 ring-zinc-200">
+                                                <div className="flex-1">
+                                                    <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Payout Method: {req.payoutMethod}</p>
+                                                    {req.payoutMethod === 'NGN_BANK' ? (
+                                                        <p className="text-sm font-medium text-zinc-700">{req.payoutAccount?.bankName} • {req.payoutAccount?.accountNumber} • <span className="uppercase">{req.payoutAccount?.accountName}</span></p>
+                                                    ) : (
+                                                        <p className="text-sm font-medium text-zinc-700">{req.payoutAccount?.email}</p>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
 
-                                        <div className="flex space-x-3 mt-4 md:mt-0">
-                                            <button onClick={() => handleRejectKyc(req.id)} className="p-4 rounded-2xl bg-slate-700 hover:bg-red-500/20 text-gray-300 hover:text-red-500 border-2 border-b-4 border-slate-600 transition-all">
-                                                <XCircle size={24} />
+                                        <div className="flex space-x-2 mt-6 md:mt-0 ml-0 md:ml-6">
+                                            <button onClick={() => handleRejectKyc(req.id)} className="btn-secondary h-10 px-4 text-xs">
+                                                <XCircle size={16} className="mr-2 text-zinc-400" />
+                                                Reject
                                             </button>
-                                            <button onClick={() => handleApproveKyc(req.id)} className="p-4 rounded-2xl bg-secondary hover:brightness-110 text-white border-2 border-b-4 border-secondary-dark transition-all">
-                                                <CheckCircle2 size={24} />
+                                            <button onClick={() => handleApproveKyc(req.id)} className="btn-primary h-10 px-4 text-xs">
+                                                <CheckCircle2 size={16} className="mr-2" />
+                                                Approve
                                             </button>
                                         </div>
                                     </div>
@@ -174,40 +383,436 @@ export default function AdminDashboard() {
                     </div>
                 );
 
+            /* ── STUDENTS ───────────────────────────────────────────────── */
+            case 'users':
+                return (
+                    <div className="space-y-10">
+                        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                            <div>
+                                <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">Student Directory</h2>
+                                <p className="text-sm text-zinc-500 mt-1">Manage all platform users and their monetization levels.</p>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                <select
+                                    value={tierFilter}
+                                    onChange={(e) => setTierFilter(e.target.value)}
+                                    className="input-field w-32 h-10 py-0 text-xs font-medium cursor-pointer"
+                                >
+                                    <option value="">All Tiers</option>
+                                    <option value="FREE">Free</option>
+                                    <option value="BRONZE">Bronze</option>
+                                    <option value="SILVER">Silver</option>
+                                    <option value="GOLD">Gold</option>
+                                </select>
+                                <select
+                                    value={kycFilter}
+                                    onChange={(e) => setKycFilter(e.target.value)}
+                                    className="input-field w-36 h-10 py-0 text-xs font-medium cursor-pointer"
+                                >
+                                    <option value="">All KYC Status</option>
+                                    <option value="UNVERIFIED">Unverified</option>
+                                    <option value="PENDING">Pending</option>
+                                    <option value="APPROVED">Approved</option>
+                                    <option value="REJECTED">Rejected</option>
+                                </select>
+                                <div className="relative w-64">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+                                    <input
+                                        type="text"
+                                        placeholder="Search by name or email..."
+                                        className="input-field pl-10 h-10 py-0 text-xs"
+                                        value={userSearch}
+                                        onChange={(e) => setUserSearch(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="card !p-0 overflow-hidden">
+                            <table className="w-full text-left border-collapse">
+                                <thead className="bg-zinc-50 border-b border-zinc-100">
+                                    <tr>
+                                        <th className="px-6 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Student</th>
+                                        <th className="px-6 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider text-center">Tier</th>
+                                        <th className="px-6 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider text-center">KYC Status</th>
+                                        <th className="px-6 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider text-right">Points</th>
+                                        <th className="px-6 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider text-right">Balance</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-zinc-100">
+                                    {users
+                                        .filter(u => u.name?.toLowerCase().includes(userSearch.toLowerCase()) || u.email.toLowerCase().includes(userSearch.toLowerCase()))
+                                        .map((u: any) => (
+                                            <tr key={u.id} className="hover:bg-zinc-50/50 transition-colors">
+                                                <td className="px-6 py-4">
+                                                    <div className="font-semibold text-zinc-900">{u.name || 'Setorial Student'}</div>
+                                                    <div className="text-xs text-zinc-500">{u.email}</div>
+                                                </td>
+                                                <td className="px-6 py-4 text-center">{tierBadge(u.tier)}</td>
+                                                <td className="px-6 py-4 text-center">{kycBadge(u.kycStatus)}</td>
+                                                <td className="px-6 py-4 text-right font-medium text-zinc-900">{(u.points ?? 0).toLocaleString()}</td>
+                                                <td className="px-6 py-4 text-right font-bold text-secondary">
+                                                    ₦{Number(u.wallets?.[0]?.monetizableBalance ?? 0).toLocaleString()}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                );
+
+            /* ── PAYOUTS ────────────────────────────────────────────────── */
+            case 'payouts':
+                return (
+                    <div className="space-y-10">
+                        <div>
+                            <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">Payout Management</h2>
+                            <p className="text-sm text-zinc-500 mt-1">Simulate and trigger automated monthly rewards.</p>
+                        </div>
+
+                        <div className="card bg-zinc-900 text-white !border-0 shadow-lg">
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
+                                <div>
+                                    <h3 className="text-lg font-semibold flex items-center">
+                                        <RefreshCcw size={20} className="mr-2 text-zinc-400" />
+                                        Next Payout Cycle
+                                    </h3>
+                                    <p className="text-zinc-400 text-sm mt-1">Triggers automatically on the 28th, but can be forced manually.</p>
+                                </div>
+                                <div className="flex items-center space-x-3 w-full md:w-auto">
+                                    <div className="relative flex-1 md:w-48">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">₦</span>
+                                        <input
+                                            type="number"
+                                            className="w-full bg-zinc-800 border-0 ring-1 ring-zinc-700/50 rounded-lg py-2 pl-7 pr-3 text-sm focus:ring-zinc-600"
+                                            placeholder="Simulate Revenue"
+                                            value={payoutRevenue} // Assuming payoutRevenue is the correct state variable
+                                            onChange={(e) => setPayoutRevenue(e.target.value)} // Assuming setPayoutRevenue is the correct state setter
+                                        />
+                                    </div>
+                                    <button onClick={handleTriggerPayout} className="btn-secondary !bg-white !text-zinc-900 !ring-0 hover:!bg-zinc-100 h-9 px-6 text-sm">
+                                        Trigger Now
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <h3 className="text-sm font-semibold text-zinc-900 px-1">Payout History</h3>
+                            <div className="card !p-0 overflow-hidden">
+                                <table className="w-full text-left border-collapse">
+                                    <thead className="bg-zinc-50 border-b border-zinc-100">
+                                        <tr>
+                                            <th className="px-6 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Month</th>
+                                            <th className="px-6 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Status</th>
+                                            <th className="px-6 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider text-right">Amount Paid</th>
+                                            <th className="px-6 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider text-right">Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-zinc-100">
+                                        {payoutBatches.map((batch: any) => (
+                                            <tr key={batch.id} className="hover:bg-zinc-50/50 transition-colors">
+                                                <td className="px-6 py-4 font-semibold text-zinc-900 uppercase">MONTH {batch.month}</td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${batch.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20' : 'bg-amber-50 text-amber-700 ring-amber-600/20'
+                                                        }`}>
+                                                        {batch.status}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-right font-bold text-zinc-900">₦{Number(batch.totalPaid).toLocaleString()}</td>
+                                                <td className="px-6 py-4 text-right text-xs text-zinc-500">{new Date(batch.createdAt).toLocaleDateString()}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                );
+
+            /* ── GLOBAL PRICING ─────────────────────────────────────────── */
+            case 'pricing':
+                return (
+                    <div className="space-y-10">
+                        <div className="flex justify-between items-end">
+                            <div>
+                                <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">Geo-Pricing Config</h2>
+                                <p className="text-sm text-zinc-500 mt-1">Configure subscription costs per country.</p>
+                            </div>
+                            <button
+                                onClick={() => openPricingModal()}
+                                className="btn-primary h-10 px-6 text-sm"
+                            >
+                                <Plus size={18} className="mr-2" />
+                                Add Country
+                            </button>
+                        </div>
+
+                        <div className="card !p-0 overflow-hidden">
+                            <table className="w-full text-left border-collapse">
+                                <thead className="bg-zinc-50 border-b border-zinc-100">
+                                    <tr>
+                                        <th className="px-6 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Country</th>
+                                        <th className="px-6 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider text-center">Multiplier</th>
+                                        <th className="px-6 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider text-right">Bronze</th>
+                                        <th className="px-6 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider text-right">Silver</th>
+                                        <th className="px-6 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider text-right">Gold</th>
+                                        <th className="px-6 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-zinc-100">
+                                    {pricingList.map((p: any) => (
+                                        <tr key={p.id} className="hover:bg-zinc-50/50 transition-colors">
+                                            <td className="px-6 py-4">
+                                                <div className="font-semibold text-zinc-900">{p.countryName}</div>
+                                                <div className="text-[10px] font-bold text-zinc-400 tracking-wider font-mono">{p.countryCode}</div>
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <span className="inline-flex items-center rounded-md bg-zinc-100 px-2 py-0.5 text-[10px] font-bold text-zinc-600 ring-1 ring-inset ring-zinc-500/10 uppercase">
+                                                    {p.economicTier} ({p.multiplier}x)
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-right text-xs font-medium text-zinc-600">
+                                                {p.currency} {Number(p.bronzeMonthly).toLocaleString()}
+                                            </td>
+                                            <td className="px-6 py-4 text-right text-xs font-medium text-zinc-600">
+                                                {p.currency} {Number(p.silverMonthly).toLocaleString()}
+                                            </td>
+                                            <td className="px-6 py-4 text-right text-xs font-medium text-zinc-600">
+                                                {p.currency} {Number(p.goldMonthly).toLocaleString()}
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex justify-end space-x-1">
+                                                    <button onClick={() => openPricingModal(p)} className="p-2 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors">
+                                                        <Edit2 size={16} />
+                                                    </button>
+                                                    <button onClick={() => handleDeletePricing(p.id, p.countryName)} className="p-2 text-zinc-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                );
+
+            /* ── REGIONAL STATS ─────────────────────────────────────────── */
+            case 'regions':
+                return (
+                    <div className="space-y-10">
+                        <div className="flex justify-between items-end">
+                            <div>
+                                <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">Regional Reward Pools</h2>
+                                <p className="text-sm text-zinc-500 mt-1">Live reward pool metrics isolated per country.</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {regionalStats.map((reg: any) => {
+                                return (
+                                    <div key={reg.country} className="card relative overflow-hidden">
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div>
+                                                <h3 className="text-lg font-semibold text-zinc-900">{reg.country || 'Global'}</h3>
+                                                <p className="text-xs text-zinc-500 font-medium">Regional Liability</p>
+                                            </div>
+                                            <Globe size={20} className="text-zinc-100" />
+                                        </div>
+                                        <div className="flex items-baseline space-x-2">
+                                            <span className="text-2xl font-bold text-zinc-900">₦{Number(reg.liability).toLocaleString()}</span>
+                                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Liability</span>
+                                        </div>
+                                        <div className="mt-6 space-y-3">
+                                            <div className="h-1.5 w-full bg-zinc-100 rounded-full overflow-hidden">
+                                                <div
+                                                    className={`h-full rounded-full ${reg.isHealthy ? 'bg-zinc-900' : 'bg-amber-500'}`}
+                                                    style={{ width: `${Math.min(100, (reg.liability / reg.poolCap) * 100)}%` }}
+                                                ></div>
+                                            </div>
+                                            <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
+                                                <span className="text-zinc-400">Pool: ₦{Number(reg.poolCap).toLocaleString()}</span>
+                                                <span className={reg.isHealthy ? 'text-zinc-900' : 'text-amber-600'}>
+                                                    {((reg.liability / reg.poolCap) * 100).toFixed(1)}% Used
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                );
+
             default:
-                return <div className="p-20 text-center font-bold text-gray-400">Coming soon...</div>;
+                return null;
         }
     };
 
+    /* ─── Layout ───────────────────────────────────────────────────────────── */
+
     return (
-        <div className="flex min-h-screen">
+        <div className="min-h-screen flex bg-zinc-50 font-sans text-zinc-900">
             {/* Sidebar */}
-            <aside className="w-80 bg-slate-900 border-r-2 border-slate-700 p-6 flex flex-col">
-                <div className="mb-12">
-                    <h1 className="text-3xl font-black italic tracking-tighter flex items-center">
-                        <ShieldCheck size={32} className="text-primary mr-2" />
-                        SETORIAL <span className="text-primary ml-1">ADMIN</span>
-                    </h1>
-                    <p className="text-xs font-bold text-gray-500 uppercase mt-2 tracking-widest pl-10">Control Center</p>
+            <aside className="w-64 bg-zinc-50 border-r border-zinc-200 px-4 py-6 flex flex-col shrink-0">
+                <div className="mb-10 px-2 flex items-center space-x-2">
+                    <div className="w-8 h-8 rounded-lg bg-zinc-900 flex items-center justify-center shadow-sm">
+                        <ShieldCheck size={20} className="text-white" />
+                    </div>
+                    <div>
+                        <h1 className="text-base font-semibold tracking-tight text-zinc-900">Setorial Admin</h1>
+                    </div>
                 </div>
 
-                <nav className="flex-1 space-y-3">
+                <nav className="flex-1 space-y-1">
                     <SidebarItem icon={LayoutDashboard} label="Overview" active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} />
-                    <SidebarItem icon={ShieldCheck} label="KYC Review" active={activeTab === 'kyc'} onClick={() => setActiveTab('kyc')} />
+                    <SidebarItem icon={ShieldCheck} label="KYC Review" active={activeTab === 'kyc'} onClick={() => setActiveTab('kyc')} badge={stats?.pendingKycCount} />
                     <SidebarItem icon={Users} label="Students" active={activeTab === 'users'} onClick={() => setActiveTab('users')} />
+                    <SidebarItem icon={Globe} label="Geo-Pricing" active={activeTab === 'pricing'} onClick={() => setActiveTab('pricing')} />
+                    <SidebarItem icon={Map} label="Region Pools" active={activeTab === 'regions'} onClick={() => setActiveTab('regions')} />
                     <SidebarItem icon={CreditCard} label="Payouts" active={activeTab === 'payouts'} onClick={() => setActiveTab('payouts')} />
                 </nav>
 
-                <button onClick={() => { localStorage.removeItem('admin_token'); window.location.reload(); }} className="mt-auto flex items-center space-x-3 p-4 rounded-2xl font-bold text-red-500 hover:bg-red-500/10 transition-all">
-                    <LogOut size={20} />
-                    <span>Logout</span>
+                <button onClick={() => { localStorage.removeItem('admin_token'); window.location.reload(); }} className="mt-auto w-full flex items-center space-x-3 px-3 py-2 rounded-lg font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition-all">
+                    <LogOut size={18} />
+                    <span className="text-sm">Log out</span>
                 </button>
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 bg-slate-900 p-12 overflow-y-auto">
-                {renderContent()}
+            <main className="flex-1 bg-white p-8 overflow-y-auto">
+                <div className="max-w-7xl mx-auto">
+                    {renderContent()}
+                </div>
             </main>
+
+            {/* Pricing Modal */}
+            {isPricingModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-zinc-950/20 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-xl ring-1 ring-zinc-950/5 w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="px-8 py-6 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50">
+                            <div>
+                                <h3 className="text-lg font-semibold text-zinc-900">{editingPricing ? 'Edit' : 'Add'} Geo-Pricing</h3>
+                                <p className="text-xs text-zinc-500 mt-0.5">Define regional subscription costs and multipliers.</p>
+                            </div>
+                            <button onClick={() => setIsPricingModalOpen(false)} className="text-zinc-400 hover:text-zinc-600 transition-colors">
+                                <XCircle size={20} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSavePricing} className="flex flex-col flex-1 overflow-hidden">
+                            <div className="p-8 overflow-y-auto space-y-8">
+                                {/* Primary Info */}
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider ml-1">Country Name</label>
+                                        <input
+                                            type="text"
+                                            className="input-field"
+                                            placeholder="e.g. Nigeria"
+                                            value={pricingForm.countryName}
+                                            onChange={(e) => setPricingForm({ ...pricingForm, countryName: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider ml-1">ISO Code</label>
+                                        <input
+                                            type="text"
+                                            className="input-field font-mono"
+                                            placeholder="e.g. NG"
+                                            value={pricingForm.countryCode}
+                                            onChange={(e) => setPricingForm({ ...pricingForm, countryCode: e.target.value.toUpperCase() })}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-6">
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider ml-1">Economic Tier</label>
+                                        <select
+                                            className="input-field h-11 py-0 cursor-pointer text-sm"
+                                            value={pricingForm.economicTier}
+                                            onChange={(e) => setPricingForm({ ...pricingForm, economicTier: e.target.value })}
+                                        >
+                                            <option value="TIER_A">Tier A (High)</option>
+                                            <option value="TIER_B">Tier B (Mid)</option>
+                                            <option value="TIER_C">Tier C (Low)</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider ml-1">Multiplier</label>
+                                        <input
+                                            type="number"
+                                            step="0.1"
+                                            className="input-field"
+                                            value={pricingForm.multiplier}
+                                            onChange={(e) => setPricingForm({ ...pricingForm, multiplier: e.target.value })}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider ml-1">Currency</label>
+                                        <input
+                                            type="text"
+                                            className="input-field"
+                                            placeholder="e.g. NGN"
+                                            value={pricingForm.currency}
+                                            onChange={(e) => setPricingForm({ ...pricingForm, currency: e.target.value.toUpperCase() })}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Monthly Pricing */}
+                                <div className="space-y-4 pt-4">
+                                    <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-1">Monthly Subs (Base)</h4>
+                                    <div className="grid grid-cols-3 gap-6">
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-medium text-zinc-600 ml-1">Bronze</label>
+                                            <input type="number" className="input-field" value={pricingForm.bronzeMonthly} onChange={(e) => setPricingForm({ ...pricingForm, bronzeMonthly: e.target.value })} required />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-medium text-zinc-600 ml-1">Silver</label>
+                                            <input type="number" className="input-field" value={pricingForm.silverMonthly} onChange={(e) => setPricingForm({ ...pricingForm, silverMonthly: e.target.value })} required />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-medium text-zinc-600 ml-1">Gold</label>
+                                            <input type="number" className="input-field" value={pricingForm.goldMonthly} onChange={(e) => setPricingForm({ ...pricingForm, goldMonthly: e.target.value })} required />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Status */}
+                                <div className="flex items-center space-x-3 pt-4">
+                                    <input
+                                        type="checkbox"
+                                        id="isActive"
+                                        className="w-4 h-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900"
+                                        checked={pricingForm.isActive}
+                                        onChange={(e) => setPricingForm({ ...pricingForm, isActive: e.target.checked })}
+                                    />
+                                    <label htmlFor="isActive" className="text-sm font-medium text-zinc-700 cursor-pointer">Active and available for users</label>
+                                </div>
+                            </div>
+
+                            <div className="px-8 py-6 border-t border-zinc-100 bg-zinc-50/50 flex justify-end space-x-3">
+                                <button type="button" onClick={() => setIsPricingModalOpen(false)} className="btn-secondary h-10 px-6 text-sm">Cancel</button>
+                                <button
+                                    type="submit"
+                                    className="btn-primary h-10 px-8 text-sm"
+                                >
+                                    {editingPricing ? 'Save Changes' : 'Create Region'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

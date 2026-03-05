@@ -57,6 +57,27 @@ let WalletService = class WalletService {
             take: 20,
         });
     }
+    async deductBalance(userId, amount, reference) {
+        return this.prisma.$transaction(async (tx) => {
+            const result = await tx.walletLedger.aggregate({
+                where: { userId },
+                _sum: { amount: true },
+            });
+            const currentBalance = result._sum.amount ? Number(result._sum.amount) : 0;
+            if (currentBalance < amount) {
+                return false;
+            }
+            await tx.walletLedger.create({
+                data: {
+                    userId,
+                    type: 'ADJUSTMENT',
+                    amount: -amount,
+                    reference,
+                },
+            });
+            return true;
+        });
+    }
 };
 exports.WalletService = WalletService;
 exports.WalletService = WalletService = __decorate([

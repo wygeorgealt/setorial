@@ -15,9 +15,8 @@ export default function Login({ onLoginSuccess }: { onLoginSuccess: () => void }
 
         try {
             const res = await adminApi.login({ email, password });
-            if (res.data.access_token) {
-                localStorage.setItem('admin_token', res.data.access_token);
-                // Assuming the backend returns role. If not, we just rely on the token
+            if (res.data.token) {
+                localStorage.setItem('admin_token', res.data.token);
                 onLoginSuccess();
             } else {
                 setError('Invalid response from server');
@@ -30,54 +29,50 @@ export default function Login({ onLoginSuccess }: { onLoginSuccess: () => void }
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden">
-            {/* Gamified Background Elements */}
-            <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-primary/20 rounded-full blur-3xl pointer-events-none"></div>
-            <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-secondary/20 rounded-full blur-3xl pointer-events-none"></div>
-
-            <div className="card w-full max-w-md relative z-10">
-                <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-20 h-20 bg-slate-900 rounded-3xl border-2 border-b-4 border-slate-700 mb-4 transform -rotate-6">
-                        <ShieldCheck size={40} className="text-primary" />
+        <div className="min-h-screen flex items-center justify-center p-6 bg-zinc-50 relative overflow-hidden">
+            <div className="card w-full max-w-sm relative z-10 px-8 py-10">
+                <div className="text-center mb-8 flex flex-col items-center">
+                    <div className="inline-flex items-center justify-center w-12 h-12 bg-white rounded-xl shadow-sm ring-1 ring-zinc-950/10 mb-5">
+                        <ShieldCheck size={24} className="text-zinc-900" />
                     </div>
-                    <h1 className="text-3xl font-black italic tracking-tighter">
-                        SETORIAL <span className="text-primary">ADMIN</span>
+                    <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
+                        Sign in to admin
                     </h1>
-                    <p className="text-gray-400 font-bold mt-2">Enter credentials to govern</p>
+                    <p className="text-sm font-medium text-zinc-500 mt-1">Authenticate to access the control center</p>
                 </div>
 
                 {error && (
-                    <div className="bg-red-500/20 border-2 border-red-500/50 p-4 rounded-2xl mb-6">
-                        <p className="text-red-400 font-bold text-sm text-center">{error}</p>
+                    <div className="bg-red-50 border border-red-200 p-3 rounded-lg mb-6">
+                        <p className="text-red-600 font-medium text-sm text-center">{error}</p>
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="space-y-2">
-                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Email</label>
+                <form onSubmit={handleSubmit} className="space-y-5">
+                    <div className="space-y-1.5">
+                        <label className="text-sm font-medium text-zinc-700 block">Email address</label>
                         <div className="relative">
-                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={20} />
+                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
                             <input
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
-                                className="input-field w-full pl-12"
+                                className="input-field w-full pl-10"
                                 placeholder="admin@setorial.com"
                             />
                         </div>
                     </div>
 
-                    <div className="space-y-2 pb-4">
-                        <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Password</label>
+                    <div className="space-y-1.5 pb-2">
+                        <label className="text-sm font-medium text-zinc-700 block">Password</label>
                         <div className="relative">
-                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={20} />
+                            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
                             <input
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
-                                className="input-field w-full pl-12"
+                                className="input-field w-full pl-10"
                                 placeholder="••••••••"
                             />
                         </div>
@@ -86,9 +81,9 @@ export default function Login({ onLoginSuccess }: { onLoginSuccess: () => void }
                     <button
                         type="submit"
                         disabled={loading}
-                        className="btn-primary w-full flex items-center justify-center"
+                        className="btn-primary w-full flex items-center justify-center h-10"
                     >
-                        {loading ? <Loader2 size={24} className="animate-spin" /> : 'AUTHORIZE'}
+                        {loading ? <Loader2 size={20} className="animate-spin" /> : 'Sign in'}
                     </button>
                 </form>
             </div>

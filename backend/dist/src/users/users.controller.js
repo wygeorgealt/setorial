@@ -29,6 +29,7 @@ let UsersController = class UsersController {
         const user = await this.usersService.findById(userId);
         const points = await this.usersService.getPoints(userId);
         const streak = await this.gamificationService.getStreak(userId);
+        const badges = await this.gamificationService.getUserBadges(userId);
         if (user) {
             delete user.password;
         }
@@ -36,6 +37,7 @@ let UsersController = class UsersController {
             ...user,
             points,
             streak,
+            badges
         };
     }
     async updateMe(req, body) {

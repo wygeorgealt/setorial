@@ -6,16 +6,16 @@ export declare class AdminController {
     constructor(payoutsService: PayoutsService, prisma: PrismaService);
     simulatePayout(month: string, revenue: number): Promise<{
         month: string;
-        estimatedRevenue: number;
-        rewardPool: number;
-        totalEligibleBalance: number;
-        distributionRatio: number;
-        safeToExecute: boolean;
-        simulatedPayoutsCount: number;
-        simulatedPayouts: {
-            userId: string;
-            eligibleBalance: number;
-            simulatedPayout: number;
+        globalEstimatedRevenue: number;
+        regions: {
+            region: any;
+            regionalRevenue: number;
+            rewardPool: number;
+            totalEligibleBalance: any;
+            distributionRatio: number;
+            safeToExecute: boolean;
+            simulatedPayoutsCount: any;
+            simulatedPayouts: any;
         }[];
     }>;
     getDashboardStats(): Promise<{
@@ -23,7 +23,17 @@ export declare class AdminController {
         rewardPoolCap: number;
         totalLiability: number;
         liabilityRatio: number;
-        alert: string;
+        projectedPayoutExposure: number;
+        distributionRatio: number;
+        dynamicConversionRate: number;
+        riskLevel: string;
+        sustainabilityTier: string;
+        activeMonetizedUsers: number;
+        fraudFlags: {
+            suspiciousHighEarners: number;
+            cheatedMockAttempts: number;
+            flaggedUserIds: string[];
+        };
         pendingKycCount: number;
         approvedKycCount: number;
         totalUsers: number;
@@ -31,10 +41,11 @@ export declare class AdminController {
             id: string;
             createdAt: Date;
             updatedAt: Date;
+            region: string | null;
+            status: import("@prisma/client").$Enums.PayoutStatus;
             month: string;
             totalLiability: import("@prisma/client-runtime-utils").Decimal;
             totalPaid: import("@prisma/client-runtime-utils").Decimal;
-            status: import("@prisma/client").$Enums.PayoutStatus;
         } | null;
     }>;
     getPendingKyc(): Promise<{
@@ -75,28 +86,33 @@ export declare class AdminController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        region: string | null;
+        status: import("@prisma/client").$Enums.PayoutStatus;
         month: string;
         totalLiability: import("@prisma/client-runtime-utils").Decimal;
         totalPaid: import("@prisma/client-runtime-utils").Decimal;
-        status: import("@prisma/client").$Enums.PayoutStatus;
     }[]>;
     triggerPayout(month: string, revenue: number): Promise<{
         message: string;
         month: string;
         totalPaid: number;
-        batchId?: undefined;
-        rewardPool?: undefined;
-        totalEligibleBalance?: undefined;
-        distributionRatio?: undefined;
-        usersPaid?: undefined;
+        totalGlobalPaid?: undefined;
+        regionsProcessed?: undefined;
+        batches?: undefined;
     } | {
-        batchId: any;
         month: string;
-        rewardPool: number;
-        totalEligibleBalance: number;
-        distributionRatio: number;
-        totalPaid: number;
-        usersPaid: number;
+        totalGlobalPaid: number;
+        regionsProcessed: number;
+        batches: {
+            region: any;
+            batchId: any;
+            rewardPool: number;
+            totalEligibleBalance: any;
+            distributionRatio: number;
+            totalPaid: number;
+            usersPaid: any;
+        }[];
         message?: undefined;
+        totalPaid?: undefined;
     }>;
 }

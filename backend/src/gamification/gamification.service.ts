@@ -42,7 +42,15 @@ export class GamificationService implements OnModuleDestroy {
         if (lastActive === yesterdayStr) {
             currentStreak++;
         } else {
-            currentStreak = 1; // Reset streak
+            // Check for streak freeze before resetting
+            const hasFreezeActive = await this.redis.get(`streak_freeze:${userId}`);
+            if (hasFreezeActive) {
+                // Freeze consumed — keep the streak alive, remove the freeze
+                await this.redis.del(`streak_freeze:${userId}`);
+                currentStreak++; // They're back, so increment
+            } else {
+                currentStreak = 1; // Reset streak
+            }
         }
 
         await this.redis.hset(key, 'count', currentStreak);
@@ -50,9 +58,80 @@ export class GamificationService implements OnModuleDestroy {
         return currentStreak;
     }
 
+    /** Apply a streak freeze for the user — lasts until next missed day */
+    async applyStreakFreeze(userId: string) {
+        // Set with 48 hour TTL (covers 1 missed day + buffer)
+        await this.redis.set(`streak_freeze:${userId}`, '1', 'EX', 48 * 60 * 60);
+    }
+
     async getStreak(userId: string): Promise<number> {
         const count = await this.redis.hget(`streak:${userId}`, 'count');
         return parseInt(count || '0', 10);
+    }
+
+    async getStarterBadges() {
+        // Ensure some default badges exist
+        const defaultBadges = [
+            { name: 'First Steps', description: 'Completed your first quiz.', icon: 'CheckCircle', color: '#58CC02' },
+            { name: 'Perfect Score', description: 'Got 100% on a quiz.', icon: 'Star', color: '#FFC800' },
+            { name: '7-Day Streak', description: 'Studied for 7 days in a row.', icon: 'Zap', color: '#FF9600' }
+        ];
+
+        for (const b of defaultBadges) {
+            await this.prisma.badge.upsert({
+                where: { name: b.name },
+                update: {},
+                create: b
+            });
+        }
+    }
+
+    async checkAndAwardBadges(userId: string, context: { streak: number, score?: number, total?: number }) {
+        await this.getStarterBadges();
+
+        const earnedBadges = [];
+
+        // Condition: First Quiz
+        if (context.score !== undefined) {
+            const quizCount = await this.prisma.pointsLedger.count({ where: { userId, action: 'Quiz Completion' } });
+            if (quizCount === 1) {
+                earnedBadges.push('First Steps');
+            }
+
+            // Condition: Perfect Score
+            if (context.score === context.total && context.total > 0) {
+                earnedBadges.push('Perfect Score');
+            }
+        }
+
+        // Condition: 7 Day Streak
+        if (context.streak >= 7) {
+            earnedBadges.push('7-Day Streak');
+        }
+
+        // Award them
+        for (const badgeName of earnedBadges) {
+            const badge = await this.prisma.badge.findUnique({ where: { name: badgeName } });
+            if (badge) {
+                // Ignore if already have it due to composite unique key
+                await this.prisma.userBadge.upsert({
+                    where: { userId_badgeId: { userId, badgeId: badge.id } },
+                    update: {},
+                    create: { userId, badgeId: badge.id }
+                }).catch(() => { }); // catch unique constraint race conditions
+            }
+        }
+    }
+
+    async getUserBadges(userId: string) {
+        return this.prisma.userBadge.findMany({
+            where: { userId },
+            include: { badge: true },
+            orderBy: { awardedAt: 'desc' }
+        }).then(userBadges => userBadges.map(ub => ({
+            ...ub.badge,
+            awardedAt: ub.awardedAt
+        })));
     }
 
     async getLeaderboard(limit: number = 10) {

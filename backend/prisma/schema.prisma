@@ -30,6 +30,13 @@ enum PayoutMethod {
   USD_PAYPAL
 }
 
+enum EconomicTier {
+  TIER_A  // High Income (USA, UK, Canada) — multiplier 1.0
+  TIER_B  // Upper Middle Income — multiplier 0.75
+  TIER_C  // Lower Middle Income (Nigeria, India) — multiplier 0.50
+  TIER_D  // Low Income — multiplier 0.35
+}
+
 model User {
   id             String         @id @default(uuid())
   email          String         @unique
@@ -41,11 +48,45 @@ model User {
   kycStatus      KycStatus      @default(UNVERIFIED)
   payoutMethod   PayoutMethod?
   payoutAccount  Json?          // { "bankName": "...", "accountNumber": "..." }
+  billingCountry String?        // ISO 3166-1 code, locked after KYC
+  countryLocked  Boolean        @default(false)
+  
+  // Monetization & Activity Rules
+  lastActiveAt           DateTime?
+  assessmentPassed       Boolean   @default(false)
+  monetizationEligibleAt DateTime? // Tracks when the 12-month consistency cycle began
+
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
   pointsLedgers  PointsLedger[]
   walletLedgers  WalletLedger[]
+  userBadges     UserBadge[]
+  mockAttempts   MockAttempt[]
+  userPowerUps   UserPowerUp[]
+}
+
+model Badge {
+  id          String      @id @default(uuid())
+  name        String      @unique
+  description String
+  icon        String      // Store icon name, e.g., 'Award', 'Zap', 'Star'
+  color       String      // e.g., '#FFC800'
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  userBadges  UserBadge[]
+}
+
+model UserBadge {
+  id        String   @id @default(uuid())
+  userId    String
+  badgeId   String
+  user      User     @relation(fields: [userId], references: [id])
+  badge     Badge    @relation(fields: [badgeId], references: [id])
+  awardedAt DateTime @default(now())
+
+  @@unique([userId, badgeId]) // A user can only earn a specific badge once
 }
 
 model Subject {
@@ -88,8 +129,10 @@ model Quiz {
 
 model Question {
   id            String   @id @default(uuid())
-  quizId        String
-  quiz          Quiz     @relation(fields: [quizId], references: [id])
+  quizId        String?
+  quiz          Quiz?    @relation(fields: [quizId], references: [id])
+  mockExamId    String?
+  mockExam      MockExam? @relation(fields: [mockExamId], references: [id])
   text          String
   options       Json
   correctOption Int
@@ -97,11 +140,74 @@ model Question {
   updatedAt     DateTime @updatedAt
 }
 
+model MockExam {
+  id              String         @id @default(uuid())
+  title           String
+  description     String?
+  durationMinutes Int
+  price           Decimal        @default(100.0) // NGN
+  isActive        Boolean        @default(true)
+  questions       Question[]
+  attempts        MockAttempt[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+enum MockStatus {
+  IN_PROGRESS
+  COMPLETED
+  CHEATED
+}
+
+model MockAttempt {
+  id           String     @id @default(uuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id])
+  mockExamId   String
+  mockExam     MockExam   @relation(fields: [mockExamId], references: [id])
+  status       MockStatus @default(IN_PROGRESS)
+  score        Int?
+  tabSwitches  Int        @default(0)
+  startedAt    DateTime   @default(now())
+  completedAt  DateTime?
+}
+
 enum WalletTxType {
   EARN
   ELIGIBLE_MOVE
   PAYOUT
   ADJUSTMENT
+  POWERUP_PURCHASE
+}
+
+enum PowerUpType {
+  STREAK_FREEZE
+  DOUBLE_POINTS
+}
+
+model PowerUp {
+  id          String      @id @default(uuid())
+  type        PowerUpType @unique
+  name        String
+  description String
+  icon        String
+  price       Decimal     // NGN cost
+  durationDays Int?       // How long the effect lasts (null = one-time use)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  userPowerUps UserPowerUp[]
+}
+
+model UserPowerUp {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  powerUpId   String
+  powerUp     PowerUp   @relation(fields: [powerUpId], references: [id])
+  isActive    Boolean   @default(true)
+  activatedAt DateTime  @default(now())
+  expiresAt   DateTime?
 }
 
 model WalletLedger {
@@ -111,6 +217,7 @@ model WalletLedger {
   type      WalletTxType
   amount    Decimal
   reference String?
+  region    String?      // ISO country code for regional tracking
   createdAt DateTime     @default(now())
 }
 
@@ -132,9 +239,28 @@ enum PayoutStatus {
 model PayoutBatch {
   id              String       @id @default(uuid())
   month           String       // e.g "2024-10"
+  region          String?      // ISO country code — null = legacy global
   totalLiability  Decimal
   totalPaid       Decimal
   status          PayoutStatus @default(PROCESSING)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
+
+model CountryPricing {
+  id              String       @id @default(uuid())
+  countryCode     String       @unique  // ISO 3166-1 (e.g. "NG", "US")
+  countryName     String                // "Nigeria", "United States"
+  economicTier    EconomicTier
+  multiplier      Float        @default(1.0)
+  currency        String       @default("USD")
+  bronzeMonthly   Decimal
+  silverMonthly   Decimal
+  goldMonthly     Decimal
+  bronzeAnnual    Decimal
+  silverAnnual    Decimal
+  goldAnnual      Decimal
+  isActive        Boolean      @default(true)
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 }

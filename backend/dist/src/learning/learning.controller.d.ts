@@ -28,10 +28,11 @@ export declare class LearningController {
             id: string;
             createdAt: Date;
             updatedAt: Date;
+            mockExamId: string | null;
             options: import("@prisma/client/runtime/client").JsonValue;
             text: string;
             correctOption: number;
-            quizId: string;
+            quizId: string | null;
         }[];
     } & {
         id: string;

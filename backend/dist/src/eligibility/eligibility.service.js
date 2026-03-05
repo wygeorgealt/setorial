@@ -25,16 +25,60 @@ let EligibilityService = EligibilityService_1 = class EligibilityService {
     }
     async checkInactivityAndDemonetize() {
         this.logger.log('Running daily inactivity demonetization check...');
-        const premiumUsers = await this.prisma.user.findMany({
-            where: { tier: { in: ['SILVER', 'GOLD'] } },
+        const thresholdDate = new Date();
+        thresholdDate.setDate(thresholdDate.getDate() - 30);
+        const inactiveUsers = await this.prisma.user.findMany({
+            where: {
+                tier: { in: ['SILVER', 'GOLD'] },
+                lastActiveAt: { lt: thresholdDate }
+            },
         });
-        this.logger.log(`Verified ${premiumUsers.length} premium users for activity.`);
+        for (const user of inactiveUsers) {
+            this.logger.log(`Demonetizing user ${user.id} due to 30 days of inactivity.`);
+            await this.prisma.user.update({
+                where: { id: user.id },
+                data: {
+                    isVerified: false,
+                    kycStatus: 'UNVERIFIED',
+                    monetizationEligibleAt: null
+                }
+            });
+        }
     }
     async moveEligiblePoints() {
         this.logger.log('Moving eligible points to monetizable pool...');
+        const twelveMonthsAgo = new Date();
+        twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
         const eligibleUsers = await this.prisma.user.findMany({
-            where: { tier: { in: ['SILVER', 'GOLD'] }, isVerified: true },
+            where: {
+                tier: { in: ['SILVER', 'GOLD'] },
+                isVerified: true,
+                assessmentPassed: true,
+                monetizationEligibleAt: { lte: twelveMonthsAgo }
+            },
         });
+        const earnAggregate = await this.prisma.walletLedger.aggregate({
+            where: { type: 'EARN' },
+            _sum: { amount: true },
+        });
+        const currentMonthRevenue = Number(earnAggregate._sum.amount ?? 0);
+        const rewardPoolCap = currentMonthRevenue * 0.20;
+        let totalEligiblePoints = 0;
+        for (const user of eligibleUsers) {
+            const pointsData = await this.prisma.pointsLedger.aggregate({
+                where: { userId: user.id },
+                _sum: { points: true }
+            });
+            totalEligiblePoints += (pointsData._sum.points || 0);
+        }
+        const baseRate = 10;
+        const baseConvertedValue = totalEligiblePoints / baseRate;
+        let effectiveRate = baseRate;
+        if (baseConvertedValue > rewardPoolCap && rewardPoolCap > 0) {
+            effectiveRate = totalEligiblePoints / rewardPoolCap;
+            this.logger.warn(`Dynamic rate adjustment: base=${baseRate}, effective=${effectiveRate.toFixed(2)} ` +
+                `(pool pressure: ₦${baseConvertedValue.toFixed(0)} exceeds cap ₦${rewardPoolCap.toFixed(0)})`);
+        }
         for (const user of eligibleUsers) {
             const pointsData = await this.prisma.pointsLedger.aggregate({
                 where: { userId: user.id },
@@ -42,8 +86,8 @@ let EligibilityService = EligibilityService_1 = class EligibilityService {
             });
             const totalPoints = pointsData._sum.points || 0;
             if (totalPoints > 5000) {
-                const monetaryValue = totalPoints / 10;
-                await this.wallet.addTransaction(user.id, 'ELIGIBLE_MOVE', monetaryValue, 'Monthly Points Conversion');
+                const monetaryValue = totalPoints / effectiveRate;
+                await this.wallet.addTransaction(user.id, 'ELIGIBLE_MOVE', monetaryValue, `Monthly Points Conversion (rate: ${effectiveRate.toFixed(2)} pts/₦1)`);
                 await this.prisma.pointsLedger.create({
                     data: {
                         userId: user.id,

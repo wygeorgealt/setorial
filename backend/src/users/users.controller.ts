@@ -18,6 +18,7 @@ export class UsersController {
         const user = await this.usersService.findById(userId);
         const points = await this.usersService.getPoints(userId);
         const streak = await this.gamificationService.getStreak(userId);
+        const badges = await this.gamificationService.getUserBadges(userId);
 
         if (user) {
             delete (user as any).password;
@@ -27,6 +28,7 @@ export class UsersController {
             ...user,
             points,
             streak,
+            badges
         };
     }
 

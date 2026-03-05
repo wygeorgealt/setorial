@@ -12,10 +12,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.LearningService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma.service");
+const gamification_service_1 = require("../gamification/gamification.service");
+const store_service_1 = require("../store/store.service");
 let LearningService = class LearningService {
     prisma;
-    constructor(prisma) {
+    gamificationService;
+    storeService;
+    constructor(prisma, gamificationService, storeService) {
         this.prisma = prisma;
+        this.gamificationService = gamificationService;
+        this.storeService = storeService;
     }
     async createSubject(dto) {
         return this.prisma.subject.create({ data: dto });
@@ -83,13 +89,29 @@ let LearningService = class LearningService {
                 score += 1;
             breakdown.push({ questionId: q.id, isCorrect, correctOption: q.correctOption });
         });
-        const pointsEarned = score * 10;
+        let pointsEarned = score * 10;
+        const hasBoost = await this.storeService.hasActiveBoost(userId);
+        if (hasBoost)
+            pointsEarned *= 2;
+        await this.gamificationService.awardPoints(userId, pointsEarned, hasBoost ? 'Quiz Completion (2x Boost)' : 'Quiz Completion');
+        const currentStreak = await this.gamificationService.incrementStreak(userId);
+        await this.gamificationService.checkAndAwardBadges(userId, {
+            streak: currentStreak,
+            score: score,
+            total: quiz.questions.length
+        });
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: { lastActiveAt: new Date() }
+        });
         return { score, total: quiz.questions.length, breakdown, pointsEarned };
     }
 };
 exports.LearningService = LearningService;
 exports.LearningService = LearningService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        gamification_service_1.GamificationService,
+        store_service_1.StoreService])
 ], LearningService);
 //# sourceMappingURL=learning.service.js.map

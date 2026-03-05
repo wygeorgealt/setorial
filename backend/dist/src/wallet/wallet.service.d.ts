@@ -11,6 +11,7 @@ export declare class WalletService {
         type: import("@prisma/client").$Enums.WalletTxType;
         amount: import("@prisma/client-runtime-utils").Decimal;
         reference: string | null;
+        region: string | null;
     }>;
     getTransactions(userId: string): Promise<{
         id: string;
@@ -19,5 +20,7 @@ export declare class WalletService {
         type: import("@prisma/client").$Enums.WalletTxType;
         amount: import("@prisma/client-runtime-utils").Decimal;
         reference: string | null;
+        region: string | null;
     }[]>;
+    deductBalance(userId: string, amount: number, reference: string): Promise<boolean>;
 }

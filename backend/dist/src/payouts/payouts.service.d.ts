@@ -3,38 +3,43 @@ export declare class PayoutsService {
     private prisma;
     private readonly logger;
     constructor(prisma: PrismaService);
-    simulatePayout(month: string, estimatedRevenue: number): Promise<{
+    simulatePayout(month: string, globalEstimatedRevenue: number): Promise<{
         month: string;
-        estimatedRevenue: number;
-        rewardPool: number;
-        totalEligibleBalance: number;
-        distributionRatio: number;
-        safeToExecute: boolean;
-        simulatedPayoutsCount: number;
-        simulatedPayouts: {
-            userId: string;
-            eligibleBalance: number;
-            simulatedPayout: number;
+        globalEstimatedRevenue: number;
+        regions: {
+            region: any;
+            regionalRevenue: number;
+            rewardPool: number;
+            totalEligibleBalance: any;
+            distributionRatio: number;
+            safeToExecute: boolean;
+            simulatedPayoutsCount: any;
+            simulatedPayouts: any;
         }[];
     }>;
-    processPayout(month: string, estimatedRevenue: number): Promise<{
+    processPayout(month: string, globalEstimatedRevenue: number): Promise<{
         message: string;
         month: string;
         totalPaid: number;
-        batchId?: undefined;
-        rewardPool?: undefined;
-        totalEligibleBalance?: undefined;
-        distributionRatio?: undefined;
-        usersPaid?: undefined;
+        totalGlobalPaid?: undefined;
+        regionsProcessed?: undefined;
+        batches?: undefined;
     } | {
-        batchId: any;
         month: string;
-        rewardPool: number;
-        totalEligibleBalance: number;
-        distributionRatio: number;
-        totalPaid: number;
-        usersPaid: number;
+        totalGlobalPaid: number;
+        regionsProcessed: number;
+        batches: {
+            region: any;
+            batchId: any;
+            rewardPool: number;
+            totalEligibleBalance: any;
+            distributionRatio: number;
+            totalPaid: number;
+            usersPaid: any;
+        }[];
         message?: undefined;
+        totalPaid?: undefined;
     }>;
     handleMonthlyPayout(): Promise<void>;
+    disburseFunds(userId: string, amount: number, region: string): Promise<any>;
 }

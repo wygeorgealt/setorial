@@ -52,6 +52,7 @@ export const gamificationApi = {
 export const subscriptionApi = {
     initialize: (tier: string) => api.post('/subscriptions/initialize', { tier }),
     verify: (reference: string) => api.get(`/subscriptions/verify/${reference}`),
+    getPricing: (country: string) => api.get(`/pricing?country=${country}`),
 };
 
 export const learningApi = {
@@ -67,4 +68,18 @@ export const kycApi = {
     getBanks: () => api.get('/users/me/kyc/banks'),
     resolveAccount: (accountNumber: string, bankCode: string) =>
         api.get(`/users/me/kyc/resolve?accountNumber=${accountNumber}&bankCode=${bankCode}`),
+};
+
+export const mockApi = {
+    getAvailable: () => api.get('/mocks'),
+    getDetails: (id: string) => api.get(`/mocks/${id}`),
+    start: (id: string) => api.post(`/mocks/${id}/start`),
+    submit: (id: string, answers: number[], tabSwitches: number) =>
+        api.post(`/mocks/${id}/submit`, { answers, tabSwitches }),
+};
+
+export const storeApi = {
+    getStore: () => api.get('/store'),
+    getMyPowerUps: () => api.get('/store/my-powerups'),
+    buy: (type: string) => api.post(`/store/buy/${type}`),
 };

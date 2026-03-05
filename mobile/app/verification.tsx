@@ -179,10 +179,15 @@ export default function VerificationScreen() {
                 {isEligible && kycStatus !== 'APPROVED' && (
                     <>
                         <View className="bg-[#0B0D12] dark:bg-[#1E222B] p-6 rounded-[28px] mb-8">
-                            <Text className="text-white font-black text-[22px] leading-tight mb-2">Smart Verification</Text>
-                            <Text className="text-gray-400 font-bold leading-6">
-                                Link your account for monthly payouts. Match your registration name for{' '}
-                                <Text className="text-[#58CC02] font-black">instant approval</Text>.
+                            <Text className="text-white font-black text-[22px] leading-tight mb-4">Smart Verification</Text>
+                            <View className="mb-4">
+                                <Text className="text-gray-400 font-bold leading-5 mb-2">• Minimum 12 months of consistent activity is required to be eligible for monetization.</Text>
+                                <Text className="text-gray-400 font-bold leading-5 mb-2">• Standardized assessment test must be passed.</Text>
+                                <Text className="text-gray-400 font-bold leading-5 mb-2">• 30 consecutive days of inactivity will reset the cycle.</Text>
+                                <Text className="text-gray-400 font-bold leading-5">• Payouts are processed on the 28th of every month.</Text>
+                            </View>
+                            <Text className="text-[#58CC02] font-bold leading-5 text-[13px]">
+                                Link your account holding exactly your registration name for faster approval.
                             </Text>
                         </View>
 

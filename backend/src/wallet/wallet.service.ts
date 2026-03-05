@@ -52,4 +52,29 @@ export class WalletService {
             take: 20,
         });
     }
+
+    async deductBalance(userId: string, amount: number, reference: string): Promise<boolean> {
+        return this.prisma.$transaction(async (tx) => {
+            const result = await tx.walletLedger.aggregate({
+                where: { userId },
+                _sum: { amount: true },
+            });
+            const currentBalance = result._sum.amount ? Number(result._sum.amount) : 0;
+
+            if (currentBalance < amount) {
+                return false;
+            }
+
+            await tx.walletLedger.create({
+                data: {
+                    userId,
+                    type: 'ADJUSTMENT', // Using an existing WalletTxType enum value that subtracts.
+                    amount: -amount,
+                    reference,
+                },
+            });
+
+            return true;
+        });
+    }
 }

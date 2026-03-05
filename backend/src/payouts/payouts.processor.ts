@@ -23,34 +23,43 @@ export class PayoutsProcessor extends WorkerHost {
         // Simulate to get exact figures
         const simulation = await this.payoutsService.simulatePayout(month, estimatedRevenue);
 
-        if (!simulation.safeToExecute) {
-            this.logger.error('Payout simulation indicated unsafe liability ratio. Aborting.');
-            return;
-        }
+        let totalProcessed = 0;
 
-        // Wrap the entire batch in a transaction or process individually
-        for (const payout of simulation.simulatedPayouts) {
-            if (payout.simulatedPayout <= 0) continue;
+        for (const regionData of (simulation as any).regions) {
+            if (!regionData.safeToExecute) {
+                this.logger.error(`Payout simulation for region ${regionData.region} indicated unsafe liability ratio. Skipping.`);
+                continue;
+            }
 
-            this.logger.log(`Paying out ${payout.simulatedPayout} to user ${payout.userId}`);
+            for (const payout of regionData.simulatedPayouts) {
+                if (payout.simulatedPayout <= 0) continue;
 
-            // Transaction
-            await (this.prisma as any).$transaction(async (tx: any) => {
-                // Here we would call Paystack API for Transfer
-                // e.g. await this.paystack.transfer(amount, recipientCode);
+                this.logger.log(`Paying out ${payout.simulatedPayout} to user ${payout.userId} (${regionData.region})`);
 
-                await tx.walletLedger.create({
-                    data: {
-                        userId: payout.userId,
-                        type: 'PAYOUT' as any,
-                        amount: -payout.simulatedPayout,
-                        reference: `PAYOUT_${month}_${job.id}`,
-                    },
+                await (this.prisma as any).$transaction(async (tx: any) => {
+                    await tx.walletLedger.create({
+                        data: {
+                            userId: payout.userId,
+                            type: 'PAYOUT' as any,
+                            amount: -payout.simulatedPayout,
+                            reference: `PAYOUT_${month}_${job.id}`,
+                            region: regionData.region
+                        },
+                    });
                 });
-            });
+
+                // Trigger real-time Paystack transfer
+                try {
+                    await this.payoutsService.disburseFunds(payout.userId, payout.simulatedPayout, regionData.region);
+                } catch (transferError) {
+                    this.logger.error(`❌ Paystack transfer failed for user ${payout.userId}: ${transferError.message}`);
+                }
+
+                totalProcessed++;
+            }
         }
 
         this.logger.log('Payout batch completed.');
-        return { status: 'completed', count: simulation.simulatedPayoutsCount };
+        return { status: 'completed', count: totalProcessed };
     }
 }

@@ -1,8 +1,12 @@
 import { PrismaService } from '../prisma.service';
 import { CreateSubjectDto, CreateTopicDto, CreateLessonDto, CreateQuizDto, SubmitQuizDto } from './dto/learning.dto';
+import { GamificationService } from '../gamification/gamification.service';
+import { StoreService } from '../store/store.service';
 export declare class LearningService {
     private prisma;
-    constructor(prisma: PrismaService);
+    private gamificationService;
+    private storeService;
+    constructor(prisma: PrismaService, gamificationService: GamificationService, storeService: StoreService);
     createSubject(dto: CreateSubjectDto): Promise<{
         id: string;
         name: string;
@@ -28,10 +32,11 @@ export declare class LearningService {
             id: string;
             createdAt: Date;
             updatedAt: Date;
+            mockExamId: string | null;
             options: import("@prisma/client/runtime/client").JsonValue;
             text: string;
             correctOption: number;
-            quizId: string;
+            quizId: string | null;
         }[];
     } & {
         id: string;

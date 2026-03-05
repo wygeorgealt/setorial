@@ -1,0 +1,154 @@
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ArrowLeft, Snowflake, Zap, ShoppingBag, CheckCircle } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { useState, useEffect } from 'react';
+import { storeApi, walletApi } from '../../services/api';
+
+export default function StoreScreen() {
+    const router = useRouter();
+    const [items, setItems] = useState<any[]>([]);
+    const [myPowerUps, setMyPowerUps] = useState<any[]>([]);
+    const [balance, setBalance] = useState(0);
+    const [loading, setLoading] = useState(true);
+    const [buying, setBuying] = useState('');
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const fetchData = async () => {
+        try {
+            const [storeRes, powerUpsRes, walletRes] = await Promise.all([
+                storeApi.getStore(),
+                storeApi.getMyPowerUps(),
+                walletApi.getBalance()
+            ]);
+            setItems(storeRes.data);
+            setMyPowerUps(powerUpsRes.data);
+            setBalance(walletRes.data.balance);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleBuy = (item: any) => {
+        Alert.alert(
+            `Buy ${item.name}?`,
+            `This costs ₦${item.price} from your wallet balance (₦${balance}).`,
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Buy Now",
+                    onPress: async () => {
+                        setBuying(item.type);
+                        try {
+                            await storeApi.buy(item.type);
+                            Alert.alert('Success!', `${item.name} activated!`);
+                            fetchData();
+                        } catch (error: any) {
+                            Alert.alert('Error', error.response?.data?.message || 'Purchase failed');
+                        } finally {
+                            setBuying('');
+                        }
+                    }
+                }
+            ]
+        );
+    };
+
+    const getIcon = (type: string, color: string) => {
+        switch (type) {
+            case 'STREAK_FREEZE': return <Snowflake size={32} color={color} />;
+            case 'DOUBLE_POINTS': return <Zap size={32} color={color} fill={color} />;
+            default: return <ShoppingBag size={32} color={color} />;
+        }
+    };
+
+    const getGradientColors = (type: string) => {
+        switch (type) {
+            case 'STREAK_FREEZE': return { bg: '#E8F4FD', border: '#1CB0F6', text: '#1899D6' };
+            case 'DOUBLE_POINTS': return { bg: '#FFF8E1', border: '#FFC800', text: '#E5B400' };
+            default: return { bg: '#F3E8FF', border: '#CE82FF', text: '#A552DE' };
+        }
+    };
+
+    return (
+        <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12]">
+            <View className="flex-row items-center px-5 py-4 border-b-2 border-[#E5E5E5] dark:border-[#272B36]">
+
+                <View className="flex-1">
+                    <Text className="text-black dark:text-white text-xl font-bold">Power-Up Store</Text>
+                </View>
+                <View className="bg-[#FFC800] px-4 py-2 rounded-xl">
+                    <Text className="text-white font-bold text-sm">₦{balance}</Text>
+                </View>
+            </View>
+
+            <ScrollView className="flex-1 px-5 pt-6">
+                {/* Active Power-Ups */}
+                {myPowerUps.length > 0 && (
+                    <View className="mb-8">
+                        <Text className="text-black dark:text-white font-bold text-lg mb-3">Active Power-Ups</Text>
+                        {myPowerUps.map((up: any) => (
+                            <View key={up.id} className="bg-green-50 dark:bg-green-900/20 border-2 border-green-300 dark:border-green-700 rounded-2xl p-4 mb-3 flex-row items-center">
+                                <CheckCircle size={20} color="#58CC02" />
+                                <Text className="text-green-700 dark:text-green-300 font-bold ml-3 flex-1">{up.powerUp.name}</Text>
+                                {up.expiresAt && (
+                                    <Text className="text-green-500 text-xs font-bold">
+                                        Expires {new Date(up.expiresAt).toLocaleDateString()}
+                                    </Text>
+                                )}
+                            </View>
+                        ))}
+                    </View>
+                )}
+
+                {/* Store Items */}
+                <Text className="text-black dark:text-white font-bold text-lg mb-4">Available</Text>
+
+                {loading ? (
+                    <ActivityIndicator size="large" color="#1CB0F6" className="mt-10" />
+                ) : (
+                    items.map((item: any) => {
+                        const colors = getGradientColors(item.type);
+                        return (
+                            <View
+                                key={item.id}
+                                className="bg-white dark:bg-[#1E222B] border-2 border-b-4 rounded-2xl p-6 mb-5"
+                                style={{ borderColor: colors.border }}
+                            >
+                                <View className="flex-row items-center mb-4">
+                                    <View
+                                        className="w-16 h-16 rounded-2xl items-center justify-center mr-4"
+                                        style={{ backgroundColor: colors.bg }}
+                                    >
+                                        {getIcon(item.type, colors.text)}
+                                    </View>
+                                    <View className="flex-1">
+                                        <Text className="text-black dark:text-white font-bold text-xl">{item.name}</Text>
+                                        <Text className="text-gray-500 dark:text-gray-400 mt-1">{item.description}</Text>
+                                    </View>
+                                </View>
+
+                                <TouchableOpacity
+                                    activeOpacity={0.8}
+                                    onPress={() => handleBuy(item)}
+                                    disabled={buying === item.type}
+                                    className="py-3 rounded-xl border-b-4 items-center"
+                                    style={{ backgroundColor: colors.border, borderBottomColor: colors.text }}
+                                >
+                                    <Text className="text-white font-bold text-[15px] uppercase tracking-wider">
+                                        {buying === item.type ? 'Purchasing...' : `Buy for ₦${item.price}`}
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
+                        );
+                    })
+                )}
+            </ScrollView>
+        </SafeAreaView>
+    );
+}

@@ -10,6 +10,9 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { EligibilityModule } from './eligibility/eligibility.module';
 import { AdminModule } from './admin/admin.module';
 import { PayoutsModule } from './payouts/payouts.module';
+import { PricingModule } from './pricing/pricing.module';
+import { MockExamsModule } from './mock-exams/mock-exams.module';
+import { StoreModule } from './store/store.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
@@ -24,6 +27,9 @@ import { ScheduleModule } from '@nestjs/schedule';
     EligibilityModule,
     AdminModule,
     PayoutsModule,
+    PricingModule,
+    MockExamsModule,
+    StoreModule,
   ],
   controllers: [AppController],
   providers: [AppService],

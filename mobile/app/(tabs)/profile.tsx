@@ -57,6 +57,28 @@ export default function ProfileScreen() {
                     <ChevronRight size={20} color="#9CA3AF" />
                 </TouchableOpacity>
 
+                {/* Badges Section */}
+                <View className="mb-8">
+                    <Text className="text-black dark:text-white font-bold text-xl tracking-tight mb-4">My Badges</Text>
+                    {user?.badges && user.badges.length > 0 ? (
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
+                            {user.badges.map((badge: any) => (
+                                <View key={badge.id} className="bg-white dark:bg-[#1E222B] border-2 border-[#E5E5E5] dark:border-[#272B36] border-b-4 rounded-2xl p-4 mr-4 items-center justify-center w-28">
+                                    <View className="w-14 h-14 rounded-full items-center justify-center mb-2" style={{ backgroundColor: badge.color + '20' }}>
+                                        <Star size={28} color={badge.color} fill={badge.color} />
+                                    </View>
+                                    <Text className="text-black dark:text-white font-bold text-[13px] text-center">{badge.name}</Text>
+                                </View>
+                            ))}
+                        </ScrollView>
+                    ) : (
+                        <View className="bg-gray-50 dark:bg-[#1E222B] border-2 border-[#E5E5E5] dark:border-[#272B36] p-6 rounded-2xl border-b-4 items-center">
+                            <Star size={32} color="#CECECE" className="mb-2" />
+                            <Text className="text-gray-400 font-bold text-center">Complete lessons to earn badges!</Text>
+                        </View>
+                    )}
+                </View>
+
                 {/* Action List */}
                 <Text className="text-black dark:text-white font-bold text-xl tracking-tight mb-4">Account</Text>
                 <View className="mb-8">
@@ -75,11 +97,13 @@ export default function ProfileScreen() {
                         label="Subscription Tier"
                         onPress={() => router.push('/subscription')}
                     />
-                    <ActionRow
-                        icon={<ShieldCheck size={20} color="#1CB0F6" />}
-                        label="Monetization & Verification"
-                        onPress={() => router.push('/verification')}
-                    />
+                    {['SILVER', 'GOLD'].includes(user?.tier || '') && (
+                        <ActionRow
+                            icon={<ShieldCheck size={20} color="#1CB0F6" />}
+                            label="Monetization & Verification"
+                            onPress={() => router.push('/verification')}
+                        />
+                    )}
                     <ActionRow
                         icon={<Settings size={20} color="#000" />}
                         label="Settings"

@@ -1,0 +1,33 @@
+import { Controller, Get, Post, Body, Param, UseGuards, Request } from '@nestjs/common';
+import { MockExamsService } from './mock-exams.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+
+@Controller('mocks')
+@UseGuards(JwtAuthGuard)
+export class MockExamsController {
+    constructor(private readonly mockService: MockExamsService) { }
+
+    @Get()
+    getAvailableMocks() {
+        return this.mockService.getAvailableMocks();
+    }
+
+    @Get(':id')
+    getMockDetails(@Param('id') id: string) {
+        return this.mockService.getMockDetails(id);
+    }
+
+    @Post(':id/start')
+    startMock(@Request() req: any, @Param('id') id: string) {
+        return this.mockService.startMock(req.user.userId, id);
+    }
+
+    @Post(':id/submit')
+    submitMock(
+        @Request() req: any,
+        @Param('id') id: string,
+        @Body() body: { answers: number[], tabSwitches: number }
+    ) {
+        return this.mockService.submitMock(req.user.userId, id, body.answers, body.tabSwitches);
+    }
+}

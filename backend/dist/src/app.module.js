@@ -19,6 +19,9 @@ const subscriptions_module_1 = require("./subscriptions/subscriptions.module");
 const eligibility_module_1 = require("./eligibility/eligibility.module");
 const admin_module_1 = require("./admin/admin.module");
 const payouts_module_1 = require("./payouts/payouts.module");
+const pricing_module_1 = require("./pricing/pricing.module");
+const mock_exams_module_1 = require("./mock-exams/mock-exams.module");
+const store_module_1 = require("./store/store.module");
 const schedule_1 = require("@nestjs/schedule");
 let AppModule = class AppModule {
 };
@@ -36,6 +39,9 @@ exports.AppModule = AppModule = __decorate([
             eligibility_module_1.EligibilityModule,
             admin_module_1.AdminModule,
             payouts_module_1.PayoutsModule,
+            pricing_module_1.PricingModule,
+            mock_exams_module_1.MockExamsModule,
+            store_module_1.StoreModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

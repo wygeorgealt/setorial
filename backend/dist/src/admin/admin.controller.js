@@ -30,7 +30,11 @@ let AdminController = class AdminController {
         return this.payoutsService.simulatePayout(month, revenue);
     }
     async getDashboardStats() {
-        const currentMonthRevenue = 5000000;
+        const earnAggregate = await this.prisma.walletLedger.aggregate({
+            where: { type: 'EARN' },
+            _sum: { amount: true },
+        });
+        const currentMonthRevenue = Number(earnAggregate._sum.amount ?? 0);
         const rewardPoolCap = currentMonthRevenue * 0.20;
         const eligAggregate = await this.prisma.walletLedger.aggregate({
             where: { type: 'ELIGIBLE_MOVE' },
@@ -45,14 +49,67 @@ let AdminController = class AdminController {
         const totalLiability = totalEarned - totalPaidOut;
         const pendingKycCount = await this.prisma.user.count({ where: { kycStatus: 'PENDING' } });
         const approvedKycCount = await this.prisma.user.count({ where: { kycStatus: 'APPROVED' } });
-        const totalUsers = await this.prisma.user.count();
+        const totalUsers = await this.prisma.user.count({ where: { role: 'STUDENT' } });
         const latestBatch = await this.prisma.payoutBatch.findFirst({ orderBy: { createdAt: 'desc' } });
+        const activeMonetizedUsers = await this.prisma.user.count({
+            where: {
+                tier: { in: ['SILVER', 'GOLD'] },
+                isVerified: true,
+                assessmentPassed: true,
+            },
+        });
+        const projectedExposure = await this.prisma.walletLedger.aggregate({
+            where: {
+                type: { in: ['ELIGIBLE_MOVE', 'PAYOUT'] },
+            },
+            _sum: { amount: true },
+        });
+        const projectedPayoutExposure = Number(projectedExposure._sum.amount ?? 0);
+        const distributionRatio = totalLiability > 0
+            ? Math.min(1, rewardPoolCap / totalLiability)
+            : 1;
+        const baseConversionRate = 10;
+        const dynamicConversionRate = baseConversionRate / distributionRatio;
+        const oneDayAgo = new Date();
+        oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+        const suspiciousHighEarners = await this.prisma.pointsLedger.groupBy({
+            by: ['userId'],
+            where: { createdAt: { gte: oneDayAgo } },
+            _sum: { points: true },
+            having: { points: { _sum: { gt: 50000 } } },
+        });
+        const cheatedAttempts = await this.prisma.mockAttempt.count({
+            where: { status: 'CHEATED' },
+        });
+        const sustainabilityTier = rewardPoolCap <= currentMonthRevenue * 0.20
+            ? 'YEAR_1 (20% cap)'
+            : rewardPoolCap <= currentMonthRevenue * 0.25
+                ? 'YEAR_2 (25% cap)'
+                : 'HARD_CAP (30% — board review required)';
+        const liabilityRatio = currentMonthRevenue > 0
+            ? totalLiability / currentMonthRevenue
+            : 0;
+        const riskLevel = liabilityRatio > 0.3
+            ? 'CRITICAL'
+            : liabilityRatio > 0.2
+                ? 'WARNING'
+                : 'SAFE';
         return {
             currentMonthRevenue,
             rewardPoolCap,
             totalLiability,
-            liabilityRatio: totalLiability / currentMonthRevenue,
-            alert: totalLiability > rewardPoolCap ? 'LIABILITY EXCEEDS SAFE THRESHOLD' : 'SAFE',
+            liabilityRatio: Math.round(liabilityRatio * 10000) / 100,
+            projectedPayoutExposure,
+            distributionRatio: Math.round(distributionRatio * 10000) / 100,
+            dynamicConversionRate: Math.round(dynamicConversionRate * 100) / 100,
+            riskLevel,
+            sustainabilityTier,
+            activeMonetizedUsers,
+            fraudFlags: {
+                suspiciousHighEarners: suspiciousHighEarners.length,
+                cheatedMockAttempts: cheatedAttempts,
+                flaggedUserIds: suspiciousHighEarners.map(u => u.userId),
+            },
             pendingKycCount,
             approvedKycCount,
             totalUsers,
@@ -81,7 +138,7 @@ let AdminController = class AdminController {
         return { success: true, userId, reason };
     }
     async getAllUsers(tier, kycStatus) {
-        const where = {};
+        const where = { role: 'STUDENT' };
         if (tier)
             where.tier = tier.toUpperCase();
         if (kycStatus)

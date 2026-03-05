@@ -15,17 +15,22 @@ export declare class UsersService {
         name?: string;
     }): Promise<{
         id: string;
+        name: string | null;
+        createdAt: Date;
+        updatedAt: Date;
         email: string;
         password: string;
-        name: string | null;
         role: import("@prisma/client").$Enums.Role;
         tier: import("@prisma/client").$Enums.Tier;
         isVerified: boolean;
         kycStatus: import("@prisma/client").$Enums.KycStatus;
         payoutMethod: import("@prisma/client").$Enums.PayoutMethod | null;
         payoutAccount: Prisma.JsonValue | null;
-        createdAt: Date;
-        updatedAt: Date;
+        billingCountry: string | null;
+        countryLocked: boolean;
+        lastActiveAt: Date | null;
+        assessmentPassed: boolean;
+        monetizationEligibleAt: Date | null;
     }>;
     getLearningProgress(userId: string): Promise<{
         id: string;

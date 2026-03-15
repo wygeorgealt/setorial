@@ -18,6 +18,8 @@ export declare class UsersController {
             icon: string;
             color: string;
         }[];
+        activeSub: any;
+        detectedCountry: any;
         id?: string | undefined;
         name?: string | null | undefined;
         createdAt?: Date | undefined;
@@ -35,9 +37,14 @@ export declare class UsersController {
         lastActiveAt?: Date | null | undefined;
         assessmentPassed?: boolean | undefined;
         monetizationEligibleAt?: Date | null | undefined;
+        isFrozen?: boolean | undefined;
+        isFlagged?: boolean | undefined;
+        expoPushToken?: string | null | undefined;
     }>;
     updateMe(req: any, body: {
         name?: string;
+        billingCountry?: string;
+        expoPushToken?: string;
     }): Promise<{
         id: string;
         name: string | null;
@@ -56,6 +63,9 @@ export declare class UsersController {
         lastActiveAt: Date | null;
         assessmentPassed: boolean;
         monetizationEligibleAt: Date | null;
+        isFrozen: boolean;
+        isFlagged: boolean;
+        expoPushToken: string | null;
     }>;
     getProgress(req: any): Promise<{
         id: string;
@@ -89,5 +99,8 @@ export declare class UsersController {
         lastActiveAt: Date | null;
         assessmentPassed: boolean;
         monetizationEligibleAt: Date | null;
+        isFrozen: boolean;
+        isFlagged: boolean;
+        expoPushToken: string | null;
     } | null>;
 }

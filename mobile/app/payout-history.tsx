@@ -58,14 +58,25 @@ export default function PayoutHistoryScreen() {
                                 </View>
                                 <View>
                                     <Text className="text-black dark:text-white font-bold text-[15px]">Automated Transfer</Text>
-                                    <Text className="text-gray-500 font-bold text-xs mt-1">
-                                        {new Date(tx.createdAt).toLocaleDateString()}
-                                    </Text>
+                                    <View className="flex-row items-center mt-1">
+                                        <Text className="text-gray-500 font-bold text-xs">
+                                            {new Date(tx.createdAt).toLocaleDateString()}
+                                        </Text>
+                                        <Text className="text-gray-300 dark:text-gray-600 mx-2">•</Text>
+                                        <Text className="text-blue-500 dark:text-blue-400 font-bold text-xs uppercase">
+                                            Rate: ₦{tx.exchangeRate || 1600}
+                                        </Text>
+                                    </View>
                                 </View>
                             </View>
-                            <Text className="text-black dark:text-white font-bold text-[17px]">
-                                ₦{Math.abs(tx.amount).toLocaleString()}
-                            </Text>
+                            <View className="items-end">
+                                <Text className="text-black dark:text-white font-bold text-[17px]">
+                                    ₦{Math.abs(tx.amount).toLocaleString()}
+                                </Text>
+                                <Text className="text-gray-400 dark:text-gray-500 text-[11px] font-bold mt-1">
+                                    ≈ ${(Math.abs(tx.amount) / (tx.exchangeRate || 1600)).toFixed(2)}
+                                </Text>
+                            </View>
                         </View>
                     ))
                 ) : (

@@ -2,25 +2,37 @@ import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/
 import { PrismaService } from '../prisma.service';
 import * as crypto from 'crypto';
 
-const TIER_PRICES: Record<string, number> = {
-    BRONZE: 100000,  // ₦1,000 in kobo
-    SILVER: 200000,  // ₦2,000 in kobo
-    GOLD: 500000,    // ₦5,000 in kobo
-};
+// Hardcoded prices are being phased out in favor of dynamic countryPricing table.
 
 @Injectable()
 export class SubscriptionsService {
     constructor(private prisma: PrismaService) { }
 
-    async initializeTransaction(userId: string, tier: string) {
+    async initializeTransaction(userId: string, tier: string, billingCycle: 'MONTHLY' | 'ANNUAL' = 'MONTHLY') {
         const secret = process.env.PAYSTACK_SECRET_KEY;
         if (!secret) throw new BadRequestException('Paystack not configured');
 
         const user = await this.prisma.user.findUnique({ where: { id: userId } });
         if (!user) throw new BadRequestException('User not found');
 
-        const amount = TIER_PRICES[tier.toUpperCase()];
-        if (!amount) throw new BadRequestException('Invalid tier');
+        // Fetch dynamic pricing for user's country
+        const countryCode = user.billingCountry || 'NG';
+        const pricing = await (this.prisma as any).countryPricing.findUnique({
+            where: { countryCode: countryCode.toUpperCase() },
+        });
+
+        if (!pricing) throw new BadRequestException('Pricing not found for your region');
+
+        const tierKey = tier.toLowerCase(); // 'bronze', 'silver', 'gold'
+        const cycleKey = billingCycle.toLowerCase(); // 'monthly', 'annual'
+
+        let amountDecimal: any;
+        if (tierKey === 'bronze') amountDecimal = cycleKey === 'annual' ? pricing.bronzeAnnual : pricing.bronzeMonthly;
+        else if (tierKey === 'silver') amountDecimal = cycleKey === 'annual' ? pricing.silverAnnual : pricing.silverMonthly;
+        else if (tierKey === 'gold') amountDecimal = cycleKey === 'annual' ? pricing.goldAnnual : pricing.goldMonthly;
+        else throw new BadRequestException('Invalid tier');
+
+        const amount = Math.round(Number(amountDecimal) * 100); // Convert to kobo
 
         const response = await fetch('https://api.paystack.co/transaction/initialize', {
             method: 'POST',
@@ -34,6 +46,7 @@ export class SubscriptionsService {
                 metadata: {
                     userId: user.id,
                     tier: tier.toUpperCase(),
+                    billingCycle: billingCycle.toUpperCase(),
                 },
                 callback_url: `setorial://payment-callback`,
             }),
@@ -63,11 +76,18 @@ export class SubscriptionsService {
         }
 
         const metadata = data.data.metadata;
+        const amount = data.data.amount; // In kobo
+        const currency = data.data.currency || 'NGN';
+
         if (metadata?.userId && metadata?.tier) {
-            await this.prisma.user.update({
-                where: { id: metadata.userId },
-                data: { tier: metadata.tier },
-            });
+            await this._activateSubscription(
+                metadata.userId,
+                metadata.tier,
+                metadata.billingCycle || 'MONTHLY',
+                reference,
+                amount,
+                currency
+            );
         }
 
         return { status: 'success', tier: metadata?.tier };
@@ -85,15 +105,79 @@ export class SubscriptionsService {
 
         const event = payload.event;
         if (event === 'charge.success') {
-            const metadata = payload.data.metadata;
+            const data = payload.data;
+            const metadata = data.metadata;
             if (metadata?.userId && metadata?.tier) {
-                await this.prisma.user.update({
-                    where: { id: metadata.userId },
-                    data: { tier: metadata.tier },
-                });
+                await this._activateSubscription(
+                    metadata.userId,
+                    metadata.tier,
+                    metadata.billingCycle || 'MONTHLY',
+                    data.reference,
+                    data.amount,
+                    data.currency || 'NGN'
+                );
             }
         }
 
         return { status: 'success' };
+    }
+
+    private async _activateSubscription(
+        userId: string,
+        tier: string,
+        billingCycle: string,
+        reference: string,
+        amountKobo: number,
+        currency: string
+    ) {
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user) return;
+
+        // Calculate period end
+        const now = new Date();
+        const periodEnd = new Date(now);
+        if (billingCycle === 'ANNUAL') {
+            periodEnd.setFullYear(now.getFullYear() + 1);
+        } else {
+            periodEnd.setMonth(now.getMonth() + 1);
+        }
+
+        await this.prisma.$transaction([
+            // Update User Tier
+            this.prisma.user.update({
+                where: { id: userId },
+                data: { tier: tier as any },
+            }),
+            // Upsert Subscription Record
+            (this.prisma as any).subscriptionRecord.upsert({
+                where: { paystackReference: reference },
+                update: {
+                    status: 'ACTIVE',
+                    currentPeriodStart: now,
+                    currentPeriodEnd: periodEnd,
+                },
+                create: {
+                    userId,
+                    tier: tier as any,
+                    billingCycle,
+                    status: 'ACTIVE',
+                    amountPaid: amountKobo / 100,
+                    currency,
+                    paystackReference: reference,
+                    currentPeriodStart: now,
+                    currentPeriodEnd: periodEnd,
+                },
+            }),
+            // Log Revenue (EARN) - this feeds real data into payout system
+            (this.prisma as any).walletLedger.create({
+                data: {
+                    userId,
+                    type: 'EARN',
+                    amount: amountKobo / 100,
+                    reference: `SUB_${reference}`,
+                    region: user.billingCountry || 'NG',
+                },
+            }),
+        ]);
     }
 }

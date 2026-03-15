@@ -1,11 +1,24 @@
 import { Tabs } from 'expo-router';
-import { LayoutGrid, Search, Wallet, MoreHorizontal, Star, ShoppingBag } from 'lucide-react-native';
+import { LayoutGrid, Search, Wallet, MoreHorizontal, ShoppingBag } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { View } from 'react-native';
+import { useAuthStore } from '../../store/authStore';
 
 export default function TabLayout() {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const { user } = useAuthStore();
+
+  const getTierColor = () => {
+    switch (user?.tier) {
+      case 'BRONZE': return '#CD7F32';
+      case 'SILVER': return '#B4B4B4';
+      case 'GOLD': return '#FFD700';
+      default: return '#58CC02'; // FREE / Blue fallback replaced by Duolingo Green
+    }
+  };
+
+  const activeColor = getTierColor();
 
   return (
     <Tabs
@@ -24,7 +37,7 @@ export default function TabLayout() {
           shadowOpacity: 0.05,
           shadowRadius: 10,
         },
-        tabBarActiveTintColor: isDark ? '#FFFFFF' : '#000000',
+        tabBarActiveTintColor: activeColor,
         tabBarInactiveTintColor: '#AFAFAF',
         tabBarLabelStyle: {
           fontSize: 11,

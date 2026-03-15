@@ -19,6 +19,25 @@ export class UsersController {
         const points = await this.usersService.getPoints(userId);
         const streak = await this.gamificationService.getStreak(userId);
         const badges = await this.gamificationService.getUserBadges(userId);
+        const activeSub = await this.usersService.getActiveSubscription(userId);
+
+        let detectedCountry = null;
+        if (user && !user.billingCountry) {
+            try {
+                const xForwardedFor = req.headers['x-forwarded-for'];
+                const ip = typeof xForwardedFor === 'string' ? xForwardedFor.split(',')[0] : req.connection.remoteAddress;
+
+                if (ip && ip !== '::1' && ip !== '127.0.0.1') {
+                    const geoRes = await fetch(`http://ip-api.com/json/${ip}`);
+                    const geoData = await geoRes.json();
+                    if (geoData.status === 'success') {
+                        detectedCountry = geoData.countryCode;
+                    }
+                }
+            } catch (e) {
+                console.warn(`IP Geolocation failed: ${e.message}`);
+            }
+        }
 
         if (user) {
             delete (user as any).password;
@@ -28,13 +47,15 @@ export class UsersController {
             ...user,
             points,
             streak,
-            badges
+            badges,
+            activeSub,
+            detectedCountry
         };
     }
 
     @UseGuards(JwtAuthGuard)
     @Patch('me')
-    async updateMe(@Request() req: any, @Body() body: { name?: string }) {
+    async updateMe(@Request() req: any, @Body() body: { name?: string; billingCountry?: string; expoPushToken?: string }) {
         const user = await this.usersService.updateProfile(req.user.userId, body);
         delete (user as any).password;
         return user;

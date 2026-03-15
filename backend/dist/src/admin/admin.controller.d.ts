@@ -4,20 +4,6 @@ export declare class AdminController {
     private payoutsService;
     private prisma;
     constructor(payoutsService: PayoutsService, prisma: PrismaService);
-    simulatePayout(month: string, revenue: number): Promise<{
-        month: string;
-        globalEstimatedRevenue: number;
-        regions: {
-            region: any;
-            regionalRevenue: number;
-            rewardPool: number;
-            totalEligibleBalance: any;
-            distributionRatio: number;
-            safeToExecute: boolean;
-            simulatedPayoutsCount: any;
-            simulatedPayouts: any;
-        }[];
-    }>;
     getDashboardStats(): Promise<{
         currentMonthRevenue: number;
         rewardPoolCap: number;
@@ -41,8 +27,9 @@ export declare class AdminController {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            region: string | null;
             status: import("@prisma/client").$Enums.PayoutStatus;
+            region: string | null;
+            exchangeRate: number | null;
             month: string;
             totalLiability: import("@prisma/client-runtime-utils").Decimal;
             totalPaid: import("@prisma/client-runtime-utils").Decimal;
@@ -78,21 +65,80 @@ export declare class AdminController {
         isVerified: boolean;
         kycStatus: import("@prisma/client").$Enums.KycStatus;
     }[]>;
-    freezeUserWallet(userId: string, reason: string): Promise<{
-        success: boolean;
-        message: string;
+    freezeUser(userId: string, isFrozen: boolean): Promise<{
+        id: string;
+        email: string;
+        isFrozen: boolean;
+    }>;
+    flagUser(userId: string, isFlagged: boolean): Promise<{
+        id: string;
+        email: string;
+        isFlagged: boolean;
+    }>;
+    getConfigs(): Promise<{
+        id: string;
+        updatedAt: Date;
+        description: string | null;
+        key: string;
+        value: string;
+    }[]>;
+    updateConfig(key: string, value: string, description?: string): Promise<{
+        id: string;
+        updatedAt: Date;
+        description: string | null;
+        key: string;
+        value: string;
+    }>;
+    getDiscounts(): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        isActive: boolean;
+        code: string;
+        discountPercent: number;
+        maxUses: number | null;
+        usedCount: number;
+        expiryDate: Date | null;
+    }[]>;
+    createDiscount(data: {
+        code: string;
+        discountPercent: number;
+        maxUses?: number;
+        expiryDate?: string;
+    }): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        isActive: boolean;
+        code: string;
+        discountPercent: number;
+        maxUses: number | null;
+        usedCount: number;
+        expiryDate: Date | null;
+    }>;
+    toggleDiscount(id: string, isActive: boolean): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        isActive: boolean;
+        code: string;
+        discountPercent: number;
+        maxUses: number | null;
+        usedCount: number;
+        expiryDate: Date | null;
     }>;
     getPayoutBatches(): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        region: string | null;
         status: import("@prisma/client").$Enums.PayoutStatus;
+        region: string | null;
+        exchangeRate: number | null;
         month: string;
         totalLiability: import("@prisma/client-runtime-utils").Decimal;
         totalPaid: import("@prisma/client-runtime-utils").Decimal;
     }[]>;
-    triggerPayout(month: string, revenue: number): Promise<{
+    triggerPayout(month: string): Promise<{
         message: string;
         month: string;
         totalPaid: number;
@@ -114,5 +160,19 @@ export declare class AdminController {
         }[];
         message?: undefined;
         totalPaid?: undefined;
+    }>;
+    simulatePayout(month: string, revenue?: string): Promise<{
+        month: string;
+        globalEstimatedRevenue: number | undefined;
+        regions: {
+            region: any;
+            regionalRevenue: number;
+            rewardPool: number;
+            totalEligibleBalance: any;
+            distributionRatio: number;
+            safeToExecute: boolean;
+            simulatedPayoutsCount: any;
+            simulatedPayouts: any;
+        }[];
     }>;
 }

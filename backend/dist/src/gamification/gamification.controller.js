@@ -21,16 +21,17 @@ let GamificationController = class GamificationController {
     constructor(gamificationService) {
         this.gamificationService = gamificationService;
     }
-    async getLeaderboard(limit) {
-        return this.gamificationService.getLeaderboard(parseInt(limit, 10) || 10);
+    async getLeaderboard(limit, subjectId) {
+        return this.gamificationService.getLeaderboard(parseInt(limit, 10) || 10, subjectId);
     }
 };
 exports.GamificationController = GamificationController;
 __decorate([
     (0, common_1.Get)('leaderboard'),
     __param(0, (0, common_1.Query)('limit')),
+    __param(1, (0, common_1.Query)('subjectId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], GamificationController.prototype, "getLeaderboard", null);
 exports.GamificationController = GamificationController = __decorate([

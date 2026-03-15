@@ -51,8 +51,34 @@ export default function ProfileScreen() {
                         <View className={`absolute bottom-0 right-0 w-4 h-4 border-2 border-white dark:border-[#0B0D12] rounded-full ${user?.isVerified ? 'bg-blue-500' : 'bg-green-500'}`} />
                     </View>
                     <View className="flex-1">
-                        <Text className="text-black dark:text-white text-[22px] font-bold tracking-tight">{user?.name || 'Student'}</Text>
-                        <Text className="text-gray-500 dark:text-gray-400 font-medium">{user?.email || 'student@setorial.com'}</Text>
+                        <View className="flex-row items-center">
+                            <Text className="text-black dark:text-white text-[22px] font-bold tracking-tight mr-2">{user?.name || 'Student'}</Text>
+                        </View>
+                        <View className="flex-row items-center mt-1">
+                            <View
+                                className="px-3 py-1 rounded-full border border-b-2"
+                                style={{
+                                    backgroundColor: user?.tier === 'GOLD' ? '#FFD70020' :
+                                        user?.tier === 'SILVER' ? '#B4B4B420' :
+                                            user?.tier === 'BRONZE' ? '#CD7F3220' : '#58CC0220',
+                                    borderColor: user?.tier === 'GOLD' ? '#FFD700' :
+                                        user?.tier === 'SILVER' ? '#B4B4B4' :
+                                            user?.tier === 'BRONZE' ? '#CD7F32' : '#58CC02'
+                                }}
+                            >
+                                <Text
+                                    className="text-[11px] font-black uppercase tracking-widest"
+                                    style={{
+                                        color: user?.tier === 'GOLD' ? '#B8860B' :
+                                            user?.tier === 'SILVER' ? '#707070' :
+                                                user?.tier === 'BRONZE' ? '#8B4513' : '#3E8E00'
+                                    }}
+                                >
+                                    {user?.tier || 'FREE'}
+                                </Text>
+                            </View>
+                            <Text className="text-gray-400 dark:text-gray-500 font-medium ml-3 text-xs">• {user?.email || 'student@setorial.com'}</Text>
+                        </View>
                     </View>
                     <ChevronRight size={20} color="#9CA3AF" />
                 </TouchableOpacity>

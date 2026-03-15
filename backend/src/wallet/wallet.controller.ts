@@ -9,8 +9,7 @@ export class WalletController {
 
     @Get('balance')
     async getBalance(@Request() req: any) {
-        const balance = await this.walletService.getBalance(req.user.userId);
-        return { balance };
+        return this.walletService.getBalanceData(req.user.userId);
     }
 
     @Get('transactions')

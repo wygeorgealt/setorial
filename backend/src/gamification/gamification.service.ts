@@ -1,12 +1,16 @@
-import { Injectable, Inject, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import Redis from 'ioredis';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class GamificationService implements OnModuleDestroy {
     private redis: Redis;
 
-    constructor(private prisma: PrismaService) {
+    constructor(
+        private prisma: PrismaService,
+        private notificationsService: NotificationsService,
+    ) {
         this.redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
     }
 
@@ -14,14 +18,19 @@ export class GamificationService implements OnModuleDestroy {
         this.redis.disconnect();
     }
 
-    async awardPoints(userId: string, points: number, action: string) {
+    async awardPoints(userId: string, points: number, action: string, subjectId?: string) {
         // Transactional Points Ledger entry
         await this.prisma.pointsLedger.create({
             data: { userId, points, action },
         });
 
-        // Update Redis Leaderboard (Sorted Set)
+        // Update Global Leaderboard (Sorted Set)
         await this.redis.zincrby('leaderboard:global', points, userId);
+
+        // Update Subject-specific Leaderboard if provided
+        if (subjectId) {
+            await this.redis.zincrby(`leaderboard:subject:${subjectId}`, points, userId);
+        }
     }
 
     async incrementStreak(userId: string) {
@@ -134,7 +143,8 @@ export class GamificationService implements OnModuleDestroy {
         })));
     }
 
-    async getLeaderboard(limit: number = 10) {
-        return this.redis.zrevrange('leaderboard:global', 0, limit - 1, 'WITHSCORES');
+    async getLeaderboard(limit: number = 10, subjectId?: string) {
+        const key = subjectId ? `leaderboard:subject:${subjectId}` : 'leaderboard:global';
+        return this.redis.zrevrange(key, 0, limit - 1, 'WITHSCORES');
     }
 }

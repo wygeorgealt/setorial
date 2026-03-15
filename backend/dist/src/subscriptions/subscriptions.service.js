@@ -46,26 +46,36 @@ exports.SubscriptionsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma.service");
 const crypto = __importStar(require("crypto"));
-const TIER_PRICES = {
-    BRONZE: 100000,
-    SILVER: 200000,
-    GOLD: 500000,
-};
 let SubscriptionsService = class SubscriptionsService {
     prisma;
     constructor(prisma) {
         this.prisma = prisma;
     }
-    async initializeTransaction(userId, tier) {
+    async initializeTransaction(userId, tier, billingCycle = 'MONTHLY') {
         const secret = process.env.PAYSTACK_SECRET_KEY;
         if (!secret)
             throw new common_1.BadRequestException('Paystack not configured');
         const user = await this.prisma.user.findUnique({ where: { id: userId } });
         if (!user)
             throw new common_1.BadRequestException('User not found');
-        const amount = TIER_PRICES[tier.toUpperCase()];
-        if (!amount)
+        const countryCode = user.billingCountry || 'NG';
+        const pricing = await this.prisma.countryPricing.findUnique({
+            where: { countryCode: countryCode.toUpperCase() },
+        });
+        if (!pricing)
+            throw new common_1.BadRequestException('Pricing not found for your region');
+        const tierKey = tier.toLowerCase();
+        const cycleKey = billingCycle.toLowerCase();
+        let amountDecimal;
+        if (tierKey === 'bronze')
+            amountDecimal = cycleKey === 'annual' ? pricing.bronzeAnnual : pricing.bronzeMonthly;
+        else if (tierKey === 'silver')
+            amountDecimal = cycleKey === 'annual' ? pricing.silverAnnual : pricing.silverMonthly;
+        else if (tierKey === 'gold')
+            amountDecimal = cycleKey === 'annual' ? pricing.goldAnnual : pricing.goldMonthly;
+        else
             throw new common_1.BadRequestException('Invalid tier');
+        const amount = Math.round(Number(amountDecimal) * 100);
         const response = await fetch('https://api.paystack.co/transaction/initialize', {
             method: 'POST',
             headers: {
@@ -78,6 +88,7 @@ let SubscriptionsService = class SubscriptionsService {
                 metadata: {
                     userId: user.id,
                     tier: tier.toUpperCase(),
+                    billingCycle: billingCycle.toUpperCase(),
                 },
                 callback_url: `setorial://payment-callback`,
             }),
@@ -103,11 +114,10 @@ let SubscriptionsService = class SubscriptionsService {
             return { status: 'failed', message: 'Payment not verified' };
         }
         const metadata = data.data.metadata;
+        const amount = data.data.amount;
+        const currency = data.data.currency || 'NGN';
         if (metadata?.userId && metadata?.tier) {
-            await this.prisma.user.update({
-                where: { id: metadata.userId },
-                data: { tier: metadata.tier },
-            });
+            await this._activateSubscription(metadata.userId, metadata.tier, metadata.billingCycle || 'MONTHLY', reference, amount, currency);
         }
         return { status: 'success', tier: metadata?.tier };
     }
@@ -121,15 +131,60 @@ let SubscriptionsService = class SubscriptionsService {
         }
         const event = payload.event;
         if (event === 'charge.success') {
-            const metadata = payload.data.metadata;
+            const data = payload.data;
+            const metadata = data.metadata;
             if (metadata?.userId && metadata?.tier) {
-                await this.prisma.user.update({
-                    where: { id: metadata.userId },
-                    data: { tier: metadata.tier },
-                });
+                await this._activateSubscription(metadata.userId, metadata.tier, metadata.billingCycle || 'MONTHLY', data.reference, data.amount, data.currency || 'NGN');
             }
         }
         return { status: 'success' };
+    }
+    async _activateSubscription(userId, tier, billingCycle, reference, amountKobo, currency) {
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user)
+            return;
+        const now = new Date();
+        const periodEnd = new Date(now);
+        if (billingCycle === 'ANNUAL') {
+            periodEnd.setFullYear(now.getFullYear() + 1);
+        }
+        else {
+            periodEnd.setMonth(now.getMonth() + 1);
+        }
+        await this.prisma.$transaction([
+            this.prisma.user.update({
+                where: { id: userId },
+                data: { tier: tier },
+            }),
+            this.prisma.subscriptionRecord.upsert({
+                where: { paystackReference: reference },
+                update: {
+                    status: 'ACTIVE',
+                    currentPeriodStart: now,
+                    currentPeriodEnd: periodEnd,
+                },
+                create: {
+                    userId,
+                    tier: tier,
+                    billingCycle,
+                    status: 'ACTIVE',
+                    amountPaid: amountKobo / 100,
+                    currency,
+                    paystackReference: reference,
+                    currentPeriodStart: now,
+                    currentPeriodEnd: periodEnd,
+                },
+            }),
+            this.prisma.walletLedger.create({
+                data: {
+                    userId,
+                    type: 'EARN',
+                    amount: amountKobo / 100,
+                    reference: `SUB_${reference}`,
+                    region: user.billingCountry || 'NG',
+                },
+            }),
+        ]);
     }
 };
 exports.SubscriptionsService = SubscriptionsService;

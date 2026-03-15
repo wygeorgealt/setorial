@@ -1,15 +1,22 @@
 import "../global.css";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useColorScheme } from "nativewind";
-import { useEffect } from "react";
-import { Appearance, View, ActivityIndicator } from "react-native";
+import { useEffect, useState } from "react";
+import { Appearance } from "react-native";
 import { useAuthStore } from "../store/authStore";
 import * as SecureStore from 'expo-secure-store';
+import * as SplashScreen from 'expo-splash-screen';
+import AnimatedSplash from "../components/AnimatedSplash";
+import { registerForPushNotificationsAsync } from "../services/notifications";
+
+// Prevent the native splash from auto-hiding
+SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
     const { colorScheme, setColorScheme } = useColorScheme();
     const router = useRouter();
     const segments = useSegments();
+    const [showSplash, setShowSplash] = useState(true);
 
     const { isLoading, token, checkSession } = useAuthStore();
 
@@ -17,8 +24,15 @@ export default function RootLayout() {
         checkSession();
     }, []);
 
+    // Hide the native splash screen once our animated one is showing
     useEffect(() => {
-        if (isLoading) return;
+        if (showSplash) {
+            SplashScreen.hideAsync();
+        }
+    }, [showSplash]);
+
+    useEffect(() => {
+        if (isLoading || showSplash) return;
 
         const inAuthGroup = segments[0] === '(auth)' || segments[0] === 'login' || segments[0] === 'register' || segments[0] === 'welcome';
 
@@ -26,8 +40,10 @@ export default function RootLayout() {
             router.replace('/welcome');
         } else if (token && inAuthGroup) {
             router.replace('/(tabs)');
+            // Register for push notifications when logged in
+            registerForPushNotificationsAsync().catch(err => console.error('Push registration error:', err));
         }
-    }, [token, isLoading, segments]);
+    }, [token, isLoading, segments, showSplash]);
 
     useEffect(() => {
         const loadTheme = async () => {
@@ -42,7 +58,6 @@ export default function RootLayout() {
         loadTheme();
 
         const subscription = Appearance.addChangeListener(({ colorScheme: newScheme }) => {
-            // Only auto-update if the user hasn't explicitly set a preference
             SecureStore.getItemAsync('theme').then((savedTheme) => {
                 if (!savedTheme && newScheme) {
                     setColorScheme(newScheme);
@@ -53,12 +68,8 @@ export default function RootLayout() {
         return () => subscription.remove();
     }, [setColorScheme]);
 
-    if (isLoading) {
-        return (
-            <View className="flex-1 items-center justify-center bg-background-light dark:bg-background-dark">
-                <ActivityIndicator size="large" color="#3B82F6" />
-            </View>
-        );
+    if (showSplash) {
+        return <AnimatedSplash onFinish={() => setShowSplash(false)} />;
     }
 
     return (
@@ -69,3 +80,4 @@ export default function RootLayout() {
         </Stack>
     );
 }
+

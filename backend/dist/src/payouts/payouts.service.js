@@ -16,13 +16,19 @@ const schedule_1 = require("@nestjs/schedule");
 const prisma_service_1 = require("../prisma.service");
 const client_1 = require("@prisma/client");
 const paystack_utils_1 = require("./paystack-utils");
+const notifications_service_1 = require("../notifications/notifications.service");
 let PayoutsService = PayoutsService_1 = class PayoutsService {
     prisma;
+    notificationsService;
     logger = new common_1.Logger(PayoutsService_1.name);
-    constructor(prisma) {
+    constructor(prisma, notificationsService) {
         this.prisma = prisma;
+        this.notificationsService = notificationsService;
     }
     async simulatePayout(month, globalEstimatedRevenue) {
+        const [year, m] = month.split('-').map(Number);
+        const startDate = new Date(year, m - 1, 1);
+        const endDate = new Date(year, m, 1);
         const regionsAgg = await this.prisma.walletLedger.groupBy({
             by: ['region'],
             where: { type: 'ELIGIBLE_MOVE', region: { not: null } },
@@ -31,10 +37,16 @@ let PayoutsService = PayoutsService_1 = class PayoutsService {
         for (const { region } of regionsAgg) {
             const currentRegion = region;
             const earnAgg = await this.prisma.walletLedger.aggregate({
-                where: { type: 'EARN', region: currentRegion },
+                where: {
+                    type: 'EARN',
+                    region: currentRegion,
+                    createdAt: { gte: startDate, lt: endDate }
+                },
                 _sum: { amount: true },
             });
-            const regionalRevenue = Number(earnAgg?._sum?.amount ?? 0);
+            const regionalRevenue = globalEstimatedRevenue !== undefined && globalEstimatedRevenue > 0
+                ? globalEstimatedRevenue
+                : Number(earnAgg?._sum?.amount ?? 0);
             const rewardPool = regionalRevenue * 0.20;
             const credits = await this.prisma.walletLedger.groupBy({
                 by: ['userId'],
@@ -79,8 +91,11 @@ let PayoutsService = PayoutsService_1 = class PayoutsService {
             regions: simulationResults,
         };
     }
-    async processPayout(month, globalEstimatedRevenue) {
+    async processPayout(month) {
         this.logger.log(`📤 Processing payout batches for ${month}`);
+        const [year, m] = month.split('-').map(Number);
+        const startDate = new Date(year, m - 1, 1);
+        const endDate = new Date(year, m, 1);
         const verifiedUsers = await this.prisma.user.findMany({
             where: { kycStatus: 'APPROVED', isVerified: true, tier: { in: ['SILVER', 'GOLD'] } },
             select: { id: true, billingCountry: true },
@@ -100,7 +115,11 @@ let PayoutsService = PayoutsService_1 = class PayoutsService {
             const currentRegion = region;
             this.logger.log(`🌍 Processing Region: ${currentRegion}`);
             const earnAgg = await this.prisma.walletLedger.aggregate({
-                where: { type: 'EARN', region: currentRegion },
+                where: {
+                    type: 'EARN',
+                    region: currentRegion,
+                    createdAt: { gte: startDate, lt: endDate }
+                },
                 _sum: { amount: true },
             });
             const regionalRevenue = Number(earnAgg?._sum?.amount ?? 0);
@@ -144,7 +163,8 @@ let PayoutsService = PayoutsService_1 = class PayoutsService {
                             type: 'PAYOUT',
                             amount: new client_1.Prisma.Decimal(-payAmount),
                             reference: batchRef,
-                            region: currentRegion
+                            region: currentRegion,
+                            exchangeRate: 1600.0
                         },
                     });
                     try {
@@ -161,10 +181,15 @@ let PayoutsService = PayoutsService_1 = class PayoutsService {
                     region: currentRegion,
                     totalLiability: new client_1.Prisma.Decimal(totalEligibleBalance),
                     totalPaid: new client_1.Prisma.Decimal(regionalTotalPaid),
+                    exchangeRate: 1600.0,
                     status: 'COMPLETED',
                 },
             });
             totalGlobalPaid += regionalTotalPaid;
+            const userIds = balances.map((b) => b.userId);
+            if (userIds.length > 0) {
+                this.notificationsService.sendPushToMany(userIds, 'Payout Sent! 🎉', `Your rewards for ${month} have been disbursed to your bank account. Check your app for details.`, { type: 'PAYOUT_SENT', month }).catch(e => this.logger.warn(`Failed to send batch push for payout: ${e.message}`));
+            }
             batchResults.push({
                 region: currentRegion,
                 batchId: batch.id,
@@ -187,7 +212,7 @@ let PayoutsService = PayoutsService_1 = class PayoutsService {
         const now = new Date();
         const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
         this.logger.log(`⏰ Cron: 28th-of-month payout triggered for ${month}`);
-        await this.processPayout(month, 0);
+        await this.processPayout(month);
     }
     async disburseFunds(userId, amount, region) {
         const user = await this.prisma.user.findUnique({ where: { id: userId } });
@@ -242,6 +267,7 @@ __decorate([
 ], PayoutsService.prototype, "handleMonthlyPayout", null);
 exports.PayoutsService = PayoutsService = PayoutsService_1 = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        notifications_service_1.NotificationsService])
 ], PayoutsService);
 //# sourceMappingURL=payouts.service.js.map

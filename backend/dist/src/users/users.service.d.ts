@@ -13,6 +13,8 @@ export declare class UsersService {
     getPoints(userId: string): Promise<number>;
     updateProfile(userId: string, data: {
         name?: string;
+        billingCountry?: string;
+        expoPushToken?: string;
     }): Promise<{
         id: string;
         name: string | null;
@@ -31,6 +33,9 @@ export declare class UsersService {
         lastActiveAt: Date | null;
         assessmentPassed: boolean;
         monetizationEligibleAt: Date | null;
+        isFrozen: boolean;
+        isFlagged: boolean;
+        expoPushToken: string | null;
     }>;
     getLearningProgress(userId: string): Promise<{
         id: string;
@@ -49,5 +54,5 @@ export declare class UsersService {
         payoutAccount: Record<string, any>;
     }): Promise<any>;
     updateKycStatus(userId: string, status: KycStatus): Promise<any>;
-    getPendingKyc(): Promise<any>;
+    getActiveSubscription(userId: string): Promise<any>;
 }

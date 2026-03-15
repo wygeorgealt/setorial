@@ -32,7 +32,8 @@ export const adminApi = {
     approveKyc: (id: string) => api.post(`/admin/kyc/${id}/approve`),
     rejectKyc: (id: string, reason: string) => api.post(`/admin/kyc/${id}/reject`, { reason }),
     getUsers: (params: any) => api.get('/admin/users', { params }),
-    freezeUser: (id: string, reason: string) => api.post(`/admin/users/${id}/freeze`, { reason }),
+    freezeUser: (id: string, isFrozen: boolean) => api.post(`/admin/users/${id}/freeze`, { isFrozen }),
+    flagUser: (id: string, isFlagged: boolean) => api.post(`/admin/users/${id}/flag`, { isFlagged }),
     // Payouts
     getPayoutBatches: () => api.get('/admin/payout-batches'),
     triggerPayout: (month: string, revenue: number) =>
@@ -44,6 +45,15 @@ export const adminApi = {
     updatePricing: (id: string, data: any) => api.patch(`/admin/pricing/${id}`, data),
     deletePricing: (id: string) => api.delete(`/admin/pricing/${id}`),
     getRegionalStats: () => api.get('/admin/regions'),
+
+    // Global Config
+    getConfigs: () => api.get('/admin/configs'),
+    updateConfig: (key: string, value: string, description?: string) => api.post(`/admin/configs/${key}`, { value, description }),
+
+    // Discounts
+    getDiscounts: () => api.get('/admin/discounts'),
+    createDiscount: (data: any) => api.post('/admin/discounts', data),
+    toggleDiscount: (id: string, isActive: boolean) => api.post(`/admin/discounts/${id}/toggle`, { isActive }),
 };
 
 export default api;

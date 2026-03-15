@@ -26,9 +26,6 @@ let AdminController = class AdminController {
         this.payoutsService = payoutsService;
         this.prisma = prisma;
     }
-    async simulatePayout(month, revenue) {
-        return this.payoutsService.simulatePayout(month, revenue);
-    }
     async getDashboardStats() {
         const earnAggregate = await this.prisma.walletLedger.aggregate({
             where: { type: 'EARN' },
@@ -149,29 +146,58 @@ let AdminController = class AdminController {
             orderBy: { createdAt: 'desc' },
         });
     }
-    async freezeUserWallet(userId, reason) {
-        await this.prisma.user.update({
+    async freezeUser(userId, isFrozen) {
+        return this.prisma.user.update({
             where: { id: userId },
-            data: { isVerified: false },
+            data: { isFrozen },
+            select: { id: true, email: true, isFrozen: true },
         });
-        return { success: true, message: `User ${userId} wallet frozen. Reason: ${reason}` };
+    }
+    async flagUser(userId, isFlagged) {
+        return this.prisma.user.update({
+            where: { id: userId },
+            data: { isFlagged },
+            select: { id: true, email: true, isFlagged: true },
+        });
+    }
+    async getConfigs() {
+        return this.prisma.globalConfig.findMany();
+    }
+    async updateConfig(key, value, description) {
+        return this.prisma.globalConfig.upsert({
+            where: { key },
+            update: { value, description },
+            create: { key, value, description },
+        });
+    }
+    async getDiscounts() {
+        return this.prisma.discountCode.findMany();
+    }
+    async createDiscount(data) {
+        return this.prisma.discountCode.create({
+            data: {
+                ...data,
+                expiryDate: data.expiryDate ? new Date(data.expiryDate) : null,
+            },
+        });
+    }
+    async toggleDiscount(id, isActive) {
+        return this.prisma.discountCode.update({
+            where: { id },
+            data: { isActive },
+        });
     }
     async getPayoutBatches() {
         return this.prisma.payoutBatch.findMany({ orderBy: { createdAt: 'desc' } });
     }
-    async triggerPayout(month, revenue) {
-        return this.payoutsService.processPayout(month, revenue);
+    async triggerPayout(month) {
+        return this.payoutsService.processPayout(month);
+    }
+    async simulatePayout(month, revenue) {
+        return this.payoutsService.simulatePayout(month, revenue ? parseFloat(revenue) : undefined);
     }
 };
 exports.AdminController = AdminController;
-__decorate([
-    (0, common_1.Get)('simulate-payout'),
-    __param(0, (0, common_1.Query)('month')),
-    __param(1, (0, common_1.Query)('revenue', common_1.ParseFloatPipe)),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Number]),
-    __metadata("design:returntype", Promise)
-], AdminController.prototype, "simulatePayout", null);
 __decorate([
     (0, common_1.Get)('dashboard'),
     __metadata("design:type", Function),
@@ -210,11 +236,55 @@ __decorate([
 __decorate([
     (0, common_1.Post)('users/:id/freeze'),
     __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)('reason')),
+    __param(1, (0, common_1.Body)('isFrozen')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, Boolean]),
     __metadata("design:returntype", Promise)
-], AdminController.prototype, "freezeUserWallet", null);
+], AdminController.prototype, "freezeUser", null);
+__decorate([
+    (0, common_1.Post)('users/:id/flag'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)('isFlagged')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Boolean]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "flagUser", null);
+__decorate([
+    (0, common_1.Get)('configs'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "getConfigs", null);
+__decorate([
+    (0, common_1.Post)('configs/:key'),
+    __param(0, (0, common_1.Param)('key')),
+    __param(1, (0, common_1.Body)('value')),
+    __param(2, (0, common_1.Body)('description')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "updateConfig", null);
+__decorate([
+    (0, common_1.Get)('discounts'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "getDiscounts", null);
+__decorate([
+    (0, common_1.Post)('discounts'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "createDiscount", null);
+__decorate([
+    (0, common_1.Post)('discounts/:id/toggle'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)('isActive')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Boolean]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "toggleDiscount", null);
 __decorate([
     (0, common_1.Get)('payout-batches'),
     __metadata("design:type", Function),
@@ -224,11 +294,18 @@ __decorate([
 __decorate([
     (0, common_1.Post)('payout/trigger'),
     __param(0, (0, common_1.Query)('month')),
-    __param(1, (0, common_1.Query)('revenue', common_1.ParseFloatPipe)),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Number]),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "triggerPayout", null);
+__decorate([
+    (0, common_1.Get)('payout/simulate'),
+    __param(0, (0, common_1.Query)('month')),
+    __param(1, (0, common_1.Query)('revenue')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "simulatePayout", null);
 exports.AdminController = AdminController = __decorate([
     (0, common_1.Controller)('admin'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),

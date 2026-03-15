@@ -13,11 +13,17 @@ module.exports = {
         },
         background: {
           light: '#F8FAFC',
-          dark: '#0F172A',
+          dark: '#0B0D12',
         },
         card: {
           light: '#FFFFFF',
           dark: '#1E293B',
+        },
+        tier: {
+          free: '#58CC02',
+          bronze: '#CD7F32',
+          silver: '#B4B4B4',
+          gold: '#FFD700',
         }
       },
     },

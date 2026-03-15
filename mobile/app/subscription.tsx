@@ -2,7 +2,7 @@ import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Alert, Activity
 import { ChevronLeft, Check, Crown, Shield, Star, Zap } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../store/authStore';
-import { subscriptionApi } from '../services/api';
+import { subscriptionApi, authApi } from '../services/api';
 import { useState, useEffect } from 'react';
 import * as Linking from 'expo-linking';
 
@@ -42,6 +42,7 @@ export default function SubscriptionScreen() {
     const [loading, setLoading] = useState<string | null>(null);
     const [fetchingPricing, setFetchingPricing] = useState(true);
     const [pricingData, setPricingData] = useState<any>(null);
+    const [billingCycle, setBillingCycle] = useState<'MONTHLY' | 'ANNUAL'>('MONTHLY');
 
     useEffect(() => {
         fetchPricing();
@@ -64,7 +65,10 @@ export default function SubscriptionScreen() {
     const handleUpgrade = async (tierName: string) => {
         setLoading(tierName);
         try {
-            const res = await subscriptionApi.initialize(tierName);
+            const res = await subscriptionApi.initialize({
+                tier: tierName,
+                billingCycle: billingCycle
+            });
             const { authorization_url, reference } = res.data;
 
             // Open Paystack checkout page in browser
@@ -105,6 +109,8 @@ export default function SubscriptionScreen() {
     // Combine remote pricing with local metadata
     const getMergedTiers = () => {
         const currency = pricingData?.currency || 'NGN';
+        const isAnnual = billingCycle === 'ANNUAL';
+
         return [
             {
                 name: 'Free',
@@ -115,25 +121,50 @@ export default function SubscriptionScreen() {
             {
                 name: 'Bronze',
                 tierId: 'BRONZE',
-                price: pricingData ? `${formatCurrency(pricingData.bronzeMonthly, currency)}/mo` : 'Loading...',
+                price: pricingData
+                    ? (isAnnual
+                        ? `${formatCurrency(pricingData.bronzeAnnual, currency)}/yr`
+                        : `${formatCurrency(pricingData.bronzeMonthly, currency)}/mo`)
+                    : 'Loading...',
                 ...TIER_META.BRONZE,
             },
             {
                 name: 'Silver',
                 tierId: 'SILVER',
-                price: pricingData ? `${formatCurrency(pricingData.silverMonthly, currency)}/mo` : 'Loading...',
+                price: pricingData
+                    ? (isAnnual
+                        ? `${formatCurrency(pricingData.silverAnnual, currency)}/yr`
+                        : `${formatCurrency(pricingData.silverMonthly, currency)}/mo`)
+                    : 'Loading...',
                 ...TIER_META.SILVER,
             },
             {
                 name: 'Gold',
                 tierId: 'GOLD',
-                price: pricingData ? `${formatCurrency(pricingData.goldMonthly, currency)}/mo` : 'Loading...',
+                price: pricingData
+                    ? (isAnnual
+                        ? `${formatCurrency(pricingData.goldAnnual, currency)}/yr`
+                        : `${formatCurrency(pricingData.goldMonthly, currency)}/mo`)
+                    : 'Loading...',
                 ...TIER_META.GOLD,
             },
         ];
     };
 
+    const handleConfirmCountry = async () => {
+        if (!user?.detectedCountry) return;
+        try {
+            await authApi.updateProfile({ billingCountry: user.detectedCountry });
+            updateUser({ billingCountry: user.detectedCountry });
+            fetchPricing();
+            Alert.alert('Region Set', `Your pricing has been locked to ${user.detectedCountry}.`);
+        } catch (error) {
+            Alert.alert('Error', 'Failed to update your region.');
+        }
+    };
+
     const tiers = getMergedTiers();
+    const hasDetectedCountry = user?.detectedCountry && !user?.billingCountry;
 
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12]">
@@ -152,6 +183,34 @@ export default function SubscriptionScreen() {
                 </View>
             ) : (
                 <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false}>
+                    {/* Active Sub Info if any */}
+                    {user?.activeSub && (
+                        <View className="bg-purple-50 dark:bg-purple-950/30 p-4 rounded-2xl mb-6 border border-purple-200 dark:border-purple-800">
+                            <View className="flex-row items-center mb-1">
+                                <Crown size={16} color="#8B5CF6" />
+                                <Text className="ml-2 text-purple-700 dark:text-purple-300 font-bold uppercase tracking-wider text-[10px]">Current Plan</Text>
+                            </View>
+                            <Text className="text-black dark:text-white font-bold text-lg">{user.activeSub.tier} {user.activeSub.billingCycle}</Text>
+                            <Text className="text-gray-500 dark:text-gray-400 text-sm">Renews: {new Date(user.activeSub.currentPeriodEnd).toLocaleDateString()}</Text>
+                        </View>
+                    )}
+
+                    {/* Country Detection Banner */}
+                    {hasDetectedCountry && (
+                        <View className="bg-blue-50 dark:bg-blue-950/30 p-5 rounded-[28px] mb-6 border border-blue-200 dark:border-blue-900 border-b-4">
+                            <Text className="text-blue-900 dark:text-blue-200 font-bold text-base mb-1">📍 New region detected!</Text>
+                            <Text className="text-blue-700 dark:text-blue-300 text-sm mb-4 leading-5">
+                                We detected you are likely in <Text className="font-bold">{user.detectedCountry}</Text>. Confirm this to lock your local pricing.
+                            </Text>
+                            <TouchableOpacity
+                                onPress={handleConfirmCountry}
+                                className="bg-blue-600 py-3 rounded-xl items-center shadow-sm"
+                            >
+                                <Text className="text-white font-bold">Confirm & Lock Region</Text>
+                            </TouchableOpacity>
+                        </View>
+                    )}
+
                     <Text className="text-gray-400 text-sm mb-2 text-center">
                         Upgrade your tier to unlock premium features and monetization.
                     </Text>
@@ -163,6 +222,25 @@ export default function SubscriptionScreen() {
                             </Text>
                         </View>
                     )}
+
+                    {/* Billing Toggle */}
+                    <View className="flex-row items-center justify-center mb-8 bg-gray-100 dark:bg-[#1E222B] p-1.5 rounded-3xl self-center border-2 border-gray-200 dark:border-[#272B36]">
+                        <TouchableOpacity
+                            onPress={() => setBillingCycle('MONTHLY')}
+                            className={`px-8 py-3 rounded-2xl ${billingCycle === 'MONTHLY' ? 'bg-white dark:bg-black shadow-sm border-2 border-b-4 border-gray-100 dark:border-white' : ''}`}
+                        >
+                            <Text className={`font-black uppercase tracking-widest text-[11px] ${billingCycle === 'MONTHLY' ? 'text-black dark:text-white' : 'text-gray-400'}`}>Monthly</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            onPress={() => setBillingCycle('ANNUAL')}
+                            className={`px-8 py-3 rounded-2xl flex-row items-center ${billingCycle === 'ANNUAL' ? 'bg-white dark:bg-black shadow-sm border-2 border-b-4 border-gray-100 dark:border-white' : ''}`}
+                        >
+                            <Text className={`font-black uppercase tracking-widest text-[11px] ${billingCycle === 'ANNUAL' ? 'text-black dark:text-white' : 'text-gray-400'}`}>Yearly</Text>
+                            <View className="ml-2 bg-green-500 px-2 py-0.5 rounded-lg">
+                                <Text className="text-white text-[9px] font-black italic">SAVE 17%</Text>
+                            </View>
+                        </TouchableOpacity>
+                    </View>
 
                     {tiers.map((tier) => {
                         const isActive = currentTier === tier.tierId;

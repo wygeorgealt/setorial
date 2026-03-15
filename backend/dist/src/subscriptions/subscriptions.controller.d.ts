@@ -4,6 +4,7 @@ export declare class SubscriptionsController {
     constructor(subscriptionsService: SubscriptionsService);
     initialize(req: any, body: {
         tier: string;
+        billingCycle?: 'MONTHLY' | 'ANNUAL';
     }): Promise<{
         authorization_url: any;
         access_code: any;

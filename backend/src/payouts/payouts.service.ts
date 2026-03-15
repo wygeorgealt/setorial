@@ -3,18 +3,27 @@ import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../prisma.service';
 import { Prisma } from '@prisma/client';
 import { paystackRequest, resolveBankCode } from './paystack-utils';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class PayoutsService {
     private readonly logger = new Logger(PayoutsService.name);
 
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private notificationsService: NotificationsService
+    ) { }
 
     /**
      * Preview-only simulation — does NOT write any changes.
      * Returns how much each eligible user would receive given a revenue figure, breakdown by region.
      */
-    async simulatePayout(month: string, globalEstimatedRevenue: number) {
+    async simulatePayout(month: string, globalEstimatedRevenue?: number) {
+        // Parse month (e.g. "2024-10") into range
+        const [year, m] = month.split('-').map(Number);
+        const startDate = new Date(year, m - 1, 1);
+        const endDate = new Date(year, m, 1);
+
         // Find distinct regions we have ELIGIBLE_MOVE entries for
         const regionsAgg = await (this.prisma as any).walletLedger.groupBy({
             by: ['region'],
@@ -26,11 +35,20 @@ export class PayoutsService {
         for (const { region } of regionsAgg) {
             const currentRegion = region!;
 
+            // Sum EARN entries for this region in the given month range
             const earnAgg = await (this.prisma as any).walletLedger.aggregate({
-                where: { type: 'EARN', region: currentRegion },
+                where: {
+                    type: 'EARN',
+                    region: currentRegion,
+                    createdAt: { gte: startDate, lt: endDate }
+                },
                 _sum: { amount: true },
             });
-            const regionalRevenue = Number(earnAgg?._sum?.amount ?? 0);
+
+            // Use manual override if provided, else use real DB revenue
+            const regionalRevenue = globalEstimatedRevenue !== undefined && globalEstimatedRevenue > 0
+                ? globalEstimatedRevenue
+                : Number(earnAgg?._sum?.amount ?? 0);
             const rewardPool = regionalRevenue * 0.20; // 20% cap per PRD
 
             const credits = await (this.prisma as any).walletLedger.groupBy({
@@ -87,8 +105,13 @@ export class PayoutsService {
      * REAL payout — writes PAYOUT ledger entries and records a PayoutBatch PER REGION.
      * Called by the cron on the 28th or manually via admin trigger.
      */
-    async processPayout(month: string, globalEstimatedRevenue: number) {
+    async processPayout(month: string) {
         this.logger.log(`📤 Processing payout batches for ${month}`);
+
+        // Parse month (e.g. "2024-10") into range
+        const [year, m] = month.split('-').map(Number);
+        const startDate = new Date(year, m - 1, 1);
+        const endDate = new Date(year, m, 1);
 
         // Get verified (KYC-approved) users only
         const verifiedUsers = await (this.prisma as any).user.findMany({
@@ -115,8 +138,13 @@ export class PayoutsService {
             const currentRegion = region!;
             this.logger.log(`🌍 Processing Region: ${currentRegion}`);
 
+            // Sum EARN entries for this region in the given month range
             const earnAgg = await (this.prisma as any).walletLedger.aggregate({
-                where: { type: 'EARN', region: currentRegion },
+                where: {
+                    type: 'EARN',
+                    region: currentRegion,
+                    createdAt: { gte: startDate, lt: endDate }
+                },
                 _sum: { amount: true },
             });
             const regionalRevenue = Number(earnAgg?._sum?.amount ?? 0);
@@ -169,7 +197,8 @@ export class PayoutsService {
                             type: 'PAYOUT',
                             amount: new Prisma.Decimal(-payAmount),  // debit
                             reference: batchRef,
-                            region: currentRegion
+                            region: currentRegion,
+                            exchangeRate: 1600.0 // Transparency: rate used for this transfer
                         },
                     });
 
@@ -190,11 +219,23 @@ export class PayoutsService {
                     region: currentRegion,
                     totalLiability: new Prisma.Decimal(totalEligibleBalance),
                     totalPaid: new Prisma.Decimal(regionalTotalPaid),
+                    exchangeRate: 1600.0, // Fixed rate for the month as per PRD locked-rate strategy
                     status: 'COMPLETED',
                 },
             });
 
             totalGlobalPaid += regionalTotalPaid;
+
+            // Send push notifications to all users who received a payout in this batch
+            const userIds = balances.map((b: any) => b.userId);
+            if (userIds.length > 0) {
+                this.notificationsService.sendPushToMany(
+                    userIds,
+                    'Payout Sent! 🎉',
+                    `Your rewards for ${month} have been disbursed to your bank account. Check your app for details.`,
+                    { type: 'PAYOUT_SENT', month }
+                ).catch(e => this.logger.warn(`Failed to send batch push for payout: ${e.message}`));
+            }
 
             batchResults.push({
                 region: currentRegion,
@@ -228,7 +269,7 @@ export class PayoutsService {
         // This parameter is less relevant now as we fetch actual regional EARN, 
         // passing 0 to represent dynamic regional fetching.
         this.logger.log(`⏰ Cron: 28th-of-month payout triggered for ${month}`);
-        await this.processPayout(month, 0);
+        await this.processPayout(month);
     }
 
     /**

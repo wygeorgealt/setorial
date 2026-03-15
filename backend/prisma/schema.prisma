@@ -58,8 +58,16 @@ model User {
 
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
+  
+  // Admin Flags
+  isFrozen       Boolean        @default(false)
+  isFlagged      Boolean        @default(false)
+
+  // Notifications
+  expoPushToken  String?        // Expo push notification token
 
   pointsLedgers  PointsLedger[]
+  subscriptions  SubscriptionRecord[]
   walletLedgers  WalletLedger[]
   userBadges     UserBadge[]
   mockAttempts   MockAttempt[]
@@ -211,14 +219,15 @@ model UserPowerUp {
 }
 
 model WalletLedger {
-  id        String       @id @default(uuid())
-  userId    String
-  user      User         @relation(fields: [userId], references: [id])
-  type      WalletTxType
-  amount    Decimal
-  reference String?
-  region    String?      // ISO country code for regional tracking
-  createdAt DateTime     @default(now())
+  id           String       @id @default(uuid())
+  userId       String
+  user         User         @relation(fields: [userId], references: [id])
+  type         WalletTxType
+  amount       Decimal
+  reference    String?
+  region       String?      // ISO country code for regional tracking
+  exchangeRate Float?       // Transparency: rate used for this specific entry
+  createdAt    DateTime     @default(now())
 }
 
 model PointsLedger {
@@ -242,6 +251,7 @@ model PayoutBatch {
   region          String?      // ISO country code — null = legacy global
   totalLiability  Decimal
   totalPaid       Decimal
+  exchangeRate    Float?       // Transparency: rate used during disburse
   status          PayoutStatus @default(PROCESSING)
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
@@ -263,4 +273,46 @@ model CountryPricing {
   isActive        Boolean      @default(true)
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
+}
+
+model GlobalConfig {
+  id                    String   @id @default(uuid())
+  key                   String   @unique // e.g., "REWARD_POOL_PERCENTAGE"
+  value                 String   // e.g., "0.20"
+  description           String?
+  updatedAt             DateTime @updatedAt
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+model SubscriptionRecord {
+  id                  String             @id @default(uuid())
+  userId              String
+  user                User               @relation(fields: [userId], references: [id])
+  tier                Tier
+  billingCycle        String             @default("MONTHLY") // "MONTHLY" | "ANNUAL"
+  status              SubscriptionStatus @default(ACTIVE)
+  amountPaid          Decimal            // Amount paid in local currency
+  currency            String             @default("NGN")
+  paystackReference   String             @unique
+  currentPeriodStart  DateTime           @default(now())
+  currentPeriodEnd    DateTime           // Expiry date
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+}
+
+model DiscountCode {
+  id              String    @id @default(uuid())
+  code            String    @unique // e.g., "SETORIAL2024"
+  discountPercent Float     // e.g., 10.0 for 10%
+  maxUses         Int?
+  usedCount       Int       @default(0)
+  expiryDate      DateTime?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }

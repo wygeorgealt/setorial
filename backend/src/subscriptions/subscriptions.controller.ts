@@ -10,9 +10,9 @@ export class SubscriptionsController {
     @Post('initialize')
     async initialize(
         @Request() req: any,
-        @Body() body: { tier: string },
+        @Body() body: { tier: string, billingCycle?: 'MONTHLY' | 'ANNUAL' },
     ) {
-        return this.subscriptionsService.initializeTransaction(req.user.userId, body.tier);
+        return this.subscriptionsService.initializeTransaction(req.user.userId, body.tier, body.billingCycle);
     }
 
     @UseGuards(JwtAuthGuard)

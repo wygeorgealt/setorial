@@ -94,7 +94,6 @@ export default function AdminDashboard() {
     // Payout trigger
     const [payoutMonth, setPayoutMonth] = useState('');
     const [payoutRevenue, setPayoutRevenue] = useState('');
-    const [triggeringPayout, setTriggeringPayout] = useState(false);
 
     // Pricing Modal
     const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
@@ -167,19 +166,23 @@ export default function AdminDashboard() {
         } catch (err) { alert('Failed to reject'); }
     };
 
-    const handleFreezeUser = async (id: string, name: string) => {
-        const reason = prompt(`Why freeze ${name}'s wallet?`);
-        if (!reason) return;
+    const handleFreezeUser = async (id: string, currentStatus: boolean) => {
         try {
-            await adminApi.freezeUser(id, reason);
+            await adminApi.freezeUser(id, !currentStatus);
             fetchData();
-        } catch (err) { alert('Failed to freeze user'); }
+        } catch (err) { alert('Failed to update freeze status'); }
+    };
+
+    const handleFlagUser = async (id: string, currentStatus: boolean) => {
+        try {
+            await adminApi.flagUser(id, !currentStatus);
+            fetchData();
+        } catch (err) { alert('Failed to update flag status'); }
     };
 
     const handleTriggerPayout = async () => {
         if (!payoutMonth || !payoutRevenue) { alert('Enter month (e.g. 2026-03) and revenue amount.'); return; }
         if (!confirm(`Trigger payout for ${payoutMonth} with ₦${Number(payoutRevenue).toLocaleString()} revenue?`)) return;
-        setTriggeringPayout(true);
         try {
             await adminApi.triggerPayout(payoutMonth, Number(payoutRevenue));
             alert('Payout triggered successfully!');
@@ -188,8 +191,6 @@ export default function AdminDashboard() {
             fetchData();
         } catch (err: any) {
             alert(err.response?.data?.message || 'Payout failed');
-        } finally {
-            setTriggeringPayout(false);
         }
     };
 
@@ -262,9 +263,7 @@ export default function AdminDashboard() {
         }
     };
 
-    const filteredUsers = users.filter(u =>
-        !userSearch || u.name?.toLowerCase().includes(userSearch.toLowerCase()) || u.email?.toLowerCase().includes(userSearch.toLowerCase())
-    );
+
 
 
     /* ─── Tab Content ──────────────────────────────────────────────────────── */
@@ -435,8 +434,9 @@ export default function AdminDashboard() {
                                         <th className="px-6 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Student</th>
                                         <th className="px-6 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider text-center">Tier</th>
                                         <th className="px-6 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider text-center">KYC Status</th>
+                                        <th className="px-6 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider text-center">Status</th>
                                         <th className="px-6 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider text-right">Points</th>
-                                        <th className="px-6 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider text-right">Balance</th>
+                                        <th className="px-6 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider text-right">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-zinc-100">
@@ -450,9 +450,29 @@ export default function AdminDashboard() {
                                                 </td>
                                                 <td className="px-6 py-4 text-center">{tierBadge(u.tier)}</td>
                                                 <td className="px-6 py-4 text-center">{kycBadge(u.kycStatus)}</td>
+                                                <td className="px-6 py-4 text-center space-y-1">
+                                                    {u.isFrozen && <span className="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-[10px] font-medium text-red-700 ring-1 ring-inset ring-red-600/10">FROZEN</span>}
+                                                    {u.isFlagged && <span className="inline-flex items-center rounded-md bg-orange-50 px-2 py-1 text-[10px] font-medium text-orange-700 ring-1 ring-inset ring-orange-600/10">FLAGGED</span>}
+                                                    {!u.isFrozen && !u.isFlagged && <span className="inline-flex items-center rounded-md bg-zinc-50 px-2 py-1 text-[10px] font-medium text-zinc-700 ring-1 ring-inset ring-zinc-500/10">HEALTHY</span>}
+                                                </td>
                                                 <td className="px-6 py-4 text-right font-medium text-zinc-900">{(u.points ?? 0).toLocaleString()}</td>
-                                                <td className="px-6 py-4 text-right font-bold text-secondary">
-                                                    ₦{Number(u.wallets?.[0]?.monetizableBalance ?? 0).toLocaleString()}
+                                                <td className="px-6 py-4 text-right">
+                                                    <div className="flex justify-end space-x-2">
+                                                        <button
+                                                            onClick={() => handleFlagUser(u.id, u.isFlagged)}
+                                                            className={`p-1.5 rounded-lg border ${u.isFlagged ? 'bg-orange-50 border-orange-200 text-orange-600' : 'bg-white border-zinc-200 text-zinc-400 hover:text-orange-600'}`}
+                                                            title={u.isFlagged ? 'Unflag Account' : 'Flag for Review'}
+                                                        >
+                                                            <AlertTriangle size={16} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleFreezeUser(u.id, u.isFrozen)}
+                                                            className={`p-1.5 rounded-lg border ${u.isFrozen ? 'bg-red-50 border-red-200 text-red-600' : 'bg-white border-zinc-200 text-zinc-400 hover:text-red-600'}`}
+                                                            title={u.isFrozen ? 'Unfreeze Wallet' : 'Freeze Wallet'}
+                                                        >
+                                                            <ShieldCheck size={16} />
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}
@@ -647,8 +667,45 @@ export default function AdminDashboard() {
                     </div>
                 );
 
-            default:
-                return null;
+            /* ── DISCOUNTS ─────────────────────────────────────────────── */
+            case 'discounts':
+                return (
+                    <div className="space-y-10">
+                        <div className="flex justify-between items-end">
+                            <div>
+                                <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">Discount & Promo Codes</h2>
+                                <p className="text-sm text-zinc-500 mt-1">Manage active promotional campaigns.</p>
+                            </div>
+                            <button className="btn-primary h-10 px-6 text-sm" onClick={() => {
+                                const code = prompt('Enter code:');
+                                const percent = prompt('Enter discount percent (e.g. 10):');
+                                if (code && percent) {
+                                    adminApi.createDiscount({ code, discountPercent: Number(percent) }).then(() => fetchData());
+                                }
+                            }}>
+                                <Plus size={18} className="mr-2" />
+                                Create New Code
+                            </button>
+                        </div>
+                        <div className="card !p-0 overflow-hidden">
+                            <AdminDiscountsTable />
+                        </div>
+                    </div>
+                );
+
+            /* ── CONFIG ─────────────────────────────────────────────────── */
+            case 'configs':
+                return (
+                    <div className="space-y-10">
+                        <div>
+                            <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">Global Configuration</h2>
+                            <p className="text-sm text-zinc-500 mt-1">Adjust platform-wide constants and variables.</p>
+                        </div>
+                        <div className="card !p-0 overflow-hidden">
+                            <AdminConfigTable />
+                        </div>
+                    </div>
+                );
         }
     };
 
@@ -674,6 +731,8 @@ export default function AdminDashboard() {
                     <SidebarItem icon={Globe} label="Geo-Pricing" active={activeTab === 'pricing'} onClick={() => setActiveTab('pricing')} />
                     <SidebarItem icon={Map} label="Region Pools" active={activeTab === 'regions'} onClick={() => setActiveTab('regions')} />
                     <SidebarItem icon={CreditCard} label="Payouts" active={activeTab === 'payouts'} onClick={() => setActiveTab('payouts')} />
+                    <SidebarItem icon={Plus} label="Discounts" active={activeTab === 'discounts'} onClick={() => setActiveTab('discounts')} />
+                    <SidebarItem icon={RefreshCcw} label="Config" active={activeTab === 'configs'} onClick={() => setActiveTab('configs')} />
                 </nav>
 
                 <button onClick={() => { localStorage.removeItem('admin_token'); window.location.reload(); }} className="mt-auto w-full flex items-center space-x-3 px-3 py-2 rounded-lg font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition-all">
@@ -787,6 +846,25 @@ export default function AdminDashboard() {
                                     </div>
                                 </div>
 
+                                {/* Annual Pricing */}
+                                <div className="space-y-4 pt-4">
+                                    <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-1">Annual Subs (Base)</h4>
+                                    <div className="grid grid-cols-3 gap-6">
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-medium text-zinc-600 ml-1">Bronze</label>
+                                            <input type="number" className="input-field" value={pricingForm.bronzeAnnual} onChange={(e) => setPricingForm({ ...pricingForm, bronzeAnnual: e.target.value })} required />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-medium text-zinc-600 ml-1">Silver</label>
+                                            <input type="number" className="input-field" value={pricingForm.silverAnnual} onChange={(e) => setPricingForm({ ...pricingForm, silverAnnual: e.target.value })} required />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-medium text-zinc-600 ml-1">Gold</label>
+                                            <input type="number" className="input-field" value={pricingForm.goldAnnual} onChange={(e) => setPricingForm({ ...pricingForm, goldAnnual: e.target.value })} required />
+                                        </div>
+                                    </div>
+                                </div>
+
                                 {/* Status */}
                                 <div className="flex items-center space-x-3 pt-4">
                                     <input
@@ -816,3 +894,129 @@ export default function AdminDashboard() {
         </div>
     );
 }
+
+/* ─── Sub-Components ────────────────────────────────────────────────────── */
+
+const AdminConfigTable = () => {
+    const [configs, setConfigs] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchConfigs();
+    }, []);
+
+    const fetchConfigs = async () => {
+        try {
+            const res = await adminApi.getConfigs();
+            setConfigs(res.data);
+        } catch (err) { console.error(err); }
+        finally { setLoading(false); }
+    };
+
+    const handleUpdate = async (key: string, currentValue: string) => {
+        const newValue = prompt(`Update value for ${key}:`, currentValue);
+        if (newValue === null || newValue === currentValue) return;
+        try {
+            await adminApi.updateConfig(key, newValue);
+            fetchConfigs();
+        } catch (err) { alert('Update failed'); }
+    };
+
+    if (loading) return <div className="p-8 text-center text-zinc-400">Loading configs...</div>;
+
+    return (
+        <table className="w-full text-left border-collapse">
+            <thead className="bg-zinc-50 border-b border-zinc-100">
+                <tr>
+                    <th className="px-6 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Config Key</th>
+                    <th className="px-6 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Value</th>
+                    <th className="px-6 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Description</th>
+                    <th className="px-6 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-100">
+                {configs.map((c: any) => (
+                    <tr key={c.id}>
+                        <td className="px-6 py-4 font-mono text-xs font-bold text-zinc-900 uppercase">{c.key}</td>
+                        <td className="px-6 py-4 text-sm text-zinc-600">{c.value}</td>
+                        <td className="px-6 py-4 text-xs text-zinc-500">{c.description || 'No description'}</td>
+                        <td className="px-6 py-4 text-right">
+                            <button onClick={() => handleUpdate(c.key, c.value)} className="p-2 text-zinc-400 hover:text-zinc-900 transition-colors">
+                                <Edit2 size={16} />
+                            </button>
+                        </td>
+                    </tr>
+                ))}
+                {configs.length === 0 && (
+                    <tr>
+                        <td colSpan={4} className="px-6 py-10 text-center text-zinc-500 italic">No configurations found. Add them via API or Database.</td>
+                    </tr>
+                )}
+            </tbody>
+        </table>
+    );
+};
+
+const AdminDiscountsTable = () => {
+    const [discounts, setDiscounts] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchDiscounts();
+    }, []);
+
+    const fetchDiscounts = async () => {
+        try {
+            const res = await adminApi.getDiscounts();
+            setDiscounts(res.data);
+        } catch (err) { console.error(err); }
+        finally { setLoading(false); }
+    };
+
+    const handleToggle = async (id: string, current: boolean) => {
+        try {
+            await adminApi.toggleDiscount(id, !current);
+            fetchDiscounts();
+        } catch (err) { alert('Failed to toggle'); }
+    };
+
+    if (loading) return <div className="p-8 text-center text-zinc-400">Loading discounts...</div>;
+
+    return (
+        <table className="w-full text-left border-collapse">
+            <thead className="bg-zinc-50 border-b border-zinc-100">
+                <tr>
+                    <th className="px-6 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Code</th>
+                    <th className="px-6 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider text-center">Discount</th>
+                    <th className="px-6 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider text-center">Usage</th>
+                    <th className="px-6 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider text-center">Status</th>
+                    <th className="px-6 py-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-100">
+                {discounts.map((d: any) => (
+                    <tr key={d.id}>
+                        <td className="px-6 py-4 font-bold text-zinc-900 tracking-wider font-mono">{d.code}</td>
+                        <td className="px-6 py-4 text-center text-sm font-semibold text-emerald-600">{d.discountPercent}% OFF</td>
+                        <td className="px-6 py-4 text-center text-xs text-zinc-500">{d.usedCount} used {d.maxUses ? `/ ${d.maxUses}` : ''}</td>
+                        <td className="px-6 py-4 text-center">
+                            <span className={`inline-flex items-center rounded-md px-2 py-1 text-[10px] font-bold ring-1 ring-inset ${d.isActive ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20' : 'bg-zinc-100 text-zinc-700 ring-zinc-500/10'}`}>
+                                {d.isActive ? 'ACTIVE' : 'INACTIVE'}
+                            </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                            <button onClick={() => handleToggle(d.id, d.isActive)} className="text-xs font-semibold text-zinc-500 hover:text-zinc-900">
+                                {d.isActive ? 'Deactivate' : 'Activate'}
+                            </button>
+                        </td>
+                    </tr>
+                ))}
+                {discounts.length === 0 && (
+                    <tr>
+                        <td colSpan={5} className="px-6 py-10 text-center text-zinc-500 italic">No discount codes active.</td>
+                    </tr>
+                )}
+            </tbody>
+        </table>
+    );
+};

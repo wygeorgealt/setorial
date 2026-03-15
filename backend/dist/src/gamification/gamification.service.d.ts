@@ -1,11 +1,13 @@
 import { OnModuleDestroy } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 export declare class GamificationService implements OnModuleDestroy {
     private prisma;
+    private notificationsService;
     private redis;
-    constructor(prisma: PrismaService);
+    constructor(prisma: PrismaService, notificationsService: NotificationsService);
     onModuleDestroy(): void;
-    awardPoints(userId: string, points: number, action: string): Promise<void>;
+    awardPoints(userId: string, points: number, action: string, subjectId?: string): Promise<void>;
     incrementStreak(userId: string): Promise<number>;
     applyStreakFreeze(userId: string): Promise<void>;
     getStreak(userId: string): Promise<number>;
@@ -25,5 +27,5 @@ export declare class GamificationService implements OnModuleDestroy {
         icon: string;
         color: string;
     }[]>;
-    getLeaderboard(limit?: number): Promise<string[]>;
+    getLeaderboard(limit?: number, subjectId?: string): Promise<string[]>;
 }

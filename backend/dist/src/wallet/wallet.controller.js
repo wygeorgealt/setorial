@@ -22,8 +22,7 @@ let WalletController = class WalletController {
         this.walletService = walletService;
     }
     async getBalance(req) {
-        const balance = await this.walletService.getBalance(req.user.userId);
-        return { balance };
+        return this.walletService.getBalanceData(req.user.userId);
     }
     async getTransactions(req) {
         return this.walletService.getTransactions(req.user.userId);

@@ -8,7 +8,10 @@ export class GamificationController {
     constructor(private readonly gamificationService: GamificationService) { }
 
     @Get('leaderboard')
-    async getLeaderboard(@Query('limit') limit: string) {
-        return this.gamificationService.getLeaderboard(parseInt(limit, 10) || 10);
+    async getLeaderboard(
+        @Query('limit') limit: string,
+        @Query('subjectId') subjectId?: string
+    ) {
+        return this.gamificationService.getLeaderboard(parseInt(limit, 10) || 10, subjectId);
     }
 }

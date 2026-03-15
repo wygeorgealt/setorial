@@ -13,6 +13,7 @@ import { PayoutsModule } from './payouts/payouts.module';
 import { PricingModule } from './pricing/pricing.module';
 import { MockExamsModule } from './mock-exams/mock-exams.module';
 import { StoreModule } from './store/store.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
@@ -30,6 +31,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     PricingModule,
     MockExamsModule,
     StoreModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

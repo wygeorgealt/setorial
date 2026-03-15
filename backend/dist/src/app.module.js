@@ -22,6 +22,7 @@ const payouts_module_1 = require("./payouts/payouts.module");
 const pricing_module_1 = require("./pricing/pricing.module");
 const mock_exams_module_1 = require("./mock-exams/mock-exams.module");
 const store_module_1 = require("./store/store.module");
+const notifications_module_1 = require("./notifications/notifications.module");
 const schedule_1 = require("@nestjs/schedule");
 let AppModule = class AppModule {
 };
@@ -42,6 +43,7 @@ exports.AppModule = AppModule = __decorate([
             pricing_module_1.PricingModule,
             mock_exams_module_1.MockExamsModule,
             store_module_1.StoreModule,
+            notifications_module_1.NotificationsModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

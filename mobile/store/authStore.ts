@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 
 interface User {
-    id: number;
+    id: string;
     email: string;
     name: string;
     role: string;
@@ -11,6 +11,10 @@ interface User {
     avatarUrl?: string;
     points: number;
     streak: number;
+    badges?: any[];
+    billingCountry?: string;
+    detectedCountry?: string | null;
+    activeSub?: any;
 }
 
 interface AuthState {

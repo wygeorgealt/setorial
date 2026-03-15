@@ -4,6 +4,7 @@ export declare class WalletController {
     constructor(walletService: WalletService);
     getBalance(req: any): Promise<{
         balance: number;
+        exchangeRate: number;
     }>;
     getTransactions(req: any): Promise<{
         id: string;
@@ -13,5 +14,6 @@ export declare class WalletController {
         amount: import("@prisma/client-runtime-utils").Decimal;
         reference: string | null;
         region: string | null;
+        exchangeRate: number | null;
     }[]>;
 }

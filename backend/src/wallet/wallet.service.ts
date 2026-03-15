@@ -6,12 +6,25 @@ import { WalletTxType } from '@prisma/client';
 export class WalletService {
     constructor(private prisma: PrismaService) { }
 
-    async getBalance(userId: string): Promise<number> {
+    async getBalanceData(userId: string): Promise<{ balance: number, exchangeRate: number }> {
         const result = await this.prisma.walletLedger.aggregate({
             where: { userId },
             _sum: { amount: true },
         });
-        return result._sum.amount ? Number(result._sum.amount) : 0;
+
+        const balance = result._sum.amount ? Number(result._sum.amount) : 0;
+
+        // Fetch latest exchange rate from the most recent completed batch
+        const latestBatch = await (this.prisma as any).payoutBatch.findFirst({
+            where: { status: 'COMPLETED', exchangeRate: { not: null } },
+            orderBy: { createdAt: 'desc' },
+            select: { exchangeRate: true }
+        });
+
+        return {
+            balance,
+            exchangeRate: latestBatch?.exchangeRate || 1600.0 // Fallback to PRD default 
+        };
     }
 
     async addTransaction(userId: string, type: WalletTxType, amount: number, reference?: string) {

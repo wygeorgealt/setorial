@@ -34,10 +34,23 @@ export class UsersService {
         return result._sum.points || 0;
     }
 
-    async updateProfile(userId: string, data: { name?: string }) {
+    async updateProfile(userId: string, data: { name?: string, billingCountry?: string, expoPushToken?: string }) {
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user) throw new BadRequestException('User not found');
+
+        const updateData: any = { ...data };
+
+        // Handle billing country locking
+        if (data.billingCountry) {
+            if (user.countryLocked && user.billingCountry !== data.billingCountry) {
+                throw new BadRequestException('Billing country is locked and cannot be changed');
+            }
+            updateData.countryLocked = true;
+        }
+
         return this.prisma.user.update({
             where: { id: userId },
-            data,
+            data: updateData,
         });
     }
 
@@ -179,11 +192,10 @@ export class UsersService {
         }) as any;
     }
 
-    async getPendingKyc() {
-        return this.prisma.user.findMany({
-            where: { kycStatus: KycStatus.PENDING },
-            select: { id: true, name: true, email: true, tier: true, payoutMethod: true, payoutAccount: true, createdAt: true },
-            orderBy: { updatedAt: 'asc' },
-        }) as any;
+    async getActiveSubscription(userId: string) {
+        return (this.prisma as any).subscriptionRecord.findFirst({
+            where: { userId, status: 'ACTIVE' },
+            orderBy: { currentPeriodEnd: 'desc' }
+        });
     }
 }

@@ -77,10 +77,20 @@ let LearningService = class LearningService {
     async submitQuiz(userId, dto) {
         const quiz = await this.prisma.quiz.findUnique({
             where: { id: dto.quizId },
-            include: { questions: true },
+            include: {
+                questions: true,
+                lesson: {
+                    include: {
+                        topic: {
+                            include: { subject: true }
+                        }
+                    }
+                }
+            },
         });
         if (!quiz)
             throw new common_1.NotFoundException('Quiz not found');
+        const subjectId = quiz.lesson.topic.subjectId;
         let score = 0;
         const breakdown = [];
         quiz.questions.forEach((q, index) => {
@@ -93,7 +103,7 @@ let LearningService = class LearningService {
         const hasBoost = await this.storeService.hasActiveBoost(userId);
         if (hasBoost)
             pointsEarned *= 2;
-        await this.gamificationService.awardPoints(userId, pointsEarned, hasBoost ? 'Quiz Completion (2x Boost)' : 'Quiz Completion');
+        await this.gamificationService.awardPoints(userId, pointsEarned, hasBoost ? 'Quiz Completion (2x Boost)' : 'Quiz Completion', subjectId);
         const currentStreak = await this.gamificationService.incrementStreak(userId);
         await this.gamificationService.checkAndAwardBadges(userId, {
             streak: currentStreak,

@@ -17,12 +17,21 @@ let WalletService = class WalletService {
     constructor(prisma) {
         this.prisma = prisma;
     }
-    async getBalance(userId) {
+    async getBalanceData(userId) {
         const result = await this.prisma.walletLedger.aggregate({
             where: { userId },
             _sum: { amount: true },
         });
-        return result._sum.amount ? Number(result._sum.amount) : 0;
+        const balance = result._sum.amount ? Number(result._sum.amount) : 0;
+        const latestBatch = await this.prisma.payoutBatch.findFirst({
+            where: { status: 'COMPLETED', exchangeRate: { not: null } },
+            orderBy: { createdAt: 'desc' },
+            select: { exchangeRate: true }
+        });
+        return {
+            balance,
+            exchangeRate: latestBatch?.exchangeRate || 1600.0
+        };
     }
     async addTransaction(userId, type, amount, reference) {
         if (type === 'PAYOUT' && amount > 0) {

@@ -22,7 +22,7 @@ let SubscriptionsController = class SubscriptionsController {
         this.subscriptionsService = subscriptionsService;
     }
     async initialize(req, body) {
-        return this.subscriptionsService.initializeTransaction(req.user.userId, body.tier);
+        return this.subscriptionsService.initializeTransaction(req.user.userId, body.tier, body.billingCycle);
     }
     async verify(reference) {
         return this.subscriptionsService.verifyTransaction(reference);

@@ -16,21 +16,27 @@ exports.GamificationService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma.service");
 const ioredis_1 = __importDefault(require("ioredis"));
+const notifications_service_1 = require("../notifications/notifications.service");
 let GamificationService = class GamificationService {
     prisma;
+    notificationsService;
     redis;
-    constructor(prisma) {
+    constructor(prisma, notificationsService) {
         this.prisma = prisma;
+        this.notificationsService = notificationsService;
         this.redis = new ioredis_1.default(process.env.REDIS_URL || 'redis://localhost:6379');
     }
     onModuleDestroy() {
         this.redis.disconnect();
     }
-    async awardPoints(userId, points, action) {
+    async awardPoints(userId, points, action, subjectId) {
         await this.prisma.pointsLedger.create({
             data: { userId, points, action },
         });
         await this.redis.zincrby('leaderboard:global', points, userId);
+        if (subjectId) {
+            await this.redis.zincrby(`leaderboard:subject:${subjectId}`, points, userId);
+        }
     }
     async incrementStreak(userId) {
         const key = `streak:${userId}`;
@@ -117,13 +123,15 @@ let GamificationService = class GamificationService {
             awardedAt: ub.awardedAt
         })));
     }
-    async getLeaderboard(limit = 10) {
-        return this.redis.zrevrange('leaderboard:global', 0, limit - 1, 'WITHSCORES');
+    async getLeaderboard(limit = 10, subjectId) {
+        const key = subjectId ? `leaderboard:subject:${subjectId}` : 'leaderboard:global';
+        return this.redis.zrevrange(key, 0, limit - 1, 'WITHSCORES');
     }
 };
 exports.GamificationService = GamificationService;
 exports.GamificationService = GamificationService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        notifications_service_1.NotificationsService])
 ], GamificationService);
 //# sourceMappingURL=gamification.service.js.map

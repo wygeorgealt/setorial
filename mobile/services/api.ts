@@ -46,11 +46,11 @@ export const walletApi = {
 };
 
 export const gamificationApi = {
-    getLeaderboard: () => api.get('/gamification/leaderboard'),
+    getLeaderboard: (subjectId?: string) => api.get(`/gamification/leaderboard${subjectId ? `?subjectId=${subjectId}` : ''}`),
 };
 
 export const subscriptionApi = {
-    initialize: (tier: string) => api.post('/subscriptions/initialize', { tier }),
+    initialize: (data: { tier: string, billingCycle?: string }) => api.post('/subscriptions/initialize', data),
     verify: (reference: string) => api.get(`/subscriptions/verify/${reference}`),
     getPricing: (country: string) => api.get(`/pricing?country=${country}`),
 };

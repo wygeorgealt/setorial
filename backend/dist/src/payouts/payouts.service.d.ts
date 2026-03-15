@@ -1,11 +1,13 @@
 import { PrismaService } from '../prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 export declare class PayoutsService {
     private prisma;
+    private notificationsService;
     private readonly logger;
-    constructor(prisma: PrismaService);
-    simulatePayout(month: string, globalEstimatedRevenue: number): Promise<{
+    constructor(prisma: PrismaService, notificationsService: NotificationsService);
+    simulatePayout(month: string, globalEstimatedRevenue?: number): Promise<{
         month: string;
-        globalEstimatedRevenue: number;
+        globalEstimatedRevenue: number | undefined;
         regions: {
             region: any;
             regionalRevenue: number;
@@ -17,7 +19,7 @@ export declare class PayoutsService {
             simulatedPayouts: any;
         }[];
     }>;
-    processPayout(month: string, globalEstimatedRevenue: number): Promise<{
+    processPayout(month: string): Promise<{
         message: string;
         month: string;
         totalPaid: number;

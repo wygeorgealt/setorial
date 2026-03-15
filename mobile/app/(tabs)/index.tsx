@@ -25,7 +25,7 @@ export default function HomeScreen() {
             updateUser(profileRes.data);
             setBalance({
                 ngn: walletRes.data.balance,
-                usd: walletRes.data.balance / 1600 // Mock conversion
+                usd: walletRes.data.balance / (walletRes.data.exchangeRate || 1600)
             });
             setSubjects(subjectsRes.data);
         } catch (error) {
@@ -55,8 +55,24 @@ export default function HomeScreen() {
                 {/* Header Section (Duolingo Style Top Bar) */}
                 <View className="flex-row items-center justify-between mb-8 pb-4 border-b-2 border-[#E5E5E5] dark:border-[#272B36]">
                     <View className="flex-row items-center flex-1">
-                        <ShieldCheck size={28} color="#CECECE" />
-                        <Text className="text-[#AFAFAF] dark:text-gray-400 font-bold text-lg ml-2">{user?.tier || 'FREE'}</Text>
+                        <ShieldCheck
+                            size={28}
+                            color={
+                                user?.tier === 'GOLD' ? '#FFD700' :
+                                    user?.tier === 'SILVER' ? '#B4B4B4' :
+                                        user?.tier === 'BRONZE' ? '#CD7F32' : '#CECECE'
+                            }
+                        />
+                        <Text
+                            className="font-black text-lg ml-2 tracking-tighter"
+                            style={{
+                                color: user?.tier === 'GOLD' ? '#FFD700' :
+                                    user?.tier === 'SILVER' ? '#B4B4B4' :
+                                        user?.tier === 'BRONZE' ? '#CD7F32' : '#AFAFAF'
+                            }}
+                        >
+                            {user?.tier || 'FREE'}
+                        </Text>
                     </View>
                     <View className="flex-row items-center">
                         <TouchableOpacity

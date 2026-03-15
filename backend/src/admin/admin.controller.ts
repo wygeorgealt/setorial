@@ -14,13 +14,6 @@ export class AdminController {
         private prisma: PrismaService,
     ) { }
 
-    @Get('simulate-payout')
-    async simulatePayout(
-        @Query('month') month: string,
-        @Query('revenue', ParseFloatPipe) revenue: number
-    ) {
-        return this.payoutsService.simulatePayout(month, revenue);
-    }
 
     // ─── Financial Dashboard ─────────────────────────────────────────────────
 
@@ -187,12 +180,62 @@ export class AdminController {
     }
 
     @Post('users/:id/freeze')
-    async freezeUserWallet(@Param('id') userId: string, @Body('reason') reason: string) {
-        await this.prisma.user.update({
+    async freezeUser(@Param('id') userId: string, @Body('isFrozen') isFrozen: boolean) {
+        return this.prisma.user.update({
             where: { id: userId },
-            data: { isVerified: false },
+            data: { isFrozen },
+            select: { id: true, email: true, isFrozen: true },
         });
-        return { success: true, message: `User ${userId} wallet frozen. Reason: ${reason}` };
+    }
+
+    @Post('users/:id/flag')
+    async flagUser(@Param('id') userId: string, @Body('isFlagged') isFlagged: boolean) {
+        return this.prisma.user.update({
+            where: { id: userId },
+            data: { isFlagged },
+            select: { id: true, email: true, isFlagged: true },
+        });
+    }
+
+    // ─── Global Configuration ───────────────────────────────────────────────
+
+    @Get('configs')
+    async getConfigs() {
+        return this.prisma.globalConfig.findMany();
+    }
+
+    @Post('configs/:key')
+    async updateConfig(@Param('key') key: string, @Body('value') value: string, @Body('description') description?: string) {
+        return this.prisma.globalConfig.upsert({
+            where: { key },
+            update: { value, description },
+            create: { key, value, description },
+        });
+    }
+
+    // ─── Discount Codes ─────────────────────────────────────────────────────
+
+    @Get('discounts')
+    async getDiscounts() {
+        return this.prisma.discountCode.findMany();
+    }
+
+    @Post('discounts')
+    async createDiscount(@Body() data: { code: string, discountPercent: number, maxUses?: number, expiryDate?: string }) {
+        return this.prisma.discountCode.create({
+            data: {
+                ...data,
+                expiryDate: data.expiryDate ? new Date(data.expiryDate) : null,
+            },
+        });
+    }
+
+    @Post('discounts/:id/toggle')
+    async toggleDiscount(@Param('id') id: string, @Body('isActive') isActive: boolean) {
+        return this.prisma.discountCode.update({
+            where: { id },
+            data: { isActive },
+        });
     }
 
     // ─── Payout Batches ─────────────────────────────────────────────────────
@@ -204,10 +247,15 @@ export class AdminController {
 
     /** Manual trigger for testing — production version runs on cron */
     @Post('payout/trigger')
-    async triggerPayout(
+    async triggerPayout(@Query('month') month: string) {
+        return this.payoutsService.processPayout(month);
+    }
+
+    @Get('payout/simulate')
+    async simulatePayout(
         @Query('month') month: string,
-        @Query('revenue', ParseFloatPipe) revenue: number,
+        @Query('revenue') revenue?: string,
     ) {
-        return this.payoutsService.processPayout(month, revenue);
+        return this.payoutsService.simulatePayout(month, revenue ? parseFloat(revenue) : undefined);
     }
 }

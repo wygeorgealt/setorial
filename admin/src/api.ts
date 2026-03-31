@@ -54,6 +54,27 @@ export const adminApi = {
     getDiscounts: () => api.get('/admin/discounts'),
     createDiscount: (data: any) => api.post('/admin/discounts', data),
     toggleDiscount: (id: string, isActive: boolean) => api.post(`/admin/discounts/${id}/toggle`, { isActive }),
+
+    // Learning & AI Content
+    getSubjects: () => api.get('/learning/subjects'),
+    createSubject: (data: any) => api.post('/learning/subjects', data),
+    deleteSubject: (id: string) => api.delete(`/learning/subjects/${id}`),
+    createTopic: (data: any) => api.post('/learning/topics', data),
+    deleteTopic: (id: string) => api.delete(`/learning/topics/${id}`),
+    generateAiLevels: (data: { subjectId: string, topicName: string, numLevels: number }) => 
+        api.post('/learning/ai/generate-levels', data),
+    getLesson: (id: string) => api.get(`/learning/lessons/${id}`),
+    updateLesson: (id: string, data: any) => api.post(`/learning/lessons/${id}`, data),
+
+    // Mock Exams
+    getMocks: () => api.get('/mocks'),
+    getMockDetails: (id: string) => api.get(`/mocks/${id}`),
+    createMock: (data: any) => api.post('/admin/mocks', data), // Assuming admin route for creation
+    deleteMock: (id: string) => api.delete(`/admin/mocks/${id}`),
+
+    // Notifications
+    sendNotification: (data: { userId?: string, title: string, body: string, data?: any }) => 
+        api.post('/admin/notifications/send', data),
 };
 
 export default api;

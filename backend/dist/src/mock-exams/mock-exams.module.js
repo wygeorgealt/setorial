@@ -21,6 +21,7 @@ exports.MockExamsModule = MockExamsModule = __decorate([
         imports: [wallet_module_1.WalletModule, gamification_module_1.GamificationModule],
         providers: [mock_exams_service_1.MockExamsService, prisma_service_1.PrismaService],
         controllers: [mock_exams_controller_1.MockExamsController],
+        exports: [mock_exams_service_1.MockExamsService],
     })
 ], MockExamsModule);
 //# sourceMappingURL=mock-exams.module.js.map

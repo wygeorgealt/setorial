@@ -27,8 +27,8 @@ export class AuthService {
         return this.generateAuthResponse(user);
     }
 
-    async login(loginDto: LoginDto) {
-        const user = await this.usersService.findByEmail(loginDto.email);
+    async login(loginDto: LoginDto, ipCountry?: string) {
+        let user = await this.usersService.findByEmail(loginDto.email);
         if (!user) {
             throw new UnauthorizedException('Invalid credentials');
         }
@@ -36,6 +36,23 @@ export class AuthService {
         if (!isPasswordValid) {
             throw new UnauthorizedException('Invalid credentials');
         }
+
+        // Fraud detection logic
+        if (ipCountry && user.countryLocked && user.billingCountry && user.billingCountry.toUpperCase() !== ipCountry.toUpperCase()) {
+            if (!user.isFlagged) {
+                user = await this.prisma.user.update({
+                    where: { id: user.id },
+                    data: { isFlagged: true }
+                });
+            }
+        }
+
+        // Update last active
+        await this.prisma.user.update({
+            where: { id: user.id },
+            data: { lastActiveAt: new Date() }
+        });
+
         return this.generateAuthResponse(user);
     }
 

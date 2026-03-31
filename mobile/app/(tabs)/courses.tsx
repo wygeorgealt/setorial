@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { learningApi } from '../../services/api';
 
 export default function CoursesScreen() {
+    const router = useRouter();
     const [subjects, setSubjects] = useState<any[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [refreshing, setRefreshing] = useState(false);
@@ -68,6 +69,7 @@ export default function CoursesScreen() {
                         <TouchableOpacity
                             key={subject.id}
                             activeOpacity={0.8}
+                            onPress={() => router.push(`/course-detail?id=${subject.id}`)}
                             className="bg-white dark:bg-[#1E222B] border-2 border-[#E5E5E5] dark:border-[#272B36] border-b-4 px-5 py-3 rounded-2xl mr-3 mb-3"
                         >
                             <Text className="text-[#4B4B4B] dark:text-white font-bold text-[15px]">{subject.name}</Text>

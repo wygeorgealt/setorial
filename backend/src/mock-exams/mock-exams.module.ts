@@ -9,5 +9,6 @@ import { GamificationModule } from '../gamification/gamification.module';
     imports: [WalletModule, GamificationModule],
     providers: [MockExamsService, PrismaService],
     controllers: [MockExamsController],
+    exports: [MockExamsService],
 })
 export class MockExamsModule { }

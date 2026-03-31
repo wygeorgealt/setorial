@@ -1,9 +1,13 @@
 import { PayoutsService } from '../payouts/payouts.service';
 import { PrismaService } from '../prisma.service';
+import { MockExamsService } from '../mock-exams/mock-exams.service';
+import { NotificationsService } from '../notifications/notifications.service';
 export declare class AdminController {
     private payoutsService;
     private prisma;
-    constructor(payoutsService: PayoutsService, prisma: PrismaService);
+    private mockExamsService;
+    private notificationsService;
+    constructor(payoutsService: PayoutsService, prisma: PrismaService, mockExamsService: MockExamsService, notificationsService: NotificationsService);
     getDashboardStats(): Promise<{
         currentMonthRevenue: number;
         rewardPoolCap: number;
@@ -24,32 +28,32 @@ export declare class AdminController {
         approvedKycCount: number;
         totalUsers: number;
         latestPayoutBatch: {
+            exchangeRate: number | null;
             id: string;
             createdAt: Date;
-            updatedAt: Date;
             status: import("@prisma/client").$Enums.PayoutStatus;
-            region: string | null;
-            exchangeRate: number | null;
             month: string;
+            region: string | null;
             totalLiability: import("@prisma/client-runtime-utils").Decimal;
             totalPaid: import("@prisma/client-runtime-utils").Decimal;
+            updatedAt: Date;
         } | null;
     }>;
     getPendingKyc(): Promise<{
         id: string;
-        name: string | null;
         createdAt: Date;
+        name: string | null;
         email: string;
         tier: import("@prisma/client").$Enums.Tier;
         payoutMethod: import("@prisma/client").$Enums.PayoutMethod | null;
         payoutAccount: import("@prisma/client/runtime/client").JsonValue;
     }[]>;
     approveKyc(userId: string): Promise<{
+        isVerified: boolean;
         id: string;
+        kycStatus: import("@prisma/client").$Enums.KycStatus;
         name: string | null;
         email: string;
-        isVerified: boolean;
-        kycStatus: import("@prisma/client").$Enums.KycStatus;
     }>;
     rejectKyc(userId: string, reason: string): Promise<{
         success: boolean;
@@ -57,13 +61,13 @@ export declare class AdminController {
         reason: string;
     }>;
     getAllUsers(tier?: string, kycStatus?: string): Promise<{
+        isVerified: boolean;
         id: string;
-        name: string | null;
         createdAt: Date;
+        kycStatus: import("@prisma/client").$Enums.KycStatus;
+        name: string | null;
         email: string;
         tier: import("@prisma/client").$Enums.Tier;
-        isVerified: boolean;
-        kycStatus: import("@prisma/client").$Enums.KycStatus;
     }[]>;
     freezeUser(userId: string, isFrozen: boolean): Promise<{
         id: string;
@@ -78,27 +82,27 @@ export declare class AdminController {
     getConfigs(): Promise<{
         id: string;
         updatedAt: Date;
-        description: string | null;
         key: string;
         value: string;
+        description: string | null;
     }[]>;
     updateConfig(key: string, value: string, description?: string): Promise<{
         id: string;
         updatedAt: Date;
-        description: string | null;
         key: string;
         value: string;
+        description: string | null;
     }>;
     getDiscounts(): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        isActive: boolean;
         code: string;
         discountPercent: number;
         maxUses: number | null;
         usedCount: number;
         expiryDate: Date | null;
+        isActive: boolean;
     }[]>;
     createDiscount(data: {
         code: string;
@@ -109,34 +113,34 @@ export declare class AdminController {
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        isActive: boolean;
         code: string;
         discountPercent: number;
         maxUses: number | null;
         usedCount: number;
         expiryDate: Date | null;
+        isActive: boolean;
     }>;
     toggleDiscount(id: string, isActive: boolean): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
-        isActive: boolean;
         code: string;
         discountPercent: number;
         maxUses: number | null;
         usedCount: number;
         expiryDate: Date | null;
+        isActive: boolean;
     }>;
     getPayoutBatches(): Promise<{
+        exchangeRate: number | null;
         id: string;
         createdAt: Date;
-        updatedAt: Date;
         status: import("@prisma/client").$Enums.PayoutStatus;
-        region: string | null;
-        exchangeRate: number | null;
         month: string;
+        region: string | null;
         totalLiability: import("@prisma/client-runtime-utils").Decimal;
         totalPaid: import("@prisma/client-runtime-utils").Decimal;
+        updatedAt: Date;
     }[]>;
     triggerPayout(month: string): Promise<{
         message: string;
@@ -175,4 +179,41 @@ export declare class AdminController {
             simulatedPayouts: any;
         }[];
     }>;
+    createMock(data: any): Promise<{
+        questions: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            text: string;
+            options: import("@prisma/client/runtime/client").JsonValue;
+            correctOption: number;
+            lessonId: string | null;
+            mockExamId: string | null;
+        }[];
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        description: string | null;
+        isActive: boolean;
+        title: string;
+        durationMinutes: number;
+        price: import("@prisma/client-runtime-utils").Decimal;
+    }>;
+    deleteMock(id: string): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        description: string | null;
+        isActive: boolean;
+        title: string;
+        durationMinutes: number;
+        price: import("@prisma/client-runtime-utils").Decimal;
+    }>;
+    sendNotification(data: {
+        userId?: string;
+        title: string;
+        body: string;
+        data?: any;
+    }): Promise<any>;
 }

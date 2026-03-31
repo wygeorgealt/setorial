@@ -21,11 +21,9 @@ export declare class UsersController {
         activeSub: any;
         detectedCountry: any;
         id?: string | undefined;
-        name?: string | null | undefined;
-        createdAt?: Date | undefined;
-        updatedAt?: Date | undefined;
         email?: string | undefined;
         password?: string | undefined;
+        name?: string | null | undefined;
         role?: import("@prisma/client").$Enums.Role | undefined;
         tier?: import("@prisma/client").$Enums.Tier | undefined;
         isVerified?: boolean | undefined;
@@ -37,6 +35,8 @@ export declare class UsersController {
         lastActiveAt?: Date | null | undefined;
         assessmentPassed?: boolean | undefined;
         monetizationEligibleAt?: Date | null | undefined;
+        createdAt?: Date | undefined;
+        updatedAt?: Date | undefined;
         isFrozen?: boolean | undefined;
         isFlagged?: boolean | undefined;
         expoPushToken?: string | null | undefined;
@@ -47,11 +47,9 @@ export declare class UsersController {
         expoPushToken?: string;
     }): Promise<{
         id: string;
-        name: string | null;
-        createdAt: Date;
-        updatedAt: Date;
         email: string;
         password: string;
+        name: string | null;
         role: import("@prisma/client").$Enums.Role;
         tier: import("@prisma/client").$Enums.Tier;
         isVerified: boolean;
@@ -63,6 +61,8 @@ export declare class UsersController {
         lastActiveAt: Date | null;
         assessmentPassed: boolean;
         monetizationEligibleAt: Date | null;
+        createdAt: Date;
+        updatedAt: Date;
         isFrozen: boolean;
         isFlagged: boolean;
         expoPushToken: string | null;
@@ -71,8 +71,8 @@ export declare class UsersController {
         id: string;
         name: string;
         totalTopics: number;
-        totalQuizzes: number;
-        completedQuizzes: number;
+        totalLessons: number;
+        completedLessons: number;
         progress: number;
     }[]>;
     submitKyc(req: any, body: {
@@ -83,11 +83,9 @@ export declare class UsersController {
     resolveAccount(accountNumber: string, bankCode: string): Promise<any>;
     getUser(id: string): Promise<{
         id: string;
-        name: string | null;
-        createdAt: Date;
-        updatedAt: Date;
         email: string;
         password: string;
+        name: string | null;
         role: import("@prisma/client").$Enums.Role;
         tier: import("@prisma/client").$Enums.Tier;
         isVerified: boolean;
@@ -99,6 +97,8 @@ export declare class UsersController {
         lastActiveAt: Date | null;
         assessmentPassed: boolean;
         monetizationEligibleAt: Date | null;
+        createdAt: Date;
+        updatedAt: Date;
         isFrozen: boolean;
         isFlagged: boolean;
         expoPushToken: string | null;

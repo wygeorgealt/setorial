@@ -16,16 +16,6 @@ export class CreateTopicDto {
     subjectId: string;
 }
 
-export class CreateLessonDto {
-    @IsString()
-    @IsNotEmpty()
-    name: string;
-
-    @IsString()
-    @IsNotEmpty()
-    topicId: string;
-}
-
 export class CreateQuestionDto {
     @IsString()
     @IsNotEmpty()
@@ -38,24 +28,46 @@ export class CreateQuestionDto {
     correctOption: number;
 }
 
-export class CreateQuizDto {
+export class CreateLessonDto {
     @IsString()
     @IsNotEmpty()
-    title: string;
+    name: string;
 
     @IsString()
     @IsNotEmpty()
-    lessonId: string;
+    topicId: string;
+
+    @IsString()
+    content?: string;
+
+    @IsNumber()
+    order?: number;
+
+    @IsNumber()
+    rewardPoints?: number;
 
     @IsArray()
     questions: CreateQuestionDto[];
 }
 
-export class SubmitQuizDto {
+export class SubmitLessonDto {
     @IsString()
     @IsNotEmpty()
-    quizId: string;
+    lessonId: string;
 
     @IsArray()
     answers: number[];
+}
+
+export class GenerateAiLevelsDto {
+    @IsString()
+    @IsNotEmpty()
+    subjectId: string;
+
+    @IsString()
+    @IsNotEmpty()
+    topicName: string;
+
+    @IsNumber()
+    numLevels: number;
 }

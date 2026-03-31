@@ -1,6 +1,8 @@
-import { Controller, Get, Post, Param, Query, UseGuards, ParseFloatPipe, Body } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Param, Query, UseGuards, ParseFloatPipe, Body } from '@nestjs/common';
 import { PayoutsService } from '../payouts/payouts.service';
 import { PrismaService } from '../prisma.service';
+import { MockExamsService } from '../mock-exams/mock-exams.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -12,6 +14,8 @@ export class AdminController {
     constructor(
         private payoutsService: PayoutsService,
         private prisma: PrismaService,
+        private mockExamsService: MockExamsService,
+        private notificationsService: NotificationsService,
     ) { }
 
 
@@ -257,5 +261,51 @@ export class AdminController {
         @Query('revenue') revenue?: string,
     ) {
         return this.payoutsService.simulatePayout(month, revenue ? parseFloat(revenue) : undefined);
+    }
+
+    // ─── Mock Exams (Admin) ─────────────────────────────────────────────────
+
+    @Post('mocks')
+    async createMock(@Body() data: any) {
+        // Simple creation via prisma for now, expects questions array
+        return this.prisma.mockExam.create({
+            data: {
+                title: data.title,
+                description: data.description,
+                durationMinutes: data.durationMinutes,
+                price: data.price,
+                isActive: data.isActive ?? true,
+                questions: {
+                    create: data.questions.map((q: any) => ({
+                        text: q.text,
+                        options: q.options,
+                        correctOption: q.correctOption,
+                    })),
+                },
+            },
+            include: { questions: true },
+        });
+    }
+
+    @Delete('mocks/:id')
+    async deleteMock(@Param('id') id: string) {
+        return this.prisma.mockExam.delete({ where: { id } });
+    }
+
+    // ─── Notifications (Admin) ───────────────────────────────────────────────
+
+    @Post('notifications/send')
+    async sendNotification(@Body() data: { userId?: string, title: string, body: string, data?: any }) {
+        if (data.userId) {
+            return this.notificationsService.sendPush(data.userId, data.title, data.body, data.data);
+        } else {
+            // Send to all users with tokens
+            const users = await this.prisma.user.findMany({
+                where: { expoPushToken: { not: null } },
+                select: { id: true },
+            });
+            const userIds = users.map(u => u.id);
+            return this.notificationsService.sendPushToMany(userIds, data.title, data.body, data.data);
+        }
     }
 }

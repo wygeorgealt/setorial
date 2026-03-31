@@ -18,7 +18,13 @@ import {
     Edit2,
     Trash2,
     Plus,
-    RefreshCcw
+    RefreshCcw,
+    BookOpen,
+    Wand2,
+    Layers,
+    Ticket,
+    Bell,
+    Percent
 } from 'lucide-react';
 import { adminApi } from './api';
 
@@ -84,11 +90,15 @@ export default function AdminDashboard() {
     const [payoutBatches, setPayoutBatches] = useState<any[]>([]);
     const [pricingList, setPricingList] = useState<any[]>([]);
     const [regionalStats, setRegionalStats] = useState<any[]>([]);
+    const [subjects, setSubjects] = useState<any[]>([]);
+    const [mocks, setMocks] = useState<any[]>([]);
+    const [discounts, setDiscounts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     // Filters
     const [tierFilter, setTierFilter] = useState('');
     const [kycFilter, setKycFilter] = useState('');
+    const [flagFilter, setFlagFilter] = useState('');
     const [userSearch, setUserSearch] = useState('');
 
     // Payout trigger
@@ -141,6 +151,15 @@ export default function AdminDashboard() {
             } else if (activeTab === 'regions') {
                 const res = await adminApi.getRegionalStats();
                 setRegionalStats(res.data);
+            } else if (activeTab === 'learning') {
+                const res = await adminApi.getSubjects();
+                setSubjects(res.data);
+            } else if (activeTab === 'mocks') {
+                const res = await adminApi.getMocks();
+                setMocks(res.data);
+            } else if (activeTab === 'discounts') {
+                const res = await adminApi.getDiscounts();
+                setDiscounts(res.data);
             }
         } catch (error) {
             console.error('Fetch error:', error);
@@ -266,12 +285,253 @@ export default function AdminDashboard() {
 
 
 
+    const handleGenerateAiLevels = async (subjectId: string, topicName: string) => {
+        const numLevels = prompt('How many levels (lessons) should the AI generate? (e.g. 5)');
+        if (!numLevels || isNaN(Number(numLevels))) return;
+
+        if (!confirm(`Generate ${numLevels} AI levels for "${topicName}"? This may take up to a minute depending on the LLM's response time.`)) return;
+        
+        setLoading(true);
+        try {
+            await adminApi.generateAiLevels({ subjectId, topicName, numLevels: Number(numLevels) });
+            alert('Levels successfully generated!');
+            fetchData();
+        } catch (err: any) {
+            alert(err.response?.data?.message || 'Failed to generate levels. Make sure GEMINI_API_KEY is set in backend.');
+            setLoading(false);
+        }
+    };
+
+    const handleCreateSubject = async () => {
+        const name = prompt('Subject Name? (e.g. Mathematics)');
+        const iconInfo = prompt('Icon Identifier or URL? (e.g. math)');
+        if (name && iconInfo) {
+            try {
+                await adminApi.createSubject({ name, iconInfo, description: 'New Subject' });
+                fetchData();
+            } catch (err) { alert('Failed to create'); }
+        }
+    };
+
+    const handleCreateTopic = async (subjectId: string) => {
+        const name = prompt('Topic Name? (e.g. Data Structures)');
+        const description = prompt('Description?');
+        const order = prompt('Order index? (e.g. 1)');
+        if (name && order) {
+            try {
+                await adminApi.createTopic({ subjectId, name, description: description || '', order: Number(order) });
+                fetchData();
+            } catch (err) { alert('Failed to create'); }
+        }
+    };
+
+    const handleDeleteSubject = async (id: string, name: string) => {
+        if (!confirm(`Delete subject "${name}" and ALL its topics and lessons? This cannot be undone.`)) return;
+        try {
+            await adminApi.deleteSubject(id);
+            fetchData();
+        } catch (err: any) {
+            alert(err.response?.data?.message || 'Failed to delete subject');
+        }
+    };
+
+    const handleDeleteTopic = async (id: string, name: string) => {
+        if (!confirm(`Delete topic "${name}" and ALL its lessons?`)) return;
+        try {
+            await adminApi.deleteTopic(id);
+            fetchData();
+        } catch (err: any) {
+            alert(err.response?.data?.message || 'Failed to delete topic');
+        }
+    };
+
+    const handleCreateMock = async () => {
+        const title = prompt('Mock Exam Title?');
+        const description = prompt('Description?');
+        const duration = prompt('Duration (minutes)?');
+        const price = prompt('Price (NGN)?');
+        if (title && duration && price) {
+            try {
+                // For simplicity, we create with 0 questions initially or prompt for JSON
+                await adminApi.createMock({ 
+                    title, 
+                    description, 
+                    durationMinutes: Number(duration), 
+                    price: Number(price),
+                    questions: [] 
+                });
+                fetchData();
+            } catch (err) { alert('Failed to create mock'); }
+        }
+    };
+
+    const handleDeleteMock = async (id: string, title: string) => {
+        if (!confirm(`Delete mock exam "${title}"?`)) return;
+        try {
+            await adminApi.deleteMock(id);
+            fetchData();
+        } catch (err) { alert('Failed to delete mock'); }
+    };
+
+    const handleSendBroadcast = async () => {
+        const title = prompt('Notification Title?');
+        const body = prompt('Notification Message?');
+        if (title && body) {
+            try {
+                await adminApi.sendNotification({ title, body });
+                alert('Broadcast notification queued!');
+            } catch (err) { alert('Failed to send notification'); }
+        }
+    };
+
+    const handleEditLesson = async (lesson: any) => {
+        const newName = prompt('Lesson name:', lesson.name);
+        if (!newName) return;
+        
+        // This is a naive text prompt for content editing
+        const newContent = prompt('Edit markdown content:', lesson.content || '');
+        if (newContent !== null) {
+            try {
+                await adminApi.updateLesson(lesson.id, { name: newName, content: newContent });
+                alert('Lesson updated successfully!');
+                fetchData();
+            } catch (err) {
+                alert('Failed to update lesson');
+            }
+        }
+    };
+
     /* ─── Tab Content ──────────────────────────────────────────────────────── */
 
     const renderContent = () => {
         if (loading) return <div className="flex-1 flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div></div>;
 
         switch (activeTab) {
+
+            /* ── LEARNING CONTENT ────────────────────────────────────────── */
+            case 'learning':
+                return (
+                    <div className="space-y-10">
+                        <div className="flex justify-between items-end">
+                            <div>
+                                <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">Learning Journeys</h2>
+                                <p className="text-sm text-zinc-500 mt-1">Manage subjects, topics, and automatically generate lessons via AI.</p>
+                            </div>
+                            <button
+                                onClick={handleCreateSubject}
+                                className="btn-primary h-10 px-6 text-sm"
+                            >
+                                <Plus size={18} className="mr-2" />
+                                Create Subject
+                            </button>
+                        </div>
+
+                        {subjects.length === 0 ? (
+                            <div className="card text-center py-20 bg-zinc-50/50">
+                                <BookOpen size={48} className="mx-auto text-zinc-300 mb-4" />
+                                <h3 className="text-lg font-medium text-zinc-900">No Subjects Found</h3>
+                                <p className="text-zinc-500 mt-1">Create your first subject to start building the learning pathway.</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-6">
+                                {subjects.map((subject: any) => (
+                                    <div key={subject.id} className="card p-6 border border-zinc-200">
+                                        <div className="flex justify-between items-center mb-6">
+                                            <div className="flex items-center space-x-4">
+                                                <div className="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center border border-indigo-100/50">
+                                                    <BookOpen size={24} className="text-indigo-600" />
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-xl font-bold text-zinc-900">{subject.name}</h3>
+                                                    <p className="text-sm text-zinc-500">{subject.topics?.length || 0} Topics Available</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <button
+                                                    onClick={() => handleCreateTopic(subject.id)}
+                                                    className="btn-secondary h-9 px-4 text-xs"
+                                                >
+                                                    <Plus size={14} className="mr-2" />
+                                                    Add Topic
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteSubject(subject.id, subject.name)}
+                                                    className="h-9 w-9 flex items-center justify-center rounded-lg bg-red-50 hover:bg-red-100 text-red-500 transition-colors ring-1 ring-red-200"
+                                                    title="Delete Subject"
+                                                >
+                                                    <Trash2 size={15} />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {subject.topics?.length > 0 ? (
+                                            <div className="space-y-3">
+                                                {subject.topics.map((topic: any) => (
+                                                    <div key={topic.id} className="bg-zinc-50 rounded-xl ring-1 ring-zinc-200/60 flex flex-col overflow-hidden">
+                                                        <div className="p-4 flex items-center justify-between bg-white border-b border-zinc-100">
+                                                            <div className="flex items-center space-x-3">
+                                                                <div className="w-8 h-8 bg-zinc-100 rounded-lg flex items-center justify-center shadow-sm border border-zinc-200">
+                                                                    <Layers size={16} className="text-zinc-500" />
+                                                                </div>
+                                                                <div>
+                                                                    <h4 className="font-semibold text-zinc-900 text-sm">{topic.name}</h4>
+                                                                    <p className="text-xs text-zinc-500">{topic.lessons?.length || 0} Levels (Lessons) included</p>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center space-x-2">
+                                                                {(!topic.lessons || topic.lessons.length === 0) ? (
+                                                                    <button
+                                                                        onClick={() => handleGenerateAiLevels(subject.id, topic.name)}
+                                                                        className="flex items-center space-x-2 bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold px-4 py-2 rounded-lg transition-colors text-xs ring-1 ring-purple-600/20"
+                                                                    >
+                                                                        <Wand2 size={14} />
+                                                                        <span>Generate AI Course</span>
+                                                                    </button>
+                                                                ) : (
+                                                                    <div className="flex items-center space-x-2 bg-emerald-50 text-emerald-700 font-semibold px-4 py-2 rounded-lg text-xs ring-1 ring-emerald-600/20">
+                                                                        <CheckCircle2 size={14} />
+                                                                        <span>AI Generated</span>
+                                                                    </div>
+                                                                )}
+                                                                <button
+                                                                    onClick={() => handleDeleteTopic(topic.id, topic.name)}
+                                                                    className="h-8 w-8 flex items-center justify-center rounded-lg bg-red-50 hover:bg-red-100 text-red-500 transition-colors ring-1 ring-red-200"
+                                                                    title="Delete Topic"
+                                                                >
+                                                                    <Trash2 size={14} />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        {topic.lessons && topic.lessons.length > 0 && (
+                                                            <div className="bg-zinc-50 px-4 py-3 space-y-2">
+                                                                {topic.lessons.map((lesson: any) => (
+                                                                    <div key={lesson.id} className="flex items-center justify-between text-sm py-1 border-b border-zinc-200 last:border-0">
+                                                                        <span className="text-zinc-700 font-medium">Lvl {lesson.order}: {lesson.name}</span>
+                                                                        <button 
+                                                                            onClick={() => handleEditLesson(lesson)}
+                                                                            className="text-xs text-indigo-600 hover:text-indigo-800 font-medium px-2 py-1 rounded-md hover:bg-indigo-50 transition-colors"
+                                                                        >
+                                                                            Edit Content
+                                                                        </button>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="bg-zinc-50 p-6 rounded-xl border border-dashed border-zinc-300 text-center">
+                                                <p className="text-zinc-500 text-sm">No topics added to this subject yet.</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                );
 
             /* ── OVERVIEW ───────────────────────────────────────────────── */
             case 'overview':
@@ -414,6 +674,15 @@ export default function AdminDashboard() {
                                     <option value="APPROVED">Approved</option>
                                     <option value="REJECTED">Rejected</option>
                                 </select>
+                                <select
+                                    value={flagFilter}
+                                    onChange={(e) => setFlagFilter(e.target.value)}
+                                    className="input-field w-28 h-10 py-0 text-xs font-medium cursor-pointer"
+                                >
+                                    <option value="">All Health</option>
+                                    <option value="FLAGGED">Flagged</option>
+                                    <option value="HEALTHY">Healthy</option>
+                                </select>
                                 <div className="relative w-64">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
                                     <input
@@ -442,6 +711,7 @@ export default function AdminDashboard() {
                                 <tbody className="divide-y divide-zinc-100">
                                     {users
                                         .filter(u => u.name?.toLowerCase().includes(userSearch.toLowerCase()) || u.email.toLowerCase().includes(userSearch.toLowerCase()))
+                                        .filter(u => flagFilter === '' || (flagFilter === 'FLAGGED' ? u.isFlagged : !u.isFlagged))
                                         .map((u: any) => (
                                             <tr key={u.id} className="hover:bg-zinc-50/50 transition-colors">
                                                 <td className="px-6 py-4">
@@ -674,7 +944,7 @@ export default function AdminDashboard() {
                         <div className="flex justify-between items-end">
                             <div>
                                 <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">Discount & Promo Codes</h2>
-                                <p className="text-sm text-zinc-500 mt-1">Manage active promotional campaigns.</p>
+                                <p className="text-sm text-zinc-500 mt-1">Manage active promotional campaigns and track usage.</p>
                             </div>
                             <button className="btn-primary h-10 px-6 text-sm" onClick={() => {
                                 const code = prompt('Enter code:');
@@ -687,8 +957,77 @@ export default function AdminDashboard() {
                                 Create New Code
                             </button>
                         </div>
-                        <div className="card !p-0 overflow-hidden">
+                        <div className="card !p-0 overflow-hidden shadow-sm">
                             <AdminDiscountsTable />
+                        </div>
+                    </div>
+                );
+
+            /* ── MOCK EXAMS ─────────────────────────────────────────────── */
+            case 'mocks':
+                return (
+                    <div className="space-y-10">
+                        <div className="flex justify-between items-end">
+                            <div>
+                                <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">Mock Exam Management</h2>
+                                <p className="text-sm text-zinc-500 mt-1">Create and manage standardized practice exams.</p>
+                            </div>
+                            <button className="btn-primary h-10 px-6 text-sm" onClick={handleCreateMock}>
+                                <Plus size={18} className="mr-2" />
+                                Create Mock Exam
+                            </button>
+                        </div>
+                        <div className="space-y-4">
+                            {mocks.map((mock: any) => (
+                                <div key={mock.id} className="card p-6 flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
+                                    <div className="flex items-center space-x-4">
+                                        <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center border border-amber-100">
+                                            <Ticket size={24} className="text-amber-600" />
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bold text-zinc-900">{mock.title}</h4>
+                                            <p className="text-sm text-zinc-500">{mock.durationMinutes} mins • ₦{Number(mock.price).toLocaleString()} • {mock._count?.questions ?? 0} Questions</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => handleDeleteMock(mock.id, mock.title)}
+                                        className="h-9 w-9 flex items-center justify-center rounded-lg bg-red-50 hover:bg-red-100 text-red-500 transition-colors ring-1 ring-red-200"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                );
+
+            /* ── NOTIFICATIONS ───────────────────────────────────────────── */
+            case 'notifications':
+                return (
+                    <div className="space-y-10">
+                        <div>
+                            <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">Push Notifications</h2>
+                            <p className="text-sm text-zinc-500 mt-1">Send immediate updates or announcements to all active students.</p>
+                        </div>
+                        <div className="card p-8 bg-zinc-900 text-white max-w-2xl">
+                            <div className="space-y-6">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Broadcast Target</label>
+                                    <div className="p-3 bg-zinc-800 rounded-lg flex items-center space-x-3 ring-1 ring-zinc-800">
+                                        <div className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center">
+                                            <Users size={16} className="text-zinc-400" />
+                                        </div>
+                                        <span className="text-sm font-medium">All Platform Users with Push Enabled</span>
+                                    </div>
+                                </div>
+                                <button 
+                                    onClick={handleSendBroadcast}
+                                    className="w-full h-12 bg-white text-zinc-900 font-bold rounded-xl hover:bg-zinc-100 transition-all flex items-center justify-center space-x-2"
+                                >
+                                    <Bell size={18} />
+                                    <span>Compose & Send Broadcast</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 );
@@ -728,10 +1067,13 @@ export default function AdminDashboard() {
                     <SidebarItem icon={LayoutDashboard} label="Overview" active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} />
                     <SidebarItem icon={ShieldCheck} label="KYC Review" active={activeTab === 'kyc'} onClick={() => setActiveTab('kyc')} badge={stats?.pendingKycCount} />
                     <SidebarItem icon={Users} label="Students" active={activeTab === 'users'} onClick={() => setActiveTab('users')} />
+                    <SidebarItem icon={BookOpen} label="Learning" active={activeTab === 'learning'} onClick={() => setActiveTab('learning')} />
+                    <SidebarItem icon={Ticket} label="Mock Exams" active={activeTab === 'mocks'} onClick={() => setActiveTab('mocks')} />
+                    <SidebarItem icon={Percent} label="Discounts" active={activeTab === 'discounts'} onClick={() => setActiveTab('discounts')} />
+                    <SidebarItem icon={Bell} label="Notifications" active={activeTab === 'notifications'} onClick={() => setActiveTab('notifications')} />
                     <SidebarItem icon={Globe} label="Geo-Pricing" active={activeTab === 'pricing'} onClick={() => setActiveTab('pricing')} />
                     <SidebarItem icon={Map} label="Region Pools" active={activeTab === 'regions'} onClick={() => setActiveTab('regions')} />
                     <SidebarItem icon={CreditCard} label="Payouts" active={activeTab === 'payouts'} onClick={() => setActiveTab('payouts')} />
-                    <SidebarItem icon={Plus} label="Discounts" active={activeTab === 'discounts'} onClick={() => setActiveTab('discounts')} />
                     <SidebarItem icon={RefreshCcw} label="Config" active={activeTab === 'configs'} onClick={() => setActiveTab('configs')} />
                 </nav>
 

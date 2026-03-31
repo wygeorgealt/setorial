@@ -16,15 +16,21 @@ exports.AdminController = void 0;
 const common_1 = require("@nestjs/common");
 const payouts_service_1 = require("../payouts/payouts.service");
 const prisma_service_1 = require("../prisma.service");
+const mock_exams_service_1 = require("../mock-exams/mock-exams.service");
+const notifications_service_1 = require("../notifications/notifications.service");
 const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
 const roles_guard_1 = require("../auth/roles.guard");
 const roles_decorator_1 = require("../auth/roles.decorator");
 let AdminController = class AdminController {
     payoutsService;
     prisma;
-    constructor(payoutsService, prisma) {
+    mockExamsService;
+    notificationsService;
+    constructor(payoutsService, prisma, mockExamsService, notificationsService) {
         this.payoutsService = payoutsService;
         this.prisma = prisma;
+        this.mockExamsService = mockExamsService;
+        this.notificationsService = notificationsService;
     }
     async getDashboardStats() {
         const earnAggregate = await this.prisma.walletLedger.aggregate({
@@ -196,6 +202,41 @@ let AdminController = class AdminController {
     async simulatePayout(month, revenue) {
         return this.payoutsService.simulatePayout(month, revenue ? parseFloat(revenue) : undefined);
     }
+    async createMock(data) {
+        return this.prisma.mockExam.create({
+            data: {
+                title: data.title,
+                description: data.description,
+                durationMinutes: data.durationMinutes,
+                price: data.price,
+                isActive: data.isActive ?? true,
+                questions: {
+                    create: data.questions.map((q) => ({
+                        text: q.text,
+                        options: q.options,
+                        correctOption: q.correctOption,
+                    })),
+                },
+            },
+            include: { questions: true },
+        });
+    }
+    async deleteMock(id) {
+        return this.prisma.mockExam.delete({ where: { id } });
+    }
+    async sendNotification(data) {
+        if (data.userId) {
+            return this.notificationsService.sendPush(data.userId, data.title, data.body, data.data);
+        }
+        else {
+            const users = await this.prisma.user.findMany({
+                where: { expoPushToken: { not: null } },
+                select: { id: true },
+            });
+            const userIds = users.map(u => u.id);
+            return this.notificationsService.sendPushToMany(userIds, data.title, data.body, data.data);
+        }
+    }
 };
 exports.AdminController = AdminController;
 __decorate([
@@ -306,11 +347,34 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "simulatePayout", null);
+__decorate([
+    (0, common_1.Post)('mocks'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "createMock", null);
+__decorate([
+    (0, common_1.Delete)('mocks/:id'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "deleteMock", null);
+__decorate([
+    (0, common_1.Post)('notifications/send'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "sendNotification", null);
 exports.AdminController = AdminController = __decorate([
     (0, common_1.Controller)('admin'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)('ADMIN'),
     __metadata("design:paramtypes", [payouts_service_1.PayoutsService,
-        prisma_service_1.PrismaService])
+        prisma_service_1.PrismaService,
+        mock_exams_service_1.MockExamsService,
+        notifications_service_1.NotificationsService])
 ], AdminController);
 //# sourceMappingURL=admin.controller.js.map

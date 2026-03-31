@@ -1,26 +1,18 @@
-import { View, Text, Image, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator } from "react-native";
-import { ChevronLeft, Clock, Star, PlayCircle, Lock } from "lucide-react-native";
+import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator } from "react-native";
+import { ChevronLeft, Star, Lock, CheckCircle2 } from "lucide-react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { useColorScheme } from "nativewind";
 import { useState, useEffect } from "react";
 import { learningApi } from "../services/api";
 
 export default function CourseDetailScreen() {
     const router = useRouter();
     const { id } = useLocalSearchParams();
-    const { colorScheme } = useColorScheme();
     const [subject, setSubject] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (id) {
-            fetchSubject();
-        }
+        if (id) fetchSubject();
     }, [id]);
-
-    const fetchData = async () => {
-        // Redundant with fetchSubject, but keep it if needed for others
-    };
 
     const fetchSubject = async () => {
         try {
@@ -35,8 +27,8 @@ export default function CourseDetailScreen() {
 
     if (loading) {
         return (
-            <View className="flex-1 bg-white items-center justify-center">
-                <ActivityIndicator size="large" color="#000" />
+            <View className="flex-1 bg-white dark:bg-[#0B0D12] items-center justify-center">
+                <ActivityIndicator size="large" color="#58CC02" />
             </View>
         );
     }
@@ -52,114 +44,90 @@ export default function CourseDetailScreen() {
         );
     }
 
-    const totalLessons = subject.topics?.reduce((acc: number, topic: any) => acc + (topic.lessons?.length || 0), 0) || 0;
-
     return (
-        <View className="flex-1 bg-white dark:bg-background-dark">
-            {/* Hero Image Section */}
-            <View className="h-2/5 w-full relative">
-                <Image
-                    source={{ uri: 'https://images.unsplash.com/photo-1587620962725-abab7fe55159?w=800&q=80' }}
-                    className="w-full h-full"
-                    resizeMode="cover"
-                />
-                <SafeAreaView className="absolute top-4 left-5">
-                    <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 bg-black/30 rounded-full items-center justify-center">
-                        <ChevronLeft size={24} color="#FFF" />
-                    </TouchableOpacity>
-                </SafeAreaView>
-
-                {/* Tutor Floating Badge */}
-                <View className="absolute -bottom-6 left-5 flex-row items-center bg-white dark:bg-card-dark p-2 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-800">
-                    <View className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden mr-3">
-                        <Image source={{ uri: 'https://i.pravatar.cc/100?u=tom' }} className="w-full h-full" />
-                    </View>
-                    <Text className="text-gray-700 dark:text-white font-bold mr-2 text-sm">Tom Collins</Text>
-                </View>
+        <SafeAreaView className="flex-1 bg-[#F5F5F5] dark:bg-[#0B0D12]">
+            {/* Header */}
+            <View className="flex-row items-center p-5 bg-white dark:bg-[#1E222B] shadow-sm z-10 border-b-2 border-gray-100 dark:border-gray-800">
+                <TouchableOpacity onPress={() => router.back()} className="mr-4">
+                    <ChevronLeft size={28} color="#AFAFAF" />
+                </TouchableOpacity>
+                <Text className="text-2xl font-black text-gray-900 dark:text-white flex-1">{subject.name}</Text>
             </View>
 
-            <ScrollView className="flex-1 px-5 pt-12 pb-10">
-                <View className="flex-row items-center justify-between mb-4">
-                    <Text className="text-2xl font-bold text-gray-900 dark:text-white flex-1 mr-4">{subject.name}</Text>
-                    <View className="bg-blue-100 dark:bg-blue-900/30 px-3 py-1.5 rounded-xl">
-                        <Text className="text-blue-600 dark:text-blue-400 font-bold">FREE</Text>
-                    </View>
-                </View>
-
-                <View className="flex-row items-center mb-6">
-                    <View className="flex-row items-center mr-6">
-                        <Clock size={16} color="#94A3B8" />
-                        <Text className="text-slate-400 ml-2 font-medium">{totalLessons} topics</Text>
-                    </View>
-                    <View className="flex-row items-center">
-                        <Star size={16} color="#F59E0B" fill="#F59E0B" />
-                        <Text className="text-slate-400 ml-2 font-medium">New</Text>
-                    </View>
-                </View>
-
-                <Text className="text-lg font-bold text-gray-900 dark:text-white mb-2">Course Description</Text>
-                <Text className="text-gray-500 dark:text-gray-400 leading-6 mb-8">
-                    In this course you will learn how to build a modern iOS app from scratch using SwiftUI and clean architecture. We cover everything from UI fundamentals to complex animations.
-                </Text>
-
-                <Text className="text-lg font-bold text-gray-900 dark:text-white mb-4">Course Content</Text>
-
-                {subject.topics?.map((topic: any, index: number) => {
-                    const firstLesson = topic.lessons?.[0];
-                    const quizId = firstLesson?.quizzes?.[0]?.id;
-
-                    return (
-                        <LessonItem
-                            key={topic.id}
-                            title={topic.name}
-                            duration={`${topic.lessons?.length || 0} lessons`}
-                            isLocked={index > 0}
+            <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100, paddingTop: 20 }}>
+                {subject.topics?.map((topic: any, topicIndex: number) => (
+                    <View key={topic.id} className="mb-10 mt-4">
+                        {/* Topic Header */}
+                        <TouchableOpacity
+                            activeOpacity={0.9}
                             onPress={() => {
-                                if (quizId) {
-                                    router.push(`/quiz?id=${quizId}`);
+                                const firstLesson = topic.lessons?.find((l: any) => l.status !== 'LOCKED') || topic.lessons?.[0];
+                                if (firstLesson) {
+                                    router.push(`/level?id=${firstLesson.id}`);
                                 } else {
-                                    alert('No quiz available for this topic yet.');
+                                    alert("No lessons available in this unit yet.");
                                 }
                             }}
-                        />
-                    );
-                })}
+                            className="bg-[#58CC02] mx-4 p-5 rounded-[24px] mb-8 shadow-sm border-b-4 border-[#46A302]"
+                        >
+                            <Text className="text-white/80 font-black text-base uppercase tracking-wider">Unit {topicIndex + 1}</Text>
+                            <Text className="text-white font-bold text-xl mt-1">{topic.name}</Text>
+                        </TouchableOpacity>
 
-                {subject.topics?.length === 0 && (
-                    <Text className="text-gray-400 text-sm italic">No topics available for this subject yet.</Text>
+                        {/* Pathway Nodes */}
+                        <View className="items-center relative">
+                            {topic.lessons?.map((lesson: any, index: number) => {
+                                // Zigzag calculation: 0, 40, 0, -40
+                                const offset = index % 4 === 0 ? 0 : index % 4 === 1 ? 50 : index % 4 === 2 ? 0 : -50;
+
+                                const isCompleted = lesson.status === 'COMPLETED';
+                                const isCurrent = lesson.status === 'CURRENT';
+                                const isLocked = lesson.status === 'LOCKED';
+
+                                let bgColorClass = "bg-[#E5E5E5] dark:bg-gray-800";
+                                let borderColorClass = "border-[#C9C9C9] dark:border-gray-700";
+                                let icon = <Lock size={28} color="#AFAFAF" />;
+
+                                if (isCompleted) {
+                                    bgColorClass = "bg-[#FFC800]";
+                                    borderColorClass = "border-[#E5B400]";
+                                    icon = <CheckCircle2 size={32} color="#FFF" />;
+                                } else if (isCurrent) {
+                                    bgColorClass = "bg-[#58CC02]";
+                                    borderColorClass = "border-[#46A302]";
+                                    icon = <Star size={36} color="#FFF" fill="#FFF" />;
+                                }
+
+                                return (
+                                    <View key={lesson.id} className="mb-6 items-center justify-center relative z-10" style={{ transform: [{ translateX: offset }] }}>
+                                        <TouchableOpacity 
+                                            activeOpacity={0.8}
+                                            disabled={isLocked}
+                                            onPress={() => router.push(`/level?id=${lesson.id}`)}
+                                        >
+                                            {isCurrent && (
+                                                <View className="absolute -top-12 left-1/2 ml-[-40px] w-20 bg-white dark:bg-gray-800 rounded-xl py-2 items-center justify-center border-2 border-gray-100 dark:border-gray-700 shadow-sm z-20">
+                                                    <Text className="text-[#58CC02] font-black uppercase text-xs">Start!</Text>
+                                                </View>
+                                            )}
+
+                                            <View className={`w-20 h-20 rounded-full items-center justify-center border-b-8 ${bgColorClass} ${borderColorClass}`}>
+                                                {icon}
+                                            </View>
+                                        </TouchableOpacity>
+                                    </View>
+                                );
+                            })}
+                        </View>
+                    </View>
+                ))}
+
+                {(!subject.topics || subject.topics.length === 0) && (
+                    <View className="items-center justify-center mt-20">
+                        <Text className="text-gray-400 font-bold">No units available yet.</Text>
+                    </View>
                 )}
-
-                <View className="h-10" />
             </ScrollView>
-
-            {/* Floating Bottom Action */}
-            <SafeAreaView className="absolute bottom-0 left-0 right-0 p-5 bg-white/95 dark:bg-background-dark/95 backdrop-blur-md border-t border-gray-100 dark:border-gray-800">
-                <TouchableOpacity
-                    activeOpacity={0.8}
-                    className="bg-[#1CB0F6] p-4 rounded-2xl items-center border-b-4 border-[#1899D6] border-t-[#1CB0F6] border-l-[#1CB0F6] border-r-[#1CB0F6]"
-                >
-                    <Text className="text-white font-bold text-[17px] uppercase tracking-wider">Start Learning</Text>
-                </TouchableOpacity>
-            </SafeAreaView>
-        </View>
-    );
-}
-
-function LessonItem({ title, duration, isLocked, onPress }: { title: string, duration: string, isLocked?: boolean, onPress: () => void }) {
-    return (
-        <TouchableOpacity
-            onPress={onPress}
-            disabled={isLocked}
-            className="flex-row items-center bg-gray-50 dark:bg-card-dark p-5 rounded-3xl mb-4 border border-gray-100 dark:border-gray-800"
-        >
-            <View className="w-10 h-10 rounded-2xl bg-white dark:bg-gray-800 items-center justify-center mr-4">
-                {isLocked ? <Lock size={18} color="#94A3B8" /> : <PlayCircle size={18} color="#000" />}
-            </View>
-            <View className="flex-1">
-                <Text className={`font-bold ${isLocked ? 'text-gray-400' : 'text-gray-900 dark:text-white'}`}>{title}</Text>
-                <Text className="text-gray-400 text-xs mt-1">{duration}</Text>
-            </View>
-            <ChevronLeft size={20} color="#94A3B8" style={{ transform: [{ rotate: '180deg' }] }} />
-        </TouchableOpacity>
+        </SafeAreaView>
     );
 }

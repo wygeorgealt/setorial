@@ -1,73 +1,44 @@
-import { View, Text, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
-import { ChevronLeft, Flame, BookOpen, Trophy, Star, Crown, Target, Zap } from 'lucide-react-native';
+import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator } from 'react-native';
+import { ChevronLeft, Flame, BookOpen, Trophy, Star, Crown, Target, Zap, Award, Lock } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../store/authStore';
+import { useState, useEffect } from 'react';
+import { authApi } from '../services/api';
 
-const BADGES = [
-    {
-        id: 'first_quiz',
-        title: 'First Steps',
-        description: 'Complete your first quiz',
-        icon: Zap,
-        color: '#3B82F6',
-        requirement: (user: any) => (user?.points || 0) > 0,
-    },
-    {
-        id: 'five_subjects',
-        title: 'Explorer',
-        description: 'Study 5 different subjects',
-        icon: BookOpen,
-        color: '#8B5CF6',
-        requirement: () => false,
-    },
-    {
-        id: '100_points',
-        title: 'Century',
-        description: 'Earn 100 points',
-        icon: Trophy,
-        color: '#EAB308',
-        requirement: (user: any) => (user?.points || 0) >= 100,
-    },
-    {
-        id: 'streak_7',
-        title: 'On Fire',
-        description: 'Maintain a 7-day streak',
-        icon: Flame,
-        color: '#EF4444',
-        requirement: (user: any) => (user?.streak || 0) >= 7,
-    },
-    {
-        id: 'streak_30',
-        title: 'Unstoppable',
-        description: 'Maintain a 30-day streak',
-        icon: Target,
-        color: '#F97316',
-        requirement: (user: any) => (user?.streak || 0) >= 30,
-    },
-    {
-        id: 'gold_tier',
-        title: 'Gold Standard',
-        description: 'Reach Gold tier',
-        icon: Crown,
-        color: '#EAB308',
-        requirement: (user: any) => user?.tier === 'GOLD',
-    },
-    {
-        id: '500_points',
-        title: 'Half Grand',
-        description: 'Earn 500 points',
-        icon: Star,
-        color: '#14B8A6',
-        requirement: (user: any) => (user?.points || 0) >= 500,
-    },
-];
+// Fallback icon map for badges from backend
+const ICON_MAP: Record<string, any> = {
+    Award, Zap, Star, Crown, Flame, Trophy, BookOpen, Target,
+};
 
 export default function AchievementsScreen() {
     const router = useRouter();
-    const { user } = useAuthStore();
+    const { user, updateUser } = useAuthStore();
+    const [loading, setLoading] = useState(true);
 
-    const earned = BADGES.filter(b => b.requirement(user));
-    const locked = BADGES.filter(b => !b.requirement(user));
+    useEffect(() => {
+        refreshUser();
+    }, []);
+
+    const refreshUser = async () => {
+        try {
+            const res = await authApi.getMe();
+            updateUser(res.data);
+        } catch (err) {
+            console.error('Failed to refresh user:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const badges = user?.badges || [];
+
+    if (loading) {
+        return (
+            <View className="flex-1 bg-white dark:bg-[#0B0D12] items-center justify-center">
+                <ActivityIndicator size="large" color="#58CC02" />
+            </View>
+        );
+    }
 
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12]">
@@ -81,56 +52,51 @@ export default function AchievementsScreen() {
 
             <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false}>
                 {/* Summary */}
-                <View className="bg-black p-8 rounded-[40px] mb-10 items-center">
+                <View className="bg-black dark:bg-[#1E222B] p-8 rounded-[40px] mb-10 items-center border-2 border-b-4 border-gray-800 dark:border-[#272B36]">
                     <Text className="text-gray-400 font-bold text-sm uppercase tracking-widest mb-2">Badges Earned</Text>
-                    <Text className="text-white font-black text-[56px] tracking-tighter">{earned.length}</Text>
-                    <Text className="text-gray-500 font-medium">of {BADGES.length} total</Text>
+                    <Text className="text-white font-black text-[56px] tracking-tighter">{badges.length}</Text>
+                    <View className="flex-row items-center mt-2">
+                        <Star size={16} color="#FFC800" fill="#FFC800" />
+                        <Text className="text-[#FFC800] font-bold ml-2">{user?.points || 0} XP</Text>
+                        <Text className="text-gray-600 mx-2">•</Text>
+                        <Flame size={16} color="#FF9600" fill="#FF9600" />
+                        <Text className="text-[#FF9600] font-bold ml-2">{user?.streak || 0} day streak</Text>
+                    </View>
                 </View>
 
                 {/* Earned Badges */}
-                {earned.length > 0 && (
+                {badges.length > 0 ? (
                     <>
                         <Text className="text-black dark:text-white font-bold text-lg mb-4">Unlocked</Text>
                         <View className="flex-row flex-wrap gap-4 mb-10">
-                            {earned.map((badge) => {
-                                const Icon = badge.icon;
+                            {badges.map((badge: any) => {
+                                const Icon = ICON_MAP[badge.icon] || Award;
                                 return (
                                     <View key={badge.id} className="w-[47%] bg-white dark:bg-[#1E222B] p-5 rounded-[28px] border-2 border-b-4 border-[#E5E5E5] dark:border-[#272B36] justify-between">
                                         <View
-                                            style={{ backgroundColor: badge.color + '20' }}
+                                            style={{ backgroundColor: (badge.color || '#3B82F6') + '20' }}
                                             className="w-14 h-14 rounded-2xl items-center justify-center mb-3 border-2 border-[rgba(0,0,0,0.05)] dark:border-transparent"
                                         >
-                                            <Icon size={28} color={badge.color} />
+                                            <Icon size={28} color={badge.color || '#3B82F6'} />
                                         </View>
-                                        <Text className="text-[#4B4B4B] dark:text-white font-bold text-[15px] mb-1">{badge.title}</Text>
+                                        <Text className="text-[#4B4B4B] dark:text-white font-bold text-[15px] mb-1">{badge.name}</Text>
                                         <Text className="text-[#AFAFAF] dark:text-gray-400 font-bold text-[11px] leading-4">{badge.description}</Text>
                                     </View>
                                 );
                             })}
                         </View>
                     </>
+                ) : (
+                    <View className="items-center justify-center py-16">
+                        <View className="w-20 h-20 bg-gray-100 dark:bg-[#1E222B] rounded-full items-center justify-center mb-4 border-2 border-b-4 border-[#E5E5E5] dark:border-[#272B36]">
+                            <Lock size={36} color="#CECECE" />
+                        </View>
+                        <Text className="text-black dark:text-white font-bold text-xl mb-2">No badges yet!</Text>
+                        <Text className="text-gray-400 dark:text-gray-500 font-medium text-center px-10">Complete lessons, maintain streaks, and earn points to unlock badges.</Text>
+                    </View>
                 )}
 
-                {/* Locked Badges */}
-                {locked.length > 0 && (
-                    <>
-                        <Text className="text-gray-400 dark:text-gray-500 font-bold text-lg mb-4">Locked</Text>
-                        <View className="flex-row flex-wrap gap-4 mb-20">
-                            {locked.map((badge) => {
-                                const Icon = badge.icon;
-                                return (
-                                    <View key={badge.id} className="w-[47%] bg-[#F5F5F5] dark:bg-[#13151A] p-5 rounded-[28px] border-2 border-b-4 border-[#E5E5E5] dark:border-[#272B36] opacity-60 justify-between">
-                                        <View className="w-14 h-14 rounded-2xl items-center justify-center mb-3 bg-[#E5E5E5] dark:bg-[#2A2E39]">
-                                            <Icon size={28} color="#AFAFAF" />
-                                        </View>
-                                        <Text className="text-[#AFAFAF] dark:text-gray-400 font-bold text-[15px] mb-1">{badge.title}</Text>
-                                        <Text className="text-[#CECECE] dark:text-gray-600 font-bold text-[11px] leading-4">{badge.description}</Text>
-                                    </View>
-                                );
-                            })}
-                        </View>
-                    </>
-                )}
+                <View className="h-20" />
             </ScrollView>
         </SafeAreaView>
     );

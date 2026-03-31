@@ -13,15 +13,16 @@ const learning_controller_1 = require("./learning.controller");
 const prisma_service_1 = require("../prisma.service");
 const gamification_module_1 = require("../gamification/gamification.module");
 const store_module_1 = require("../store/store.module");
+const ai_content_service_1 = require("./ai-content.service");
 let LearningModule = class LearningModule {
 };
 exports.LearningModule = LearningModule;
 exports.LearningModule = LearningModule = __decorate([
     (0, common_1.Module)({
         imports: [gamification_module_1.GamificationModule, store_module_1.StoreModule],
-        providers: [learning_service_1.LearningService, prisma_service_1.PrismaService],
+        providers: [learning_service_1.LearningService, prisma_service_1.PrismaService, ai_content_service_1.AiContentService],
         controllers: [learning_controller_1.LearningController],
-        exports: [learning_service_1.LearningService],
+        exports: [learning_service_1.LearningService, ai_content_service_1.AiContentService],
     })
 ], LearningModule);
 //# sourceMappingURL=learning.module.js.map

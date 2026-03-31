@@ -1,9 +1,48 @@
 import { LearningService } from './learning.service';
-import { CreateSubjectDto, CreateTopicDto, CreateLessonDto, CreateQuizDto, SubmitQuizDto } from './dto/learning.dto';
+import { AiContentService } from './ai-content.service';
+import { CreateSubjectDto, CreateTopicDto, CreateLessonDto, SubmitLessonDto, GenerateAiLevelsDto } from './dto/learning.dto';
 export declare class LearningController {
     private readonly learningService;
-    constructor(learningService: LearningService);
+    private readonly aiContentService;
+    constructor(learningService: LearningService, aiContentService: AiContentService);
+    generateAiLevels(dto: GenerateAiLevelsDto): Promise<{
+        message: string;
+        topic: {
+            id: string;
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
+            subjectId: string;
+        };
+        levels: ({
+            questions: {
+                id: string;
+                createdAt: Date;
+                updatedAt: Date;
+                text: string;
+                options: import("@prisma/client/runtime/client").JsonValue;
+                correctOption: number;
+                mockExamId: string | null;
+                lessonId: string | null;
+            }[];
+        } & {
+            id: string;
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
+            content: string | null;
+            order: number;
+            rewardPoints: number;
+            topicId: string;
+        })[];
+    }>;
     createSubject(dto: CreateSubjectDto): Promise<{
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
+    deleteSubject(id: string): Promise<{
         id: string;
         name: string;
         createdAt: Date;
@@ -16,30 +55,33 @@ export declare class LearningController {
         updatedAt: Date;
         subjectId: string;
     }>;
-    createLesson(dto: CreateLessonDto): Promise<{
+    deleteTopic(id: string): Promise<{
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        topicId: string;
+        subjectId: string;
     }>;
-    createQuiz(dto: CreateQuizDto): Promise<{
+    createLesson(dto: CreateLessonDto): Promise<{
         questions: {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            mockExamId: string | null;
-            options: import("@prisma/client/runtime/client").JsonValue;
             text: string;
+            options: import("@prisma/client/runtime/client").JsonValue;
             correctOption: number;
-            quizId: string | null;
+            mockExamId: string | null;
+            lessonId: string | null;
         }[];
     } & {
         id: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
-        title: string;
-        lessonId: string;
+        content: string | null;
+        order: number;
+        rewardPoints: number;
+        topicId: string;
     }>;
     getSubjects(): Promise<({
         topics: {
@@ -55,53 +97,56 @@ export declare class LearningController {
         createdAt: Date;
         updatedAt: Date;
     })[]>;
-    getSubject(id: string): Promise<({
-        topics: ({
-            lessons: ({
-                quizzes: {
-                    id: string;
-                    createdAt: Date;
-                    updatedAt: Date;
-                    title: string;
-                    lessonId: string;
-                }[];
-            } & {
+    getSubject(id: string, req: any): Promise<{
+        topics: {
+            lessons: {
+                status: string;
+                score: number | null;
+                _count: {
+                    questions: number;
+                };
                 id: string;
                 name: string;
                 createdAt: Date;
                 updatedAt: Date;
+                content: string | null;
+                order: number;
+                rewardPoints: number;
                 topicId: string;
-            })[];
-        } & {
+            }[];
             id: string;
             name: string;
             createdAt: Date;
             updatedAt: Date;
             subjectId: string;
-        })[];
+        }[];
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
+    getLesson(id: string): Promise<{
+        questions: {
+            id: string;
+            text: string;
+            options: import("@prisma/client/runtime/client").JsonValue;
+        }[];
     } & {
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-    }) | null>;
-    getQuiz(id: string): Promise<{
-        questions: {
-            id: string;
-            options: import("@prisma/client/runtime/client").JsonValue;
-            text: string;
-        }[];
-    } & {
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        title: string;
-        lessonId: string;
+        content: string | null;
+        order: number;
+        rewardPoints: number;
+        topicId: string;
     }>;
-    submitQuiz(req: any, dto: SubmitQuizDto): Promise<{
+    submitLesson(req: any, dto: SubmitLessonDto): Promise<{
         score: number;
         total: number;
         breakdown: any[];
         pointsEarned: number;
+        passed: boolean;
+        isFirstCompletion: boolean;
     }>;
 }

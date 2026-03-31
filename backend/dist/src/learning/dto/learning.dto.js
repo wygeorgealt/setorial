@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SubmitQuizDto = exports.CreateQuizDto = exports.CreateQuestionDto = exports.CreateLessonDto = exports.CreateTopicDto = exports.CreateSubjectDto = void 0;
+exports.GenerateAiLevelsDto = exports.SubmitLessonDto = exports.CreateLessonDto = exports.CreateQuestionDto = exports.CreateTopicDto = exports.CreateSubjectDto = void 0;
 const class_validator_1 = require("class-validator");
 class CreateSubjectDto {
     name;
@@ -35,21 +35,6 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateTopicDto.prototype, "subjectId", void 0);
-class CreateLessonDto {
-    name;
-    topicId;
-}
-exports.CreateLessonDto = CreateLessonDto;
-__decorate([
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
-    __metadata("design:type", String)
-], CreateLessonDto.prototype, "name", void 0);
-__decorate([
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
-    __metadata("design:type", String)
-], CreateLessonDto.prototype, "topicId", void 0);
 class CreateQuestionDto {
     text;
     options;
@@ -69,38 +54,73 @@ __decorate([
     (0, class_validator_1.IsNumber)(),
     __metadata("design:type", Number)
 ], CreateQuestionDto.prototype, "correctOption", void 0);
-class CreateQuizDto {
-    title;
-    lessonId;
+class CreateLessonDto {
+    name;
+    topicId;
+    content;
+    order;
+    rewardPoints;
     questions;
 }
-exports.CreateQuizDto = CreateQuizDto;
+exports.CreateLessonDto = CreateLessonDto;
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
-], CreateQuizDto.prototype, "title", void 0);
+], CreateLessonDto.prototype, "name", void 0);
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
-], CreateQuizDto.prototype, "lessonId", void 0);
+], CreateLessonDto.prototype, "topicId", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateLessonDto.prototype, "content", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
+], CreateLessonDto.prototype, "order", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
+], CreateLessonDto.prototype, "rewardPoints", void 0);
 __decorate([
     (0, class_validator_1.IsArray)(),
     __metadata("design:type", Array)
-], CreateQuizDto.prototype, "questions", void 0);
-class SubmitQuizDto {
-    quizId;
+], CreateLessonDto.prototype, "questions", void 0);
+class SubmitLessonDto {
+    lessonId;
     answers;
 }
-exports.SubmitQuizDto = SubmitQuizDto;
+exports.SubmitLessonDto = SubmitLessonDto;
 __decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
-], SubmitQuizDto.prototype, "quizId", void 0);
+], SubmitLessonDto.prototype, "lessonId", void 0);
 __decorate([
     (0, class_validator_1.IsArray)(),
     __metadata("design:type", Array)
-], SubmitQuizDto.prototype, "answers", void 0);
+], SubmitLessonDto.prototype, "answers", void 0);
+class GenerateAiLevelsDto {
+    subjectId;
+    topicName;
+    numLevels;
+}
+exports.GenerateAiLevelsDto = GenerateAiLevelsDto;
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], GenerateAiLevelsDto.prototype, "subjectId", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], GenerateAiLevelsDto.prototype, "topicName", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
+], GenerateAiLevelsDto.prototype, "numLevels", void 0);
 //# sourceMappingURL=learning.dto.js.map

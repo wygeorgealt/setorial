@@ -7,9 +7,9 @@ export declare class MockExamsController {
         _count: {
             questions: number;
         };
-        title: string;
         description: string | null;
         price: import("@prisma/client-runtime-utils").Decimal;
+        title: string;
         durationMinutes: number;
     }[]>;
     getMockDetails(id: string): Promise<({
@@ -23,9 +23,9 @@ export declare class MockExamsController {
         createdAt: Date;
         updatedAt: Date;
         isActive: boolean;
-        title: string;
         description: string | null;
         price: import("@prisma/client-runtime-utils").Decimal;
+        title: string;
         durationMinutes: number;
     }) | null>;
     startMock(req: any, id: string): Promise<{

@@ -17,11 +17,9 @@ export declare class UsersService {
         expoPushToken?: string;
     }): Promise<{
         id: string;
-        name: string | null;
-        createdAt: Date;
-        updatedAt: Date;
         email: string;
         password: string;
+        name: string | null;
         role: import("@prisma/client").$Enums.Role;
         tier: import("@prisma/client").$Enums.Tier;
         isVerified: boolean;
@@ -33,6 +31,8 @@ export declare class UsersService {
         lastActiveAt: Date | null;
         assessmentPassed: boolean;
         monetizationEligibleAt: Date | null;
+        createdAt: Date;
+        updatedAt: Date;
         isFrozen: boolean;
         isFlagged: boolean;
         expoPushToken: string | null;
@@ -41,8 +41,8 @@ export declare class UsersService {
         id: string;
         name: string;
         totalTopics: number;
-        totalQuizzes: number;
-        completedQuizzes: number;
+        totalLessons: number;
+        completedLessons: number;
         progress: number;
     }[]>;
     getBanks(): Promise<any>;

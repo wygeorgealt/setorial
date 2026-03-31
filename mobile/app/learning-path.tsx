@@ -44,7 +44,11 @@ export default function LearningPathScreen() {
 
             <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false}>
                 {progress.map((subject) => (
-                    <View key={subject.id} className="mb-6 bg-white dark:bg-[#1E222B] p-6 rounded-[32px] border-2 border-b-4 border-[#E5E5E5] dark:border-[#272B36]">
+                    <TouchableOpacity
+                        key={subject.id}
+                        activeOpacity={0.8}
+                        onPress={() => router.push(`/course-detail?id=${subject.id}`)}
+                        className="mb-6 bg-white dark:bg-[#1E222B] p-6 rounded-[32px] border-2 border-b-4 border-[#E5E5E5] dark:border-[#272B36]">
                         <View className="flex-row items-center justify-between mb-4">
                             <View className="flex-row items-center">
                                 <View className="w-12 h-12 bg-[#F5F5F5] dark:bg-[#2A2E39] rounded-2xl items-center justify-center mr-4 border-2 border-[#E5E5E5] dark:border-[#272B36]">
@@ -52,7 +56,7 @@ export default function LearningPathScreen() {
                                 </View>
                                 <View>
                                     <Text className="text-[#4B4B4B] dark:text-white font-bold text-lg">{subject.name}</Text>
-                                    <Text className="text-[#AFAFAF] dark:text-gray-400 font-bold text-xs uppercase tracking-wider">{subject.totalTopics} topics · {subject.totalQuizzes} quizzes</Text>
+                                    <Text className="text-[#AFAFAF] dark:text-gray-400 font-bold text-xs uppercase tracking-wider">{subject.totalTopics} topics · {subject.totalLessons} lessons</Text>
                                 </View>
                             </View>
                             <Text className="text-[#58CC02] font-black text-2xl">{subject.progress}%</Text>
@@ -69,10 +73,10 @@ export default function LearningPathScreen() {
                         <View className="flex-row items-center mt-3">
                             <CheckCircle2 size={14} color="#94A3B8" />
                             <Text className="text-gray-400 text-xs ml-2">
-                                {subject.completedQuizzes}/{subject.totalQuizzes} quizzes completed
+                                {subject.completedLessons}/{subject.totalLessons} lessons completed
                             </Text>
                         </View>
-                    </View>
+                    </TouchableOpacity>
                 ))}
 
                 {progress.length === 0 && (

@@ -3,22 +3,15 @@ import { LayoutGrid, Search, Wallet, MoreHorizontal, ShoppingBag } from 'lucide-
 import { useColorScheme } from 'nativewind';
 import { View } from 'react-native';
 import { useAuthStore } from '../../store/authStore';
+import { getTierColors } from '../../utils/theme';
 
 export default function TabLayout() {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
   const { user } = useAuthStore();
 
-  const getTierColor = () => {
-    switch (user?.tier) {
-      case 'BRONZE': return '#CD7F32';
-      case 'SILVER': return '#B4B4B4';
-      case 'GOLD': return '#FFD700';
-      default: return '#58CC02'; // FREE / Blue fallback replaced by Duolingo Green
-    }
-  };
-
-  const activeColor = getTierColor();
+  const theme = getTierColors(user?.tier);
+  const activeColor = isDark ? theme.border : theme.primary;
 
   return (
     <Tabs

@@ -71,6 +71,32 @@ async function main() {
         });
     }
     console.log('Country pricing seeded:', pricingData.length, 'countries');
+
+    // ─── Seed Power-Ups ─────────────────────────────────────────────────
+    const powerUps = [
+        { type: 'STREAK_FREEZE' as const, name: 'Streak Freeze', description: 'Protect your streak for 1 day if you miss a lesson', icon: 'Shield', price: 200, durationDays: 1 },
+        { type: 'DOUBLE_POINTS' as const, name: '2x XP Boost', description: 'Double all points earned for 24 hours', icon: 'Zap', price: 500, durationDays: 1 },
+    ];
+    for (const p of powerUps) {
+        await (prisma.powerUp as any).upsert({ where: { type: p.type }, update: { ...p }, create: { ...p } });
+    }
+    console.log('Power-ups seeded:', powerUps.length);
+
+    // ─── Seed Badges ────────────────────────────────────────────────────
+    const badges = [
+        { name: 'First Steps', description: 'Complete your first lesson', icon: 'Zap', color: '#3B82F6' },
+        { name: 'Explorer', description: 'Complete 5 lessons', icon: 'BookOpen', color: '#8B5CF6' },
+        { name: 'Century', description: 'Earn 100 XP', icon: 'Trophy', color: '#EAB308' },
+        { name: 'On Fire', description: 'Maintain a 7-day streak', icon: 'Flame', color: '#EF4444' },
+        { name: 'Unstoppable', description: 'Maintain a 30-day streak', icon: 'Target', color: '#F97316' },
+        { name: 'Gold Standard', description: 'Reach Gold tier', icon: 'Crown', color: '#EAB308' },
+        { name: 'Half Grand', description: 'Earn 500 XP', icon: 'Star', color: '#14B8A6' },
+        { name: 'Perfect Score', description: 'Get 100% on a lesson', icon: 'Award', color: '#10B981' },
+    ];
+    for (const b of badges) {
+        await (prisma.badge as any).upsert({ where: { name: b.name }, update: { ...b }, create: { ...b } });
+    }
+    console.log('Badges seeded:', badges.length);
 }
 
 main()

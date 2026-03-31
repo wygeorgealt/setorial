@@ -1,5 +1,5 @@
 import { PrismaService } from '../prisma.service';
-import { CreateSubjectDto, CreateTopicDto, CreateLessonDto, CreateQuizDto, SubmitQuizDto } from './dto/learning.dto';
+import { CreateSubjectDto, CreateTopicDto, CreateLessonDto, SubmitLessonDto } from './dto/learning.dto';
 import { GamificationService } from '../gamification/gamification.service';
 import { StoreService } from '../store/store.service';
 export declare class LearningService {
@@ -13,6 +13,12 @@ export declare class LearningService {
         createdAt: Date;
         updatedAt: Date;
     }>;
+    deleteSubject(id: string): Promise<{
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
     createTopic(dto: CreateTopicDto): Promise<{
         id: string;
         name: string;
@@ -20,30 +26,33 @@ export declare class LearningService {
         updatedAt: Date;
         subjectId: string;
     }>;
-    createLesson(dto: CreateLessonDto): Promise<{
+    deleteTopic(id: string): Promise<{
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-        topicId: string;
+        subjectId: string;
     }>;
-    createQuiz(dto: CreateQuizDto): Promise<{
+    createLesson(dto: CreateLessonDto): Promise<{
         questions: {
             id: string;
             createdAt: Date;
             updatedAt: Date;
-            mockExamId: string | null;
-            options: import("@prisma/client/runtime/client").JsonValue;
             text: string;
+            options: import("@prisma/client/runtime/client").JsonValue;
             correctOption: number;
-            quizId: string | null;
+            mockExamId: string | null;
+            lessonId: string | null;
         }[];
     } & {
         id: string;
+        name: string;
         createdAt: Date;
         updatedAt: Date;
-        title: string;
-        lessonId: string;
+        content: string | null;
+        order: number;
+        rewardPoints: number;
+        topicId: string;
     }>;
     getSubjects(): Promise<({
         topics: {
@@ -59,53 +68,56 @@ export declare class LearningService {
         createdAt: Date;
         updatedAt: Date;
     })[]>;
-    getSubject(id: string): Promise<({
-        topics: ({
-            lessons: ({
-                quizzes: {
-                    id: string;
-                    createdAt: Date;
-                    updatedAt: Date;
-                    title: string;
-                    lessonId: string;
-                }[];
-            } & {
+    getSubjectPathway(id: string, userId: string): Promise<{
+        topics: {
+            lessons: {
+                status: string;
+                score: number | null;
+                _count: {
+                    questions: number;
+                };
                 id: string;
                 name: string;
                 createdAt: Date;
                 updatedAt: Date;
+                content: string | null;
+                order: number;
+                rewardPoints: number;
                 topicId: string;
-            })[];
-        } & {
+            }[];
             id: string;
             name: string;
             createdAt: Date;
             updatedAt: Date;
             subjectId: string;
-        })[];
+        }[];
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
+    getLesson(id: string): Promise<{
+        questions: {
+            id: string;
+            text: string;
+            options: import("@prisma/client/runtime/client").JsonValue;
+        }[];
     } & {
         id: string;
         name: string;
         createdAt: Date;
         updatedAt: Date;
-    }) | null>;
-    getQuiz(id: string): Promise<{
-        questions: {
-            id: string;
-            options: import("@prisma/client/runtime/client").JsonValue;
-            text: string;
-        }[];
-    } & {
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        title: string;
-        lessonId: string;
+        content: string | null;
+        order: number;
+        rewardPoints: number;
+        topicId: string;
     }>;
-    submitQuiz(userId: string, dto: SubmitQuizDto): Promise<{
+    submitLesson(userId: string, dto: SubmitLessonDto): Promise<{
         score: number;
         total: number;
         breakdown: any[];
         pointsEarned: number;
+        passed: boolean;
+        isFirstCompletion: boolean;
     }>;
 }

@@ -17,7 +17,7 @@ export default function StatisticsScreen() {
             ]);
             setBalance({
                 ngn: balanceRes.data.balance,
-                usd: balanceRes.data.balance / 1600
+                usd: balanceRes.data.balance / (balanceRes.data.exchangeRate || 1600)
             });
             setTransactions(txRes.data);
         } catch (error) {

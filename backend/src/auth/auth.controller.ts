@@ -14,8 +14,9 @@ export class AuthController {
 
     @HttpCode(HttpStatus.OK)
     @Post('login')
-    async login(@Body() loginDto: LoginDto) {
-        return this.authService.login(loginDto);
+    async login(@Body() loginDto: LoginDto, @Request() req: any) {
+        const ipCountry = req.headers['cf-ipcountry'] || req.headers['x-vercel-ip-country'] || null;
+        return this.authService.login(loginDto, ipCountry);
     }
 
     @UseGuards(JwtAuthGuard)

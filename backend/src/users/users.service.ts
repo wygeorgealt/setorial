@@ -55,19 +55,15 @@ export class UsersService {
     }
 
     async getLearningProgress(userId: string) {
-        // Get all subjects with their topics and count quiz submissions
+        // Get all subjects with their topics and lessons
         const subjects = await this.prisma.subject.findMany({
             include: {
                 topics: {
                     include: {
                         lessons: {
                             include: {
-                                quizzes: {
-                                    include: {
-                                        _count: {
-                                            select: { questions: true }
-                                        }
-                                    }
+                                userProgress: {
+                                    where: { userId }
                                 }
                             }
                         }
@@ -76,27 +72,26 @@ export class UsersService {
             }
         });
 
-        // Get user's quiz submissions from points ledger
-        const userPoints = await this.prisma.pointsLedger.findMany({
-            where: { userId },
-            select: { action: true, createdAt: true }
-        });
-
         return subjects.map(subject => {
-            const totalQuizzes = subject.topics.reduce((sum, topic) =>
-                sum + topic.lessons.reduce((lSum, lesson) => lSum + lesson.quizzes.length, 0), 0
-            );
-            const completed = userPoints.filter(p =>
-                p.action?.toLowerCase().includes(subject.name.toLowerCase())
-            ).length;
+            let totalLessons = 0;
+            let completedLessons = 0;
+
+            subject.topics.forEach(topic => {
+                topic.lessons.forEach(lesson => {
+                    totalLessons++;
+                    if (lesson.userProgress && lesson.userProgress.length > 0) {
+                        completedLessons++;
+                    }
+                });
+            });
 
             return {
                 id: subject.id,
                 name: subject.name,
                 totalTopics: subject.topics.length,
-                totalQuizzes,
-                completedQuizzes: completed,
-                progress: totalQuizzes > 0 ? Math.round((completed / totalQuizzes) * 100) : 0,
+                totalLessons,
+                completedLessons,
+                progress: totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0,
             };
         });
     }

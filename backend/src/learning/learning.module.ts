@@ -4,11 +4,12 @@ import { LearningController } from './learning.controller';
 import { PrismaService } from '../prisma.service';
 import { GamificationModule } from '../gamification/gamification.module';
 import { StoreModule } from '../store/store.module';
+import { AiContentService } from './ai-content.service';
 
 @Module({
   imports: [GamificationModule, StoreModule],
-  providers: [LearningService, PrismaService],
+  providers: [LearningService, PrismaService, AiContentService],
   controllers: [LearningController],
-  exports: [LearningService],
+  exports: [LearningService, AiContentService],
 })
 export class LearningModule { }

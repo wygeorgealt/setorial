@@ -58,8 +58,8 @@ export const subscriptionApi = {
 export const learningApi = {
     getSubjects: () => api.get('/learning/subjects'),
     getSubject: (id: string) => api.get(`/learning/subjects/${id}`),
-    getQuiz: (id: string) => api.get(`/learning/quizzes/${id}`),
-    submitQuiz: (data: any) => api.post('/learning/quizzes/submit', data),
+    getLesson: (id: string) => api.get(`/learning/lessons/${id}`),
+    submitLesson: (data: any) => api.post('/learning/lessons/submit', data),
 };
 
 export const kycApi = {

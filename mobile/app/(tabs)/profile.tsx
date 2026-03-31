@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
 import { useState, useCallback } from 'react';
 import { authApi } from '../../services/api';
+import { getTierColors } from '../../utils/theme';
 
 export default function ProfileScreen() {
     const router = useRouter();
@@ -27,6 +28,8 @@ export default function ProfileScreen() {
         await logout();
         router.replace('/welcome');
     };
+
+    const theme = getTierColors(user?.tier);
 
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12]">
@@ -58,21 +61,13 @@ export default function ProfileScreen() {
                             <View
                                 className="px-3 py-1 rounded-full border border-b-2"
                                 style={{
-                                    backgroundColor: user?.tier === 'GOLD' ? '#FFD70020' :
-                                        user?.tier === 'SILVER' ? '#B4B4B420' :
-                                            user?.tier === 'BRONZE' ? '#CD7F3220' : '#58CC0220',
-                                    borderColor: user?.tier === 'GOLD' ? '#FFD700' :
-                                        user?.tier === 'SILVER' ? '#B4B4B4' :
-                                            user?.tier === 'BRONZE' ? '#CD7F32' : '#58CC02'
+                                    backgroundColor: `${theme.primary}20`,
+                                    borderColor: theme.primary
                                 }}
                             >
                                 <Text
                                     className="text-[11px] font-black uppercase tracking-widest"
-                                    style={{
-                                        color: user?.tier === 'GOLD' ? '#B8860B' :
-                                            user?.tier === 'SILVER' ? '#707070' :
-                                                user?.tier === 'BRONZE' ? '#8B4513' : '#3E8E00'
-                                    }}
+                                    style={{ color: theme.primaryDark }}
                                 >
                                     {user?.tier || 'FREE'}
                                 </Text>

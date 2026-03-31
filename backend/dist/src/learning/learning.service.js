@@ -26,17 +26,26 @@ let LearningService = class LearningService {
     async createSubject(dto) {
         return this.prisma.subject.create({ data: dto });
     }
+    async deleteSubject(id) {
+        return this.prisma.$transaction(async (tx) => {
+            await tx.topic.deleteMany({ where: { subjectId: id } });
+            return tx.subject.delete({ where: { id } });
+        });
+    }
     async createTopic(dto) {
         return this.prisma.topic.create({ data: dto });
     }
-    async createLesson(dto) {
-        return this.prisma.lesson.create({ data: dto });
+    async deleteTopic(id) {
+        return this.prisma.topic.delete({ where: { id } });
     }
-    async createQuiz(dto) {
-        return this.prisma.quiz.create({
+    async createLesson(dto) {
+        return this.prisma.lesson.create({
             data: {
-                title: dto.title,
-                lessonId: dto.lessonId,
+                name: dto.name,
+                topicId: dto.topicId,
+                content: dto.content,
+                order: dto.order ?? 1,
+                rewardPoints: dto.rewardPoints ?? 10,
                 questions: {
                     create: dto.questions.map(q => ({
                         text: q.text,
@@ -51,70 +60,108 @@ let LearningService = class LearningService {
     async getSubjects() {
         return this.prisma.subject.findMany({ include: { topics: true } });
     }
-    async getSubject(id) {
-        return this.prisma.subject.findUnique({
+    async getSubjectPathway(id, userId) {
+        const subject = await this.prisma.subject.findUnique({
             where: { id },
             include: {
                 topics: {
                     include: {
                         lessons: {
-                            include: { quizzes: true }
+                            orderBy: { order: 'asc' },
+                            include: {
+                                _count: { select: { questions: true } },
+                                userProgress: {
+                                    where: { userId }
+                                }
+                            }
                         }
                     }
                 }
             }
         });
+        if (!subject)
+            throw new common_1.NotFoundException('Subject not found');
+        const annotatedTopics = subject.topics.map(topic => {
+            let foundCurrent = false;
+            const annotatedLessons = topic.lessons.map(lesson => {
+                const isCompleted = lesson.userProgress && lesson.userProgress.length > 0;
+                let status = 'LOCKED';
+                if (isCompleted) {
+                    status = 'COMPLETED';
+                }
+                else if (!foundCurrent) {
+                    status = 'CURRENT';
+                    foundCurrent = true;
+                }
+                const { userProgress, ...rest } = lesson;
+                return { ...rest, status, score: isCompleted ? userProgress[0].score : null };
+            });
+            return { ...topic, lessons: annotatedLessons };
+        });
+        return { ...subject, topics: annotatedTopics };
     }
-    async getQuiz(id) {
-        const quiz = await this.prisma.quiz.findUnique({
+    async getLesson(id) {
+        const lesson = await this.prisma.lesson.findUnique({
             where: { id },
             include: { questions: { select: { id: true, text: true, options: true } } },
         });
-        if (!quiz)
-            throw new common_1.NotFoundException('Quiz not found');
-        return quiz;
+        if (!lesson)
+            throw new common_1.NotFoundException('Lesson not found');
+        return lesson;
     }
-    async submitQuiz(userId, dto) {
-        const quiz = await this.prisma.quiz.findUnique({
-            where: { id: dto.quizId },
+    async submitLesson(userId, dto) {
+        const lesson = await this.prisma.lesson.findUnique({
+            where: { id: dto.lessonId },
             include: {
                 questions: true,
-                lesson: {
-                    include: {
-                        topic: {
-                            include: { subject: true }
-                        }
-                    }
-                }
+                topic: { include: { subject: true } }
             },
         });
-        if (!quiz)
-            throw new common_1.NotFoundException('Quiz not found');
-        const subjectId = quiz.lesson.topic.subjectId;
+        if (!lesson)
+            throw new common_1.NotFoundException('Lesson not found');
         let score = 0;
         const breakdown = [];
-        quiz.questions.forEach((q, index) => {
+        lesson.questions.forEach((q, index) => {
             const isCorrect = q.correctOption === dto.answers[index];
             if (isCorrect)
                 score += 1;
             breakdown.push({ questionId: q.id, isCorrect, correctOption: q.correctOption });
         });
-        let pointsEarned = score * 10;
-        const hasBoost = await this.storeService.hasActiveBoost(userId);
-        if (hasBoost)
-            pointsEarned *= 2;
-        await this.gamificationService.awardPoints(userId, pointsEarned, hasBoost ? 'Quiz Completion (2x Boost)' : 'Quiz Completion', subjectId);
+        const passThreshold = Math.ceil(lesson.questions.length * 0.7);
+        const passed = score >= passThreshold || lesson.questions.length === 0;
+        let pointsEarned = 0;
+        let isFirstCompletion = false;
+        if (passed) {
+            const existingProgress = await this.prisma.userProgress.findUnique({
+                where: { userId_lessonId: { userId, lessonId: lesson.id } }
+            });
+            if (!existingProgress) {
+                isFirstCompletion = true;
+                await this.prisma.userProgress.create({
+                    data: {
+                        userId,
+                        lessonId: lesson.id,
+                        score: score
+                    }
+                });
+                pointsEarned = lesson.rewardPoints;
+                const hasBoost = await this.storeService.hasActiveBoost(userId);
+                if (hasBoost)
+                    pointsEarned *= 2;
+                await this.gamificationService.awardPoints(userId, pointsEarned, hasBoost ? 'Lesson Completion (2x Boost)' : 'Lesson Completion', lesson.topic.subjectId);
+            }
+        }
         const currentStreak = await this.gamificationService.incrementStreak(userId);
         await this.gamificationService.checkAndAwardBadges(userId, {
             streak: currentStreak,
             score: score,
-            total: quiz.questions.length
+            total: lesson.questions.length
         });
         await this.prisma.user.update({
             where: { id: userId },
             data: { lastActiveAt: new Date() }
         });
-        return { score, total: quiz.questions.length, breakdown, pointsEarned };
+        return { score, total: lesson.questions.length, breakdown, pointsEarned, passed, isFirstCompletion };
     }
 };
 exports.LearningService = LearningService;

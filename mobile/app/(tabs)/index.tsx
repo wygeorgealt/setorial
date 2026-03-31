@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
 import { useState, useEffect, useCallback } from 'react';
 import { authApi, walletApi, learningApi } from '../../services/api';
+import { getTierColors } from '../../utils/theme';
 
 export default function HomeScreen() {
     const router = useRouter();
@@ -43,6 +44,8 @@ export default function HomeScreen() {
         setRefreshing(false);
     }, []);
 
+    const theme = getTierColors(user?.tier);
+
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12]">
             <ScrollView
@@ -57,19 +60,11 @@ export default function HomeScreen() {
                     <View className="flex-row items-center flex-1">
                         <ShieldCheck
                             size={28}
-                            color={
-                                user?.tier === 'GOLD' ? '#FFD700' :
-                                    user?.tier === 'SILVER' ? '#B4B4B4' :
-                                        user?.tier === 'BRONZE' ? '#CD7F32' : '#CECECE'
-                            }
+                            color={theme.primary}
                         />
                         <Text
                             className="font-black text-lg ml-2 tracking-tighter"
-                            style={{
-                                color: user?.tier === 'GOLD' ? '#FFD700' :
-                                    user?.tier === 'SILVER' ? '#B4B4B4' :
-                                        user?.tier === 'BRONZE' ? '#CD7F32' : '#AFAFAF'
-                            }}
+                            style={{ color: theme.primary }}
                         >
                             {user?.tier || 'FREE'}
                         </Text>
@@ -108,7 +103,8 @@ export default function HomeScreen() {
                         <TouchableOpacity
                             activeOpacity={0.8}
                             onPress={() => router.push('/payout-history')}
-                            className="bg-[#1CB0F6] py-3 px-6 rounded-xl border-b-4 border-[#1899D6]"
+                            className="py-3 px-6 rounded-xl border-b-4 border-opacity-80"
+                            style={{ backgroundColor: theme.primary, borderColor: theme.primaryDark }}
                         >
                             <Text className="text-white font-bold text-[13px] tracking-widest uppercase">History</Text>
                         </TouchableOpacity>
@@ -159,7 +155,27 @@ export default function HomeScreen() {
                 {/* Holdings / Courses */}
                 <View className="mb-10">
                     <Text className="text-black dark:text-white font-bold text-xl tracking-tight mb-4">My Courses</Text>
-                    <Text className="text-gray-400 dark:text-gray-500 text-sm">No active courses. Scroll below to discover new subjects.</Text>
+                    {subjects.length > 0 ? (
+                        subjects.slice(0, 3).map((subject: any) => (
+                            <TouchableOpacity
+                                key={subject.id}
+                                activeOpacity={0.8}
+                                onPress={() => router.push(`/course-detail?id=${subject.id}`)}
+                                className="flex-row items-center p-4 mb-3 bg-white dark:bg-[#1E222B] border-2 border-[#E5E5E5] dark:border-[#272B36] border-b-4 rounded-2xl"
+                            >
+                                <View className="w-10 h-10 bg-[#58CC02]/20 rounded-xl items-center justify-center mr-4">
+                                    <Star size={20} color="#58CC02" />
+                                </View>
+                                <View className="flex-1">
+                                    <Text className="text-[#4B4B4B] dark:text-white font-bold text-[15px]">{subject.name}</Text>
+                                    <Text className="text-[#AFAFAF] dark:text-gray-400 text-xs font-bold uppercase tracking-wider">{subject.topics?.length || 0} units</Text>
+                                </View>
+                                <ChevronRight size={18} color="#CECECE" />
+                            </TouchableOpacity>
+                        ))
+                    ) : (
+                        <Text className="text-gray-400 dark:text-gray-500 text-sm">No active courses. Scroll below to discover new subjects.</Text>
+                    )}
                 </View>
 
                 {/* Popular on Stake / Top Subjects */}

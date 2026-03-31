@@ -31,40 +31,41 @@ enum PayoutMethod {
 }
 
 enum EconomicTier {
-  TIER_A  // High Income (USA, UK, Canada) — multiplier 1.0
-  TIER_B  // Upper Middle Income — multiplier 0.75
-  TIER_C  // Lower Middle Income (Nigeria, India) — multiplier 0.50
-  TIER_D  // Low Income — multiplier 0.35
+  TIER_A // High Income (USA, UK, Canada) — multiplier 1.0
+  TIER_B // Upper Middle Income — multiplier 0.75
+  TIER_C // Lower Middle Income (Nigeria, India) — multiplier 0.50
+  TIER_D // Low Income — multiplier 0.35
 }
 
 model User {
-  id             String         @id @default(uuid())
-  email          String         @unique
+  id             String        @id @default(uuid())
+  email          String        @unique
   password       String
   name           String?
-  role           Role           @default(STUDENT)
-  tier           Tier           @default(FREE)
-  isVerified     Boolean        @default(false)
-  kycStatus      KycStatus      @default(UNVERIFIED)
+  avatarUrl      String?
+  role           Role          @default(STUDENT)
+  tier           Tier          @default(FREE)
+  isVerified     Boolean       @default(false)
+  kycStatus      KycStatus     @default(UNVERIFIED)
   payoutMethod   PayoutMethod?
-  payoutAccount  Json?          // { "bankName": "...", "accountNumber": "..." }
-  billingCountry String?        // ISO 3166-1 code, locked after KYC
-  countryLocked  Boolean        @default(false)
-  
+  payoutAccount  Json? // { "bankName": "...", "accountNumber": "..." }
+  billingCountry String? // ISO 3166-1 code, locked after KYC
+  countryLocked  Boolean       @default(false)
+
   // Monetization & Activity Rules
   lastActiveAt           DateTime?
   assessmentPassed       Boolean   @default(false)
   monetizationEligibleAt DateTime? // Tracks when the 12-month consistency cycle began
 
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Admin Flags
-  isFrozen       Boolean        @default(false)
-  isFlagged      Boolean        @default(false)
+  isFrozen  Boolean @default(false)
+  isFlagged Boolean @default(false)
 
   // Notifications
-  expoPushToken  String?        // Expo push notification token
+  expoPushToken String? // Expo push notification token
 
   pointsLedgers  PointsLedger[]
   subscriptions  SubscriptionRecord[]
@@ -72,18 +73,19 @@ model User {
   userBadges     UserBadge[]
   mockAttempts   MockAttempt[]
   userPowerUps   UserPowerUp[]
+  userProgresses UserProgress[] // Tracks completed lessons/levels
 }
 
 model Badge {
-  id          String      @id @default(uuid())
-  name        String      @unique
+  id          String   @id @default(uuid())
+  name        String   @unique
   description String
-  icon        String      // Store icon name, e.g., 'Award', 'Zap', 'Star'
-  color       String      // e.g., '#FFC800'
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  
-  userBadges  UserBadge[]
+  icon        String // Store icon name, e.g., 'Award', 'Zap', 'Star'
+  color       String // e.g., '#FFC800'
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userBadges UserBadge[]
 }
 
 model UserBadge {
@@ -98,67 +100,73 @@ model UserBadge {
 }
 
 model Subject {
-  id          String   @id @default(uuid())
-  name        String   @unique
-  topics      Topic[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(uuid())
+  name      String   @unique
+  topics    Topic[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Topic {
-  id          String   @id @default(uuid())
-  name        String
-  subjectId   String
-  subject     Subject  @relation(fields: [subjectId], references: [id])
-  lessons     Lesson[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(uuid())
+  name      String
+  subjectId String
+  subject   Subject  @relation(fields: [subjectId], references: [id])
+  lessons   Lesson[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Lesson {
-  id          String   @id @default(uuid())
-  name        String
-  topicId     String
-  topic       Topic    @relation(fields: [topicId], references: [id])
-  quizzes     Quiz[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String         @id @default(uuid())
+  name         String
+  content      String? // Markdown or rich text content for the lesson
+  order        Int            @default(1) // Determines the sequence 1, 2, 3...
+  rewardPoints Int            @default(10) // Base points for completion
+  topicId      String
+  topic        Topic          @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  questions    Question[]
+  userProgress UserProgress[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
 }
 
-model Quiz {
-  id          String     @id @default(uuid())
-  title       String
+model UserProgress {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   lessonId    String
-  lesson      Lesson     @relation(fields: [lessonId], references: [id])
-  questions   Question[]
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  score       Int
+  completedAt DateTime @default(now())
+
+  @@unique([userId, lessonId]) // A user can only complete a lesson once for progression
 }
 
 model Question {
-  id            String   @id @default(uuid())
-  quizId        String?
-  quiz          Quiz?    @relation(fields: [quizId], references: [id])
+  id            String    @id @default(uuid())
+  lessonId      String?
+  lesson        Lesson?   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   mockExamId    String?
-  mockExam      MockExam? @relation(fields: [mockExamId], references: [id])
+  mockExam      MockExam? @relation(fields: [mockExamId], references: [id], onDelete: Cascade)
   text          String
   options       Json
   correctOption Int
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
 model MockExam {
-  id              String         @id @default(uuid())
+  id              String        @id @default(uuid())
   title           String
   description     String?
   durationMinutes Int
-  price           Decimal        @default(100.0) // NGN
-  isActive        Boolean        @default(true)
+  price           Decimal       @default(100.0) // NGN
+  isActive        Boolean       @default(true)
   questions       Question[]
   attempts        MockAttempt[]
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 }
 
 enum MockStatus {
@@ -168,16 +176,16 @@ enum MockStatus {
 }
 
 model MockAttempt {
-  id           String     @id @default(uuid())
-  userId       String
-  user         User       @relation(fields: [userId], references: [id])
-  mockExamId   String
-  mockExam     MockExam   @relation(fields: [mockExamId], references: [id])
-  status       MockStatus @default(IN_PROGRESS)
-  score        Int?
-  tabSwitches  Int        @default(0)
-  startedAt    DateTime   @default(now())
-  completedAt  DateTime?
+  id          String     @id @default(uuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id])
+  mockExamId  String
+  mockExam    MockExam   @relation(fields: [mockExamId], references: [id])
+  status      MockStatus @default(IN_PROGRESS)
+  score       Int?
+  tabSwitches Int        @default(0)
+  startedAt   DateTime   @default(now())
+  completedAt DateTime?
 }
 
 enum WalletTxType {
@@ -194,15 +202,15 @@ enum PowerUpType {
 }
 
 model PowerUp {
-  id          String      @id @default(uuid())
-  type        PowerUpType @unique
-  name        String
-  description String
-  icon        String
-  price       Decimal     // NGN cost
-  durationDays Int?       // How long the effect lasts (null = one-time use)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id           String      @id @default(uuid())
+  type         PowerUpType @unique
+  name         String
+  description  String
+  icon         String
+  price        Decimal // NGN cost
+  durationDays Int? // How long the effect lasts (null = one-time use)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
   userPowerUps UserPowerUp[]
 }
@@ -225,8 +233,8 @@ model WalletLedger {
   type         WalletTxType
   amount       Decimal
   reference    String?
-  region       String?      // ISO country code for regional tracking
-  exchangeRate Float?       // Transparency: rate used for this specific entry
+  region       String? // ISO country code for regional tracking
+  exchangeRate Float? // Transparency: rate used for this specific entry
   createdAt    DateTime     @default(now())
 }
 
@@ -246,41 +254,41 @@ enum PayoutStatus {
 }
 
 model PayoutBatch {
-  id              String       @id @default(uuid())
-  month           String       // e.g "2024-10"
-  region          String?      // ISO country code — null = legacy global
-  totalLiability  Decimal
-  totalPaid       Decimal
-  exchangeRate    Float?       // Transparency: rate used during disburse
-  status          PayoutStatus @default(PROCESSING)
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  id             String       @id @default(uuid())
+  month          String // e.g "2024-10"
+  region         String? // ISO country code — null = legacy global
+  totalLiability Decimal
+  totalPaid      Decimal
+  exchangeRate   Float? // Transparency: rate used during disburse
+  status         PayoutStatus @default(PROCESSING)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 }
 
 model CountryPricing {
-  id              String       @id @default(uuid())
-  countryCode     String       @unique  // ISO 3166-1 (e.g. "NG", "US")
-  countryName     String                // "Nigeria", "United States"
-  economicTier    EconomicTier
-  multiplier      Float        @default(1.0)
-  currency        String       @default("USD")
-  bronzeMonthly   Decimal
-  silverMonthly   Decimal
-  goldMonthly     Decimal
-  bronzeAnnual    Decimal
-  silverAnnual    Decimal
-  goldAnnual      Decimal
-  isActive        Boolean      @default(true)
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  id            String       @id @default(uuid())
+  countryCode   String       @unique // ISO 3166-1 (e.g. "NG", "US")
+  countryName   String // "Nigeria", "United States"
+  economicTier  EconomicTier
+  multiplier    Float        @default(1.0)
+  currency      String       @default("USD")
+  bronzeMonthly Decimal
+  silverMonthly Decimal
+  goldMonthly   Decimal
+  bronzeAnnual  Decimal
+  silverAnnual  Decimal
+  goldAnnual    Decimal
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 }
 
 model GlobalConfig {
-  id                    String   @id @default(uuid())
-  key                   String   @unique // e.g., "REWARD_POOL_PERCENTAGE"
-  value                 String   // e.g., "0.20"
-  description           String?
-  updatedAt             DateTime @updatedAt
+  id          String   @id @default(uuid())
+  key         String   @unique // e.g., "REWARD_POOL_PERCENTAGE"
+  value       String // e.g., "0.20"
+  description String?
+  updatedAt   DateTime @updatedAt
 }
 
 enum SubscriptionStatus {
@@ -290,25 +298,25 @@ enum SubscriptionStatus {
 }
 
 model SubscriptionRecord {
-  id                  String             @id @default(uuid())
-  userId              String
-  user                User               @relation(fields: [userId], references: [id])
-  tier                Tier
-  billingCycle        String             @default("MONTHLY") // "MONTHLY" | "ANNUAL"
-  status              SubscriptionStatus @default(ACTIVE)
-  amountPaid          Decimal            // Amount paid in local currency
-  currency            String             @default("NGN")
-  paystackReference   String             @unique
-  currentPeriodStart  DateTime           @default(now())
-  currentPeriodEnd    DateTime           // Expiry date
-  createdAt           DateTime           @default(now())
-  updatedAt           DateTime           @updatedAt
+  id                 String             @id @default(uuid())
+  userId             String
+  user               User               @relation(fields: [userId], references: [id])
+  tier               Tier
+  billingCycle       String             @default("MONTHLY") // "MONTHLY" | "ANNUAL"
+  status             SubscriptionStatus @default(ACTIVE)
+  amountPaid         Decimal // Amount paid in local currency
+  currency           String             @default("NGN")
+  paystackReference  String             @unique
+  currentPeriodStart DateTime           @default(now())
+  currentPeriodEnd   DateTime // Expiry date
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
 }
 
 model DiscountCode {
   id              String    @id @default(uuid())
   code            String    @unique // e.g., "SETORIAL2024"
-  discountPercent Float     // e.g., 10.0 for 10%
+  discountPercent Float // e.g., 10.0 for 10%
   maxUses         Int?
   usedCount       Int       @default(0)
   expiryDate      DateTime?

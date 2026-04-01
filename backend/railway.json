@@ -6,8 +6,6 @@
   },
   "deploy": {
     "numReplicas": 1,
-    "restartPolicyType": "ON_FAILURE",
-    "healthCheckPath": "/health",
-    "port": 3000
+    "restartPolicyType": "ON_FAILURE"
   }
 }

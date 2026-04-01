@@ -6,16 +6,16 @@ WORKDIR /app
 # Install build dependencies
 RUN apk add --no-cache openssl
 
-# Install dependencies first (better caching)
+# Copy package files and prisma schema (needed for postinstall prisma generate)
 COPY package*.json ./
+COPY prisma ./prisma/
+COPY prisma.config.ts ./
+
+# Install dependencies (postinstall runs prisma generate, needs schema above)
 RUN npm install --legacy-peer-deps
 
-# Copy source and prisma schema
-COPY prisma ./prisma/
+# Copy remaining source
 COPY . .
-
-# Generate Prisma client
-RUN npx prisma generate
 
 # Build the application
 RUN npm run build

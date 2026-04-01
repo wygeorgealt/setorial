@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: '/api',
+    baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
 });
 
 // Intercept requests to add the token
@@ -75,6 +75,8 @@ export const adminApi = {
     // Notifications
     sendNotification: (data: { userId?: string, title: string, body: string, data?: any }) => 
         api.post('/admin/notifications/send', data),
+    sendEmailBroadcast: (data: { subject: string, body: string }) => 
+        api.post('/admin/notifications/email', data),
 };
 
 export default api;

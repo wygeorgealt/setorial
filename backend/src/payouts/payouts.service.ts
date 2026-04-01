@@ -4,6 +4,8 @@ import { PrismaService } from '../prisma.service';
 import { Prisma } from '@prisma/client';
 import { paystackRequest, resolveBankCode } from './paystack-utils';
 import { NotificationsService } from '../notifications/notifications.service';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class PayoutsService {
@@ -11,7 +13,8 @@ export class PayoutsService {
 
     constructor(
         private prisma: PrismaService,
-        private notificationsService: NotificationsService
+        private notificationsService: NotificationsService,
+        @InjectQueue('payouts') private payoutsQueue: Queue
     ) { }
 
     /**
@@ -116,7 +119,7 @@ export class PayoutsService {
         // Get verified (KYC-approved) users only
         const verifiedUsers = await (this.prisma as any).user.findMany({
             where: { kycStatus: 'APPROVED', isVerified: true, tier: { in: ['SILVER', 'GOLD'] } },
-            select: { id: true, billingCountry: true },
+            select: { id: true, billingCountry: true, email: true },
         });
         const verifiedIds = verifiedUsers.map((u: any) => u.id);
 
@@ -205,6 +208,13 @@ export class PayoutsService {
                     // Trigger physical disbursement
                     try {
                         await this.disburseFunds(userId, payAmount, currentRegion);
+                        
+                        // Send email confirmation
+                        const user = verifiedUsers.find(u => u.id === userId);
+                        if (user && user.email) {
+                            this.notificationsService.sendPayoutConfirmation(user.email, payAmount, month)
+                                .catch(e => this.logger.warn(`Failed to send payout email to ${user.email}: ${e.message}`));
+                        }
                     } catch (disbursementError) {
                         this.logger.error(`❌ Disbursement failed for user ${userId}: ${disbursementError.message}`);
                         // We continue with other users even if one fails
@@ -263,13 +273,15 @@ export class PayoutsService {
      */
     @Cron('0 0 28 * *')
     async handleMonthlyPayout() {
+        // Only run cron on the web main instance to push jobs. 
+        // The worker will consume them via PayoutsProcessor.
+        if (process.env.IS_WORKER === 'true') return;
+
         const now = new Date();
         const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-        // This parameter is less relevant now as we fetch actual regional EARN, 
-        // passing 0 to represent dynamic regional fetching.
-        this.logger.log(`⏰ Cron: 28th-of-month payout triggered for ${month}`);
-        await this.processPayout(month);
+        this.logger.log(`⏰ Cron: Adding payout processing job to queue for ${month}`);
+        await this.payoutsQueue.add('process-payout', { month });
     }
 
     /**

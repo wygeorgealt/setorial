@@ -4,6 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
 import { PrismaService } from '../prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class AuthService {
@@ -11,6 +12,7 @@ export class AuthService {
         private usersService: UsersService,
         private jwtService: JwtService,
         private prisma: PrismaService,
+        private notificationsService: NotificationsService,
     ) { }
 
     async register(registerDto: RegisterDto) {
@@ -18,13 +20,56 @@ export class AuthService {
         if (existing) {
             throw new BadRequestException('Email already in use');
         }
+
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+
         const hashedPassword = await bcrypt.hash(registerDto.password, 10);
-        const user = await this.usersService.createUser({
+        await this.usersService.createUser({
             email: registerDto.email,
             password: hashedPassword,
             name: registerDto.name,
+            emailOtp: otp,
+            emailOtpExpiresAt: otpExpires,
+            isEmailVerified: false,
         });
-        return this.generateAuthResponse(user);
+
+        await this.notificationsService.sendOtpEmail(registerDto.email, otp, registerDto.name || 'Student');
+
+        return {
+            message: 'Registration successful. Please check your email for the verification code.',
+            email: registerDto.email
+        };
+    }
+
+    async verifyOtp(email: string, otp: string) {
+        const user = await this.usersService.findByEmail(email);
+        if (!user) throw new BadRequestException('User not found');
+
+        if (user.isEmailVerified) {
+            throw new BadRequestException('Email already verified');
+        }
+
+        if (user.emailOtp !== otp) {
+            throw new BadRequestException('Invalid verification code');
+        }
+
+        if (user.emailOtpExpiresAt && new Date() > user.emailOtpExpiresAt) {
+            throw new BadRequestException('Verification code has expired');
+        }
+
+        const updatedUser = await this.prisma.user.update({
+            where: { id: user.id },
+            data: {
+                isEmailVerified: true,
+                emailOtp: null,
+                emailOtpExpiresAt: null,
+            }
+        });
+
+        await this.notificationsService.sendWelcomeEmail(updatedUser.email, updatedUser.name || 'Student');
+
+        return this.generateAuthResponse(updatedUser);
     }
 
     async login(loginDto: LoginDto, ipCountry?: string) {
@@ -35,6 +80,10 @@ export class AuthService {
         const isPasswordValid = await bcrypt.compare(loginDto.password, user.password);
         if (!isPasswordValid) {
             throw new UnauthorizedException('Invalid credentials');
+        }
+
+        if (!user.isEmailVerified) {
+            throw new UnauthorizedException('Please verify your email address first');
         }
 
         // Fraud detection logic

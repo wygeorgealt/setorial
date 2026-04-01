@@ -96,10 +96,10 @@ export class UsersService {
         });
     }
 
-    async getBanks() {
+    async getBanks(country: string = 'nigeria') {
         try {
             const response = await lastValueFrom(
-                this.httpService.get('https://api.paystack.co/bank?country=nigeria', {
+                this.httpService.get(`https://api.paystack.co/bank?country=${country.toLowerCase()}`, {
                     headers: { Authorization: `Bearer ${this.paystackKey}` },
                 })
             );

@@ -105,6 +105,11 @@ export default function AdminDashboard() {
     const [payoutMonth, setPayoutMonth] = useState('');
     const [payoutRevenue, setPayoutRevenue] = useState('');
 
+    // Notifications
+    const [broadcastType, setBroadcastType] = useState<'push' | 'email'>('push');
+    const [emailSubject, setEmailSubject] = useState('');
+    const [emailBody, setEmailBody] = useState('');
+
     // Pricing Modal
     const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
     const [editingPricing, setEditingPricing] = useState<any>(null);
@@ -379,8 +384,29 @@ export default function AdminDashboard() {
         if (title && body) {
             try {
                 await adminApi.sendNotification({ title, body });
-                alert('Broadcast notification queued!');
-            } catch (err) { alert('Failed to send notification'); }
+                alert('Push broadcast notification queued!');
+            } catch (err) { alert('Failed to send push notification'); }
+        }
+    };
+
+    const handleSendEmailBroadcast = async () => {
+        if (!emailSubject || !emailBody) {
+            alert('Please enter both subject and body for the email broadcast.');
+            return;
+        }
+
+        if (!confirm(`Are you sure you want to send this email to all verified students?`)) return;
+
+        setLoading(true);
+        try {
+            await adminApi.sendEmailBroadcast({ subject: emailSubject, body: emailBody });
+            alert('Email broadcast sent successfully!');
+            setEmailSubject('');
+            setEmailBody('');
+        } catch (err: any) {
+            alert(err.response?.data?.message || 'Failed to send email broadcast');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -1005,30 +1031,102 @@ export default function AdminDashboard() {
             case 'notifications':
                 return (
                     <div className="space-y-10">
-                        <div>
-                            <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">Push Notifications</h2>
-                            <p className="text-sm text-zinc-500 mt-1">Send immediate updates or announcements to all active students.</p>
-                        </div>
-                        <div className="card p-8 bg-zinc-900 text-white max-w-2xl">
-                            <div className="space-y-6">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Broadcast Target</label>
-                                    <div className="p-3 bg-zinc-800 rounded-lg flex items-center space-x-3 ring-1 ring-zinc-800">
-                                        <div className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center">
-                                            <Users size={16} className="text-zinc-400" />
-                                        </div>
-                                        <span className="text-sm font-medium">All Platform Users with Push Enabled</span>
-                                    </div>
-                                </div>
-                                <button 
-                                    onClick={handleSendBroadcast}
-                                    className="w-full h-12 bg-white text-zinc-900 font-bold rounded-xl hover:bg-zinc-100 transition-all flex items-center justify-center space-x-2"
+                        <div className="flex justify-between items-end">
+                            <div>
+                                <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">Broadcast Center</h2>
+                                <p className="text-sm text-zinc-500 mt-1">Communicate with your students via Push or Email.</p>
+                            </div>
+                            <div className="flex bg-zinc-100 p-1 rounded-xl">
+                                <button
+                                    onClick={() => setBroadcastType('push')}
+                                    className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${broadcastType === 'push' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'}`}
                                 >
-                                    <Bell size={18} />
-                                    <span>Compose & Send Broadcast</span>
+                                    Push Notification
+                                </button>
+                                <button
+                                    onClick={() => setBroadcastType('email')}
+                                    className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${broadcastType === 'email' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-500 hover:text-zinc-700'}`}
+                                >
+                                    Email Broadcast
                                 </button>
                             </div>
                         </div>
+
+                        {broadcastType === 'push' ? (
+                            <div className="card p-8 bg-zinc-900 text-white max-w-2xl border-0 shadow-2xl">
+                                <div className="space-y-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Broadcast Target</label>
+                                        <div className="p-3 bg-zinc-800/50 rounded-lg flex items-center space-x-3 ring-1 ring-zinc-800">
+                                            <div className="w-8 h-8 rounded-full bg-zinc-700 flex items-center justify-center">
+                                                <Users size={16} className="text-zinc-400" />
+                                            </div>
+                                            <span className="text-sm font-medium">All Platform Users with Push Enabled</span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={handleSendBroadcast}
+                                        className="w-full h-12 bg-white text-zinc-900 font-bold rounded-xl hover:bg-zinc-100 transition-all flex items-center justify-center space-x-2"
+                                    >
+                                        <Bell size={18} />
+                                        <span>Compose & Send Push</span>
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                                <div className="space-y-6">
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider ml-1">Email Subject</label>
+                                        <input
+                                            type="text"
+                                            className="input-field"
+                                            placeholder="e.g. Big Updates to the Platform!"
+                                            value={emailSubject}
+                                            onChange={(e) => setEmailSubject(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <div className="flex justify-between items-center ml-1">
+                                            <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Email Content (HTML Supported)</label>
+                                            <span className="text-[10px] text-zinc-400 font-medium">Wrapped in Setorial Template</span>
+                                        </div>
+                                        <textarea
+                                            className="input-field min-h-[300px] py-4 resize-none"
+                                            placeholder="Write your email content here..."
+                                            value={emailBody}
+                                            onChange={(e) => setEmailBody(e.target.value)}
+                                        ></textarea>
+                                    </div>
+                                    <button
+                                        onClick={handleSendEmailBroadcast}
+                                        className="w-full h-12 bg-zinc-900 text-white font-bold rounded-xl hover:bg-zinc-800 transition-all flex items-center justify-center space-x-2"
+                                    >
+                                        <CheckCircle2 size={18} />
+                                        <span>Send Mass Email</span>
+                                    </button>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider ml-1">Preview</label>
+                                    <div className="border border-zinc-200 rounded-2xl overflow-hidden bg-white shadow-sm">
+                                        <div className="bg-zinc-900 p-6 text-center">
+                                            <h1 className="text-white font-black text-xl tracking-tighter">SETORIAL</h1>
+                                        </div>
+                                        <div className="p-8">
+                                            <h2 className="text-lg font-bold text-zinc-900 mb-4">{emailSubject || 'Subject Line Goes Here'}</h2>
+                                            <div
+                                                className="text-zinc-600 space-y-4 text-sm leading-relaxed"
+                                                dangerouslySetInnerHTML={{ __html: emailBody || '<p className="italic text-zinc-400">Content preview will appear here...</p>' }}
+                                            ></div>
+                                        </div>
+                                        <div className="bg-zinc-50 p-4 border-t border-zinc-100 text-center">
+                                            <p className="text-[10px] text-zinc-400">© {new Date().getFullYear()} Setorial Platform</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 );
 

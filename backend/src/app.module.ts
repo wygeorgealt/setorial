@@ -15,9 +15,30 @@ import { MockExamsModule } from './mock-exams/mock-exams.module';
 import { StoreModule } from './store/store.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   imports: [
+    BullModule.forRootAsync({
+      useFactory: () => {
+        const redisUrl = process.env.REDIS_PRIVATE_URL || process.env.REDIS_URL;
+        if (redisUrl) {
+          const url = new URL(redisUrl);
+          return {
+            connection: {
+              host: url.hostname,
+              port: parseInt(url.port || '6379'),
+              username: url.username || undefined,
+              password: url.password || undefined,
+              tls: redisUrl.startsWith('rediss://') ? {} : undefined,
+            }
+          };
+        }
+        return {
+          connection: { host: 'localhost', port: 6379 }
+        };
+      }
+    }),
     ScheduleModule.forRoot(),
     AuthModule,
     UsersModule,

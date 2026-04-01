@@ -1,14 +1,16 @@
-import { Controller, Get, Patch, Post, Param, Body, Query, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Patch, Post, Param, Body, Query, UseGuards, Request, BadRequestException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { GamificationService } from '../gamification/gamification.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { PayoutMethod } from '@prisma/client';
 
 @Controller('users')
 export class UsersController {
     constructor(
         private usersService: UsersService,
-        private gamificationService: GamificationService
+        private gamificationService: GamificationService,
+        private notificationsService: NotificationsService
     ) { }
 
     @UseGuards(JwtAuthGuard)
@@ -68,6 +70,14 @@ export class UsersController {
     }
 
     @UseGuards(JwtAuthGuard)
+    @Post('me/support')
+    async sendSupport(@Request() req: any, @Body('message') message: string) {
+        const user = await this.usersService.findById(req.user.userId);
+        if (!user) throw new BadRequestException('User not found');
+        return this.notificationsService.sendSupportEmail(user.email, message);
+    }
+
+    @UseGuards(JwtAuthGuard)
     @Post('me/kyc')
     async submitKyc(
         @Request() req: any,
@@ -78,8 +88,8 @@ export class UsersController {
 
     @UseGuards(JwtAuthGuard)
     @Get('me/kyc/banks')
-    async getBanks() {
-        return this.usersService.getBanks();
+    async getBanks(@Query('country') country?: string) {
+        return this.usersService.getBanks(country || 'nigeria');
     }
 
     @UseGuards(JwtAuthGuard)

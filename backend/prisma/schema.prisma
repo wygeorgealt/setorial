@@ -38,12 +38,15 @@ enum EconomicTier {
 }
 
 model User {
-  id             String        @id @default(uuid())
-  email          String        @unique
-  password       String
-  name           String?
-  avatarUrl      String?
-  role           Role          @default(STUDENT)
+  id                String        @id @default(uuid())
+  email             String        @unique
+  password          String
+  name              String?
+  isEmailVerified   Boolean       @default(false)
+  emailOtp          String?
+  emailOtpExpiresAt DateTime?
+  avatarUrl         String?
+  role              Role          @default(STUDENT)
   tier           Tier          @default(FREE)
   isVerified     Boolean       @default(false)
   kycStatus      KycStatus     @default(UNVERIFIED)

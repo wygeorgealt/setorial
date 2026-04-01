@@ -308,4 +308,15 @@ export class AdminController {
             return this.notificationsService.sendPushToMany(userIds, data.title, data.body, data.data);
         }
     }
+
+    @Post('notifications/email')
+    async sendEmailBroadcast(@Body() data: { subject: string, body: string }) {
+        const users = await this.prisma.user.findMany({
+            where: { role: 'STUDENT', isEmailVerified: true },
+            select: { email: true },
+        });
+        const emails = users.map(u => u.email);
+        return this.notificationsService.sendBroadcastEmail(emails, data.subject, data.body);
+    }
+}
 }

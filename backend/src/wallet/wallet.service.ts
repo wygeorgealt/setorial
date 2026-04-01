@@ -14,6 +14,11 @@ export class WalletService {
 
         const balance = result._sum.amount ? Number(result._sum.amount) : 0;
 
+        // Check for manual admin-locked rate first
+        const lockedRateConfig = await (this.prisma as any).globalConfig.findUnique({
+            where: { key: 'LOCKED_EXCHANGE_RATE' }
+        });
+
         // Fetch latest exchange rate from the most recent completed batch
         const latestBatch = await (this.prisma as any).payoutBatch.findFirst({
             where: { status: 'COMPLETED', exchangeRate: { not: null } },
@@ -21,9 +26,13 @@ export class WalletService {
             select: { exchangeRate: true }
         });
 
+        const exchangeRate = lockedRateConfig?.value 
+            ? parseFloat(lockedRateConfig.value) 
+            : (latestBatch?.exchangeRate || 1600.0);
+
         return {
             balance,
-            exchangeRate: latestBatch?.exchangeRate || 1600.0 // Fallback to PRD default 
+            exchangeRate
         };
     }
 

@@ -12,6 +12,11 @@ export class AuthController {
         return this.authService.register(registerDto);
     }
 
+    @Post('verify-otp')
+    async verifyOtp(@Body() body: { email: string; otp: string }) {
+        return this.authService.verifyOtp(body.email, body.otp);
+    }
+
     @HttpCode(HttpStatus.OK)
     @Post('login')
     async login(@Body() loginDto: LoginDto, @Request() req: any) {

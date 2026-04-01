@@ -319,4 +319,3 @@ export class AdminController {
         return this.notificationsService.sendBroadcastEmail(emails, data.subject, data.body);
     }
 }
-}

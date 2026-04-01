@@ -89,7 +89,7 @@ You MUST respond ONLY with a valid JSON object containing a "levels" array match
                         order: level.order,
                         rewardPoints: 10,
                         questions: {
-                            create: level.questions.map(q => ({
+                            create: level.questions.map((q: any) => ({
                                 text: q.text,
                                 options: q.options,
                                 correctOption: q.correctOption

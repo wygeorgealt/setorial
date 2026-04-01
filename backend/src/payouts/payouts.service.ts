@@ -210,7 +210,7 @@ export class PayoutsService {
                         await this.disburseFunds(userId, payAmount, currentRegion);
                         
                         // Send email confirmation
-                        const user = verifiedUsers.find(u => u.id === userId);
+                        const user = verifiedUsers.find((u: any) => u.id === userId);
                         if (user && user.email) {
                             this.notificationsService.sendPayoutConfirmation(user.email, payAmount, month)
                                 .catch(e => this.logger.warn(`Failed to send payout email to ${user.email}: ${e.message}`));

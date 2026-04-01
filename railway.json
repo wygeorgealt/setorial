@@ -1,66 +1,34 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
-  "build": {
-    "builder": "NIXPACKS"
-  },
-  "deploy": {
-    "numReplicas": 1
-  },
   "services": {
-    "postgres": {
-      "type": "database",
-      "database": "postgres"
-    },
-    "redis": {
-      "type": "database",
-      "database": "redis"
-    },
     "backend": {
-      "type": "service",
-      "rootDirectory": "/backend",
+      "name": "backend",
+      "rootDirectory": "backend",
       "build": {
         "builder": "NIXPACKS"
       },
       "deploy": {
         "startCommand": "npx prisma migrate deploy && npm run start:prod"
-      },
-      "env": {
-        "PORT": "3000",
-        "DATABASE_URL": "${{ postgres.DATABASE_URL }}",
-        "REDIS_URL": "${{ redis.REDIS_URL }}",
-        "JWT_SECRET": { "generate": "secret" },
-        "PAYSTACK_SECRET_KEY": { "description": "Paystack Secret Key (Starts with sk_)" },
-        "IS_WORKER": "false"
       }
     },
     "worker": {
-      "type": "service",
-      "rootDirectory": "/backend",
+      "name": "worker",
+      "rootDirectory": "backend",
       "build": {
         "builder": "NIXPACKS"
       },
       "deploy": {
         "startCommand": "npm run start:worker"
-      },
-      "env": {
-        "DATABASE_URL": "${{ postgres.DATABASE_URL }}",
-        "REDIS_URL": "${{ redis.REDIS_URL }}",
-        "JWT_SECRET": "${{ backend.JWT_SECRET }}",
-        "PAYSTACK_SECRET_KEY": "${{ backend.PAYSTACK_SECRET_KEY }}",
-        "IS_WORKER": "true"
       }
     },
     "admin": {
-      "type": "service",
-      "rootDirectory": "/admin",
+      "name": "admin",
+      "rootDirectory": "admin",
       "build": {
         "builder": "NIXPACKS"
       },
       "deploy": {
         "startCommand": "npm run serve"
-      },
-      "env": {
-        "VITE_API_BASE_URL": "${{ backend.RAILWAY_PUBLIC_DOMAIN }}"
       }
     }
   }

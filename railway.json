@@ -1,34 +1,65 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
   "services": {
+    "db": {
+      "source": {
+        "image": "postgres:15"
+      },
+      "env": {
+        "POSTGRES_DB": "setorial",
+        "POSTGRES_PASSWORD": "${{ PROJECT_ID }}",
+        "POSTGRES_USER": "postgres"
+      }
+    },
+    "redis": {
+      "source": {
+        "image": "redis:7"
+      }
+    },
     "backend": {
-      "name": "backend",
+      "name": "setorial-api",
       "rootDirectory": "backend",
       "build": {
         "builder": "NIXPACKS"
       },
       "deploy": {
-        "startCommand": "npx prisma migrate deploy && npm run start:prod"
+        "startCommand": "npx prisma migrate deploy && npm run start:prod",
+        "healthCheckPath": "/health"
+      },
+      "env": {
+        "DATABASE_URL": "postgresql://postgres:${{ db.POSTGRES_PASSWORD }}@${{ db.RAILWAY_PRIVATE_DOMAIN }}:5432/setorial?schema=public",
+        "REDIS_URL": "redis://default@${{ redis.RAILWAY_PRIVATE_DOMAIN }}:6379",
+        "JWT_SECRET": { "generate": "secret" },
+        "IS_WORKER": "false"
       }
     },
     "worker": {
-      "name": "worker",
+      "name": "setorial-worker",
       "rootDirectory": "backend",
       "build": {
         "builder": "NIXPACKS"
       },
       "deploy": {
         "startCommand": "npm run start:worker"
+      },
+      "env": {
+        "DATABASE_URL": "${{ backend.DATABASE_URL }}",
+        "REDIS_URL": "${{ backend.REDIS_URL }}",
+        "JWT_SECRET": "${{ backend.JWT_SECRET }}",
+        "IS_WORKER": "true"
       }
     },
     "admin": {
-      "name": "admin",
+      "name": "setorial-admin",
       "rootDirectory": "admin",
       "build": {
         "builder": "NIXPACKS"
       },
       "deploy": {
         "startCommand": "npm run serve"
+      },
+      "env": {
+        "VITE_API_BASE_URL": "https://${{ backend.RAILWAY_PUBLIC_DOMAIN }}"
       }
     }
   }

@@ -1,16 +1,20 @@
-import { Controller, Get, Patch, Post, Param, Body, Query, UseGuards, Request, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Patch, Post, Param, Body, Query, UseGuards, Request, BadRequestException, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { GamificationService } from '../gamification/gamification.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PayoutMethod } from '@prisma/client';
 
+import { FileInterceptor } from '@nestjs/platform-express';
+import { UploadService } from '../upload/upload.service';
+
 @Controller('users')
 export class UsersController {
     constructor(
         private usersService: UsersService,
         private gamificationService: GamificationService,
-        private notificationsService: NotificationsService
+        private notificationsService: NotificationsService,
+        private uploadService: UploadService,
     ) { }
 
     @UseGuards(JwtAuthGuard)
@@ -57,8 +61,23 @@ export class UsersController {
 
     @UseGuards(JwtAuthGuard)
     @Patch('me')
-    async updateMe(@Request() req: any, @Body() body: { name?: string; billingCountry?: string; expoPushToken?: string }) {
-        const user = await this.usersService.updateProfile(req.user.userId, body);
+    @UseInterceptors(FileInterceptor('avatar'))
+    async updateMe(
+        @Request() req: any, 
+        @Body() body: { name?: string; billingCountry?: string; expoPushToken?: string },
+        @UploadedFile() file?: Express.Multer.File
+    ) {
+        let avatarUrl: string | undefined;
+        
+        if (file) {
+            avatarUrl = await this.uploadService.uploadFile(file);
+        }
+
+        const user = await this.usersService.updateProfile(req.user.userId, {
+            ...body,
+            ...(avatarUrl ? { avatarUrl } : {})
+        });
+        
         delete (user as any).password;
         return user;
     }

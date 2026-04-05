@@ -59,7 +59,7 @@ export default function PayoutHistoryScreen() {
                                 <View>
                                     <Text className="text-black dark:text-white font-bold text-[15px]">Automated Transfer</Text>
                                     <View className="flex-row items-center mt-1">
-                                        <Text className="text-gray-500 font-bold text-xs">
+                                        <Text className="text-gray-500 dark:text-gray-400 font-bold text-xs">
                                             {new Date(tx.createdAt).toLocaleDateString()}
                                         </Text>
                                         <Text className="text-gray-300 dark:text-gray-600 mx-2">•</Text>

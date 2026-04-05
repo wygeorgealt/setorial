@@ -6,12 +6,12 @@ export default function TermsScreen() {
     const router = useRouter();
 
     return (
-        <SafeAreaView className="flex-1 bg-white">
+        <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950">
             <View className="flex-row items-center justify-between px-5 py-6">
                 <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 items-center justify-center">
                     <ChevronLeft size={24} color="#000" />
                 </TouchableOpacity>
-                <Text className="text-black font-bold text-xl">Terms of Service</Text>
+                <Text className="text-black dark:text-white font-bold text-xl">Terms of Service</Text>
                 <View className="w-10" />
             </View>
 

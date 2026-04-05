@@ -140,7 +140,7 @@ export default function LevelScreen() {
 
     if (loading) {
         return (
-            <View className="flex-1 bg-white items-center justify-center">
+            <View className="flex-1 bg-white dark:bg-zinc-950 items-center justify-center">
                 <ActivityIndicator size="large" color="#58CC02" />
             </View>
         );
@@ -148,8 +148,8 @@ export default function LevelScreen() {
 
     if (!lesson) {
         return (
-            <View className="flex-1 bg-white items-center justify-center p-5">
-                <Text className="text-gray-500 mb-4">Lesson not found</Text>
+            <View className="flex-1 bg-white dark:bg-zinc-950 items-center justify-center p-5">
+                <Text className="text-gray-500 dark:text-gray-400 mb-4">Lesson not found</Text>
                 <TouchableOpacity onPress={() => router.back()} className="bg-black px-6 py-3 rounded-full">
                     <Text className="text-white font-bold">Go Back</Text>
                 </TouchableOpacity>
@@ -247,7 +247,7 @@ export default function LevelScreen() {
                         style={{ width: `${progressPercent}%` }}
                         className="h-full bg-[#58CC02] rounded-full absolute left-0 top-0 transition-all duration-300 ease-out"
                     >
-                        <View className="absolute top-1 left-2 right-2 h-[4px] bg-white/30 rounded-full" />
+                        <View className="absolute top-1 left-2 right-2 h-[4px] bg-white dark:bg-zinc-950/30 rounded-full" />
                     </View>
                 </View>
 
@@ -273,7 +273,7 @@ export default function LevelScreen() {
                         >
                             <View className={`w-8 h-8 rounded-full border-2 items-center justify-center mr-4 ${isSelected ? 'border-[#1899D6] dark:border-transparent bg-[#1CB0F6]' : 'border-[#E5E5E5] dark:border-[#272B36]'
                                 }`}>
-                                {isSelected && <View className="w-3 h-3 bg-white rounded-full" />}
+                                {isSelected && <View className="w-3 h-3 bg-white dark:bg-zinc-950 rounded-full" />}
                                 {!isSelected && <Text className="text-[#AFAFAF] font-bold text-sm">{index + 1}</Text>}
                             </View>
                             <Text className={`flex-1 font-bold text-[17px] ${isSelected ? 'text-[#1899D6] dark:text-[#1CB0F6]' : 'text-[#4B4B4B] dark:text-white'

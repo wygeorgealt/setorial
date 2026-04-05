@@ -37,7 +37,7 @@ export default function LoginScreen() {
     };
 
     return (
-        <SafeAreaView className="flex-1 bg-white">
+        <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950">
             <KeyboardAvoidingView
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
                 className="flex-1"
@@ -50,36 +50,36 @@ export default function LoginScreen() {
                             <ArrowLeft size={24} color="#000" strokeWidth={2.5} />
                         </TouchableOpacity>
                         <TouchableOpacity className="flex-row items-center cursor-pointer">
-                            <Text className="text-black font-bold mr-1">English</Text>
+                            <Text className="text-black dark:text-white font-bold mr-1">English</Text>
                             <ChevronDown size={18} color="#000" />
                         </TouchableOpacity>
                     </View>
 
                     {/* Title Area */}
                     <View className="mb-8">
-                        <Text className="text-[26px] font-bold text-black mb-1.5 tracking-tight">Access your account</Text>
-                        <Text className="text-gray-500 text-base">Welcome back to Setorial.</Text>
+                        <Text className="text-[26px] font-bold text-black dark:text-white mb-1.5 tracking-tight">Access your account</Text>
+                        <Text className="text-gray-500 dark:text-gray-400 text-base">Welcome back to Setorial.</Text>
                     </View>
 
                     {/* Form Section */}
                     <View className="mb-5">
 
                         {/* Email Input */}
-                        <View className="border border-gray-200 rounded-xl px-4 pt-3 pb-2 mb-4">
+                        <View className="border border-gray-200 dark:border-zinc-800 rounded-xl px-4 pt-3 pb-2 mb-4">
                             <Text className="text-gray-400 text-[12px] font-medium mb-0.5 tracking-wide">Email</Text>
                             <TextInput
                                 placeholder="name@example.com"
                                 placeholderTextColor="#9CA3AF"
                                 value={email}
                                 onChangeText={setEmail}
-                                className="text-black text-[16px] font-semibold p-0 m-0 h-6"
+                                className="text-black dark:text-white text-[16px] font-semibold p-0 m-0 h-6"
                                 keyboardType="email-address"
                                 autoCapitalize="none"
                             />
                         </View>
 
                         {/* Password Input */}
-                        <View className="border border-gray-200 rounded-xl px-4 pt-3 pb-2 mb-4 flex-row items-center justify-between">
+                        <View className="border border-gray-200 dark:border-zinc-800 rounded-xl px-4 pt-3 pb-2 mb-4 flex-row items-center justify-between">
                             <View className="flex-1">
                                 <Text className="text-gray-400 text-[12px] font-medium mb-0.5 tracking-wide">Password</Text>
                                 <TextInput
@@ -88,7 +88,7 @@ export default function LoginScreen() {
                                     value={password}
                                     onChangeText={setPassword}
                                     secureTextEntry={!showPassword}
-                                    className="text-black text-[16px] font-semibold p-0 m-0 h-6"
+                                    className="text-black dark:text-white text-[16px] font-semibold p-0 m-0 h-6"
                                 />
                             </View>
                             <TouchableOpacity onPress={() => setShowPassword(!showPassword)} className="p-2 -mr-2">
@@ -103,7 +103,7 @@ export default function LoginScreen() {
                     </View>
 
                     <TouchableOpacity onPress={() => router.push('/forgot-password')} className="items-end mb-8">
-                        <Text className="text-gray-500 font-semibold underline">Forgot Password?</Text>
+                        <Text className="text-gray-500 dark:text-gray-400 font-semibold underline">Forgot Password?</Text>
                     </TouchableOpacity>
 
                     {error ? <Text className="text-red-500 text-sm mb-4">{error}</Text> : null}

@@ -45,7 +45,7 @@ export default function RegisterScreen() {
     };
 
     return (
-        <SafeAreaView className="flex-1 bg-white">
+        <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950">
             <KeyboardAvoidingView
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
                 className="flex-1"
@@ -58,49 +58,49 @@ export default function RegisterScreen() {
                             <ArrowLeft size={24} color="#000" strokeWidth={2.5} />
                         </TouchableOpacity>
                         <TouchableOpacity className="flex-row items-center">
-                            <Text className="text-black font-bold mr-1">English</Text>
+                            <Text className="text-black dark:text-white font-bold mr-1">English</Text>
                             <ChevronDown size={18} color="#000" />
                         </TouchableOpacity>
                     </View>
 
                     {/* Title Area */}
                     <View className="mb-8">
-                        <Text className="text-[26px] font-bold text-black mb-1.5 tracking-tight">Create your account</Text>
-                        <Text className="text-gray-500 text-base">We'll send you a code to verify this email.</Text>
+                        <Text className="text-[26px] font-bold text-black dark:text-white mb-1.5 tracking-tight">Create your account</Text>
+                        <Text className="text-gray-500 dark:text-gray-400 text-base">We'll send you a code to verify this email.</Text>
                     </View>
 
                     {/* Form Section */}
                     <View className="mb-8">
 
                         {/* Name Input */}
-                        <View className="border border-gray-200 rounded-xl px-4 pt-3 pb-2 mb-4">
+                        <View className="border border-gray-200 dark:border-zinc-800 rounded-xl px-4 pt-3 pb-2 mb-4">
                             <Text className="text-gray-400 text-[12px] font-medium mb-0.5 tracking-wide">Full Name</Text>
                             <TextInput
                                 placeholder="Your full name"
                                 placeholderTextColor="#9CA3AF"
                                 value={name}
                                 onChangeText={setName}
-                                className="text-black text-[16px] font-semibold p-0 m-0 h-6"
+                                className="text-black dark:text-white text-[16px] font-semibold p-0 m-0 h-6"
                                 autoCapitalize="words"
                             />
                         </View>
 
                         {/* Email Input */}
-                        <View className="border border-gray-200 rounded-xl px-4 pt-3 pb-2 mb-4">
+                        <View className="border border-gray-200 dark:border-zinc-800 rounded-xl px-4 pt-3 pb-2 mb-4">
                             <Text className="text-gray-400 text-[12px] font-medium mb-0.5 tracking-wide">Email</Text>
                             <TextInput
                                 placeholder="name@example.com"
                                 placeholderTextColor="#9CA3AF"
                                 value={email}
                                 onChangeText={setEmail}
-                                className="text-black text-[16px] font-semibold p-0 m-0 h-6"
+                                className="text-black dark:text-white text-[16px] font-semibold p-0 m-0 h-6"
                                 keyboardType="email-address"
                                 autoCapitalize="none"
                             />
                         </View>
 
                         {/* Password Input */}
-                        <View className="border border-gray-200 rounded-xl px-4 pt-3 pb-2 mb-4 flex-row items-center justify-between">
+                        <View className="border border-gray-200 dark:border-zinc-800 rounded-xl px-4 pt-3 pb-2 mb-4 flex-row items-center justify-between">
                             <View className="flex-1">
                                 <Text className="text-gray-400 text-[12px] font-medium mb-0.5 tracking-wide">Password</Text>
                                 <TextInput
@@ -109,7 +109,7 @@ export default function RegisterScreen() {
                                     value={password}
                                     onChangeText={setPassword}
                                     secureTextEntry={!showPassword}
-                                    className="text-black text-[16px] font-semibold p-0 m-0 h-6"
+                                    className="text-black dark:text-white text-[16px] font-semibold p-0 m-0 h-6"
                                 />
                             </View>
                             <TouchableOpacity onPress={() => setShowPassword(!showPassword)} className="p-2 -mr-2">
@@ -122,7 +122,7 @@ export default function RegisterScreen() {
                         </View>
 
                         {/* Referral Input (Optional styling) */}
-                        <View className="border border-gray-200 rounded-xl px-4 pt-3 pb-2 mb-4 opacity-60 justify-center h-[64px]">
+                        <View className="border border-gray-200 dark:border-zinc-800 rounded-xl px-4 pt-3 pb-2 mb-4 opacity-60 justify-center h-[64px]">
                             <TextInput
                                 placeholder="Referral code (optional)"
                                 placeholderTextColor="#9CA3AF"
@@ -143,10 +143,10 @@ export default function RegisterScreen() {
                         className="flex-row items-center mb-6"
                         onPress={() => setAgreed(!agreed)}
                     >
-                        <View className={`w-6 h-6 rounded border mr-3 items-center justify-center ${agreed ? 'bg-black border-black' : 'border-gray-300 bg-white'}`}>
+                        <View className={`w-6 h-6 rounded border mr-3 items-center justify-center ${agreed ? 'bg-black border-black' : 'border-gray-300 bg-white dark:bg-zinc-950'}`}>
                             {agreed && <Check size={16} color="#FFF" strokeWidth={3} />}
                         </View>
-                        <Text className="text-black text-base">
+                        <Text className="text-black dark:text-white text-base">
                             I agree to Setorial's <Text className="font-bold">Privacy Policy</Text>
                         </Text>
                     </TouchableOpacity>

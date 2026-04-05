@@ -49,7 +49,7 @@ export default function StatisticsScreen() {
                 {/* Balance Card - Duolingo Gamified Style */}
                 <View className="bg-[#1CB0F6] border-2 border-b-4 border-[#1899D6] p-8 rounded-[32px] mb-10 overflow-hidden relative">
                     {/* Decorative Background */}
-                    <View className="absolute top-[-20] right-[-20] w-40 h-40 bg-white/20 rounded-full" />
+                    <View className="absolute top-[-20] right-[-20] w-40 h-40 bg-white dark:bg-zinc-950/20 rounded-full" />
 
                     <Text className="text-white/90 font-bold uppercase tracking-widest text-xs mb-2">Total Monetizable Balance</Text>
                     <Text className="text-white text-[42px] font-black tracking-tighter mb-1">
@@ -84,7 +84,7 @@ export default function StatisticsScreen() {
                         </View>
                     ))
                 ) : (
-                    <View className="items-center justify-center bg-gray-50 p-10 rounded-[32px] border border-gray-100">
+                    <View className="items-center justify-center bg-gray-50 dark:bg-zinc-900 p-10 rounded-[32px] border border-gray-100 dark:border-zinc-800">
                         <Layers size={32} color="#D1D5DB" className="mb-3" />
                         <Text className="text-gray-400 font-medium text-center">No transactions yet.</Text>
                     </View>

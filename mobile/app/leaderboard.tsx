@@ -95,7 +95,7 @@ function LeaderboardScreen() {
                                 user={topThree[1]}
                                 rank={2}
                                 height={140}
-                                color="bg-gray-100"
+                                color="bg-gray-100 dark:bg-zinc-800"
                                 icon={<Medal size={20} color="#94A3B8" />}
                             />
                         )}
@@ -156,7 +156,7 @@ function PodiumItem({ user, rank, height, color, icon }: any) {
                 <View className={`w-16 h-16 rounded-full border-4 border-white overflow-hidden shadow-sm ${color}`}>
                     <Image source={{ uri: user.avatarUrl || `https://i.pravatar.cc/100?u=${user.id}` }} className="w-full h-full" />
                 </View>
-                <View className="absolute top-[-20] self-center bg-white rounded-full p-1 border-2 border-[#E5E5E5]">
+                <View className="absolute top-[-20] self-center bg-white dark:bg-zinc-950 rounded-full p-1 border-2 border-[#E5E5E5]">
                     {icon}
                 </View>
             </View>
@@ -164,9 +164,9 @@ function PodiumItem({ user, rank, height, color, icon }: any) {
                 style={{ height }}
                 className={`${color} w-full rounded-t-3xl items-center pt-8 border-2 border-b-0 ${isWinner ? 'border-[#E5B400] z-0' : 'border-[#CECECE] opacity-90 -mt-8'}`}
             >
-                <Text className="text-black/60 font-black uppercase tracking-widest text-sm mb-1">{rank === 1 ? 'Winner' : rank === 2 ? 'Silver' : 'Bronze'}</Text>
-                <Text className="text-black font-extrabold text-2xl">{user.points}</Text>
-                <Text className="text-black/50 text-[11px] font-black mt-2 uppercase tracking-wide">{user.name?.split(' ')[0] || 'User'}</Text>
+                <Text className="text-black dark:text-white/60 font-black uppercase tracking-widest text-sm mb-1">{rank === 1 ? 'Winner' : rank === 2 ? 'Silver' : 'Bronze'}</Text>
+                <Text className="text-black dark:text-white font-extrabold text-2xl">{user.points}</Text>
+                <Text className="text-black dark:text-white/50 text-[11px] font-black mt-2 uppercase tracking-wide">{user.name?.split(' ')[0] || 'User'}</Text>
             </View>
         </View>
     );

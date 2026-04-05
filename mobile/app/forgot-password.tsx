@@ -74,7 +74,7 @@ export default function ForgotPasswordScreen() {
     };
 
     return (
-        <SafeAreaView className="flex-1 bg-white">
+        <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950">
             <KeyboardAvoidingView
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
                 className="flex-1"
@@ -90,10 +90,10 @@ export default function ForgotPasswordScreen() {
 
                     {/* Title Area */}
                     <View className="mb-8">
-                        <Text className="text-[26px] font-bold text-black mb-1.5 tracking-tight">
+                        <Text className="text-[26px] font-bold text-black dark:text-white mb-1.5 tracking-tight">
                             {step === 1 ? "Reset Password" : "Check Your Email"}
                         </Text>
-                        <Text className="text-gray-500 text-base">
+                        <Text className="text-gray-500 dark:text-gray-400 text-base">
                             {step === 1 
                                 ? "Enter your email address and we'll send you a 6-digit recovery code." 
                                 : `We've sent a 6-digit code to ${email}.`}
@@ -109,14 +109,14 @@ export default function ForgotPasswordScreen() {
                         
                         {step === 1 && (
                             /* Email Input */
-                            <View className="border border-gray-200 rounded-xl px-4 pt-3 pb-2 mb-4">
+                            <View className="border border-gray-200 dark:border-zinc-800 rounded-xl px-4 pt-3 pb-2 mb-4">
                                 <Text className="text-gray-400 text-[12px] font-medium mb-0.5 tracking-wide">Email</Text>
                                 <TextInput
                                     placeholder="name@example.com"
                                     placeholderTextColor="#9CA3AF"
                                     value={email}
                                     onChangeText={setEmail}
-                                    className="text-black text-[16px] font-semibold p-0 m-0 h-6"
+                                    className="text-black dark:text-white text-[16px] font-semibold p-0 m-0 h-6"
                                     keyboardType="email-address"
                                     autoCapitalize="none"
                                 />
@@ -126,21 +126,21 @@ export default function ForgotPasswordScreen() {
                         {step === 2 && (
                             <>
                                 {/* OTP Input */}
-                                <View className="border border-gray-200 rounded-xl px-4 pt-3 pb-2 mb-4">
+                                <View className="border border-gray-200 dark:border-zinc-800 rounded-xl px-4 pt-3 pb-2 mb-4">
                                     <Text className="text-gray-400 text-[12px] font-medium mb-0.5 tracking-wide">6-Digit Code</Text>
                                     <TextInput
                                         placeholder="123456"
                                         placeholderTextColor="#9CA3AF"
                                         value={otp}
                                         onChangeText={setOtp}
-                                        className="text-black text-[16px] font-semibold p-0 m-0 h-6 tracking-widest"
+                                        className="text-black dark:text-white text-[16px] font-semibold p-0 m-0 h-6 tracking-widest"
                                         keyboardType="number-pad"
                                         maxLength={6}
                                     />
                                 </View>
 
                                 {/* New Password Input */}
-                                <View className="border border-gray-200 rounded-xl px-4 pt-3 pb-2 mb-4 flex-row items-center justify-between">
+                                <View className="border border-gray-200 dark:border-zinc-800 rounded-xl px-4 pt-3 pb-2 mb-4 flex-row items-center justify-between">
                                     <View className="flex-1">
                                         <Text className="text-gray-400 text-[12px] font-medium mb-0.5 tracking-wide">New Password</Text>
                                         <TextInput
@@ -149,7 +149,7 @@ export default function ForgotPasswordScreen() {
                                             value={newPassword}
                                             onChangeText={setNewPassword}
                                             secureTextEntry={!showPassword}
-                                            className="text-black text-[16px] font-semibold p-0 m-0 h-6"
+                                            className="text-black dark:text-white text-[16px] font-semibold p-0 m-0 h-6"
                                         />
                                     </View>
                                     <TouchableOpacity onPress={() => setShowPassword(!showPassword)} className="p-2 -mr-2">

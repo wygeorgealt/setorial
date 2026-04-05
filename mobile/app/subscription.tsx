@@ -179,7 +179,7 @@ export default function SubscriptionScreen() {
             {fetchingPricing ? (
                 <View className="flex-1 justify-center items-center">
                     <ActivityIndicator size="large" color="#8B5CF6" />
-                    <Text className="text-gray-500 mt-4 font-bold">Loading local pricing...</Text>
+                    <Text className="text-gray-500 dark:text-gray-400 mt-4 font-bold">Loading local pricing...</Text>
                 </View>
             ) : (
                 <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false}>
@@ -264,7 +264,7 @@ export default function SubscriptionScreen() {
                                             <Text className={`font-bold text-xl ${isActive ? 'text-white' : 'text-black dark:text-white'}`}>
                                                 {tier.name}
                                             </Text>
-                                            <Text className={`font-bold ${isActive ? 'text-gray-400' : 'text-gray-500'}`}>
+                                            <Text className={`font-bold ${isActive ? 'text-gray-400' : 'text-gray-500 dark:text-gray-400'}`}>
                                                 {tier.price}
                                             </Text>
                                         </View>
@@ -279,7 +279,7 @@ export default function SubscriptionScreen() {
                                 {tier.features.map((feature: string, i: number) => (
                                     <View key={i} className="flex-row items-center mb-2.5">
                                         <Check size={16} color={isActive ? '#FFF' : tier.accent} strokeWidth={3} />
-                                        <Text className={`ml-3 font-medium ${isActive ? 'text-gray-300' : 'text-gray-600'}`}>
+                                        <Text className={`ml-3 font-medium ${isActive ? 'text-gray-300' : 'text-gray-600 dark:text-gray-400'}`}>
                                             {feature}
                                         </Text>
                                     </View>

@@ -35,8 +35,8 @@ export default function CourseDetailScreen() {
 
     if (!subject) {
         return (
-            <View className="flex-1 bg-white items-center justify-center p-5">
-                <Text className="text-gray-500 mb-4">Subject not found</Text>
+            <View className="flex-1 bg-white dark:bg-zinc-950 items-center justify-center p-5">
+                <Text className="text-gray-500 dark:text-gray-400 mb-4">Subject not found</Text>
                 <TouchableOpacity onPress={() => router.back()} className="bg-black px-6 py-3 rounded-full">
                     <Text className="text-white font-bold">Go Back</Text>
                 </TouchableOpacity>

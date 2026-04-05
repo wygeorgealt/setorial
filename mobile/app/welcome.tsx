@@ -107,7 +107,7 @@ export default function WelcomeScreen() {
                                 {slides.map((_, index) => (
                                     <View
                                         key={index}
-                                        className={`h-1 rounded-full ${currentIndex === index ? 'w-6 bg-white' : 'w-1.5 h-1.5 bg-gray-500'}`}
+                                        className={`h-1 rounded-full ${currentIndex === index ? 'w-6 bg-white dark:bg-zinc-950' : 'w-1.5 h-1.5 bg-gray-500'}`}
                                     />
                                 ))}
                             </View>
@@ -123,7 +123,7 @@ export default function WelcomeScreen() {
                             <TouchableOpacity
                                 activeOpacity={0.8}
                                 onPress={() => router.push('/login')}
-                                className="w-full bg-white/10 border-2 border-white/20 border-b-4 py-4 rounded-2xl items-center"
+                                className="w-full bg-white dark:bg-zinc-950/10 border-2 border-white/20 border-b-4 py-4 rounded-2xl items-center"
                             >
                                 <Text className="text-white font-bold text-[17px] uppercase tracking-wider">I Already Have An Account</Text>
                             </TouchableOpacity>

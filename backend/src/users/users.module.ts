@@ -4,9 +4,10 @@ import { UsersController } from './users.controller';
 import { PrismaService } from '../prisma.service';
 import { GamificationModule } from '../gamification/gamification.module';
 import { HttpModule } from '@nestjs/axios';
+import { UploadModule } from '../upload/upload.module';
 
 @Module({
-  imports: [GamificationModule, HttpModule],
+  imports: [GamificationModule, HttpModule, UploadModule],
   providers: [UsersService, PrismaService],
   controllers: [UsersController],
   exports: [UsersService],

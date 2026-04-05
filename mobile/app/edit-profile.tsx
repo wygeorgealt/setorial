@@ -1,25 +1,61 @@
-import { View, Text, TouchableOpacity, SafeAreaView, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, SafeAreaView, TextInput, ActivityIndicator, Alert, Image } from 'react-native';
 import { ChevronLeft, Camera } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../store/authStore';
 import { authApi } from '../services/api';
 import { useState } from 'react';
 
+import * as ImagePicker from 'expo-image-picker';
+
 export default function EditProfileScreen() {
     const router = useRouter();
     const { user, updateUser } = useAuthStore();
     const [name, setName] = useState(user?.name || '');
     const [saving, setSaving] = useState(false);
+    const [image, setImage] = useState<string | null>(null);
+
+    const pickImage = async () => {
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.8,
+        });
+
+        if (!result.canceled) {
+            setImage(result.assets[0].uri);
+        }
+    };
 
     const handleSave = async () => {
         if (!name.trim()) return;
         setSaving(true);
         try {
-            const res = await authApi.updateProfile({ name: name.trim() });
-            updateUser({ name: res.data.name });
+            const formData = new FormData();
+            formData.append('name', name.trim());
+
+            if (image) {
+                const uriParts = image.split('.');
+                const fileType = uriParts[uriParts.length - 1];
+
+                formData.append('avatar', {
+                    uri: image,
+                    name: `avatar.${fileType}`,
+                    type: `image/${fileType}`,
+                } as any);
+            }
+
+            const res = await authApi.updateProfile(formData);
+            
+            updateUser({ 
+                name: res.data.name,
+                avatarUrl: res.data.avatarUrl
+            });
+            
             Alert.alert('Success', 'Profile updated successfully');
             router.back();
-        } catch (error) {
+        } catch (error: any) {
+            console.error('Update failed:', error.response?.data || error.message);
             Alert.alert('Error', 'Failed to update profile');
         } finally {
             setSaving(false);
@@ -46,10 +82,18 @@ export default function EditProfileScreen() {
                 {/* Avatar */}
                 <View className="items-center mb-10">
                     <View className="relative">
-                        <View className="w-28 h-28 rounded-full bg-gray-100 dark:bg-[#1E222B] items-center justify-center border-4 border-white dark:border-[#0B0D12] shadow-md">
-                            <Text className="text-4xl text-black dark:text-white">{(user?.name || 'S')[0].toUpperCase()}</Text>
+                        <View className="w-28 h-28 rounded-full bg-gray-100 dark:bg-[#1E222B] items-center justify-center border-4 border-white dark:border-[#0B0D12] shadow-md overflow-hidden">
+                            {image || user?.avatarUrl ? (
+                                <Image source={{ uri: image || user?.avatarUrl || '' }} className="w-full h-full" />
+                            ) : (
+                                <Text className="text-4xl text-black dark:text-white">{(user?.name || 'S')[0].toUpperCase()}</Text>
+                            )}
                         </View>
-                        <TouchableOpacity className="absolute bottom-0 right-0 bg-black w-10 h-10 rounded-full items-center justify-center border-4 border-white dark:border-[#0B0D12]">
+                        <TouchableOpacity
+                            onPress={pickImage}
+                            activeOpacity={0.8}
+                            className="absolute bottom-0 right-0 bg-black w-10 h-10 rounded-full items-center justify-center border-4 border-white dark:border-[#0B0D12]"
+                        >
                             <Camera size={16} color="#FFF" />
                         </TouchableOpacity>
                     </View>

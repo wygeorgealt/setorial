@@ -82,11 +82,11 @@ export default function MockExamsScreen() {
                             <View className="flex-row items-center mb-4">
                                 <View className="flex-row items-center mr-4">
                                     <Clock size={16} color="#AFAFAF" />
-                                    <Text className="text-gray-500 font-bold ml-1">{mock.durationMinutes} mins</Text>
+                                    <Text className="text-gray-500 dark:text-gray-400 font-bold ml-1">{mock.durationMinutes} mins</Text>
                                 </View>
                                 <View className="flex-row items-center">
                                     <FileText size={16} color="#AFAFAF" />
-                                    <Text className="text-gray-500 font-bold ml-1">{mock._count.questions} qs</Text>
+                                    <Text className="text-gray-500 dark:text-gray-400 font-bold ml-1">{mock._count.questions} qs</Text>
                                 </View>
                             </View>
 

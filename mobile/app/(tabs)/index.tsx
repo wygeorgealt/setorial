@@ -124,7 +124,7 @@ export default function HomeScreen() {
                             <Text className="text-yellow-800 text-[15px] font-bold mb-4">
                                 Upgrade to Silver or Gold tier to monetize your points.
                             </Text>
-                            <View className="bg-white px-5 py-3 rounded-xl self-start border-b-4 border-gray-200">
+                            <View className="bg-white dark:bg-zinc-950 px-5 py-3 rounded-xl self-start border-b-4 border-gray-200 dark:border-zinc-800">
                                 <Text className="text-[#FFC800] font-bold text-[15px] uppercase tracking-wider">Upgrade now</Text>
                             </View>
                         </View>
@@ -213,7 +213,7 @@ export default function HomeScreen() {
                                             {subject.topics?.length || 0} Topics
                                         </Text>
                                     </View>
-                                    <View className="w-12 h-12 bg-white/20 rounded-full items-center justify-center">
+                                    <View className="w-12 h-12 bg-white dark:bg-zinc-950/20 rounded-full items-center justify-center">
                                         <ArrowUpRight size={24} color="#FFF" />
                                     </View>
                                 </TouchableOpacity>

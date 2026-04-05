@@ -111,7 +111,7 @@ export default function ActiveMockScreen() {
     if (!mock) {
         return (
             <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12] items-center justify-center">
-                <Text className="text-gray-500 font-bold">Preparing Mock Exam...</Text>
+                <Text className="text-gray-500 dark:text-gray-400 font-bold">Preparing Mock Exam...</Text>
             </SafeAreaView>
         );
     }
@@ -157,7 +157,7 @@ export default function ActiveMockScreen() {
                                 >
                                     <View className={`w-6 h-6 rounded-full border-2 items-center justify-center mr-3
                                         ${isSelected ? 'border-[#1CB0F6] bg-[#1CB0F6]' : 'border-[#E5E5E5] dark:border-[#4B4B4B]'}`}>
-                                        {isSelected && <View className="w-2 h-2 rounded-full bg-white" />}
+                                        {isSelected && <View className="w-2 h-2 rounded-full bg-white dark:bg-zinc-950" />}
                                     </View>
                                     <Text className={`font-bold flex-1 ${isSelected ? 'text-[#1CB0F6]' : 'text-[#4B4B4B] dark:text-gray-300'}`}>
                                         {opt}

@@ -34,7 +34,7 @@ export class UsersService {
         return result._sum.points || 0;
     }
 
-    async updateProfile(userId: string, data: { name?: string, billingCountry?: string, expoPushToken?: string }) {
+    async updateProfile(userId: string, data: { name?: string, billingCountry?: string, expoPushToken?: string, avatarUrl?: string }) {
         const user = await this.prisma.user.findUnique({ where: { id: userId } });
         if (!user) throw new BadRequestException('User not found');
 

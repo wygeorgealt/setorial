@@ -26,7 +26,7 @@ export default function LearningPathScreen() {
 
     if (loading) {
         return (
-            <View className="flex-1 bg-white items-center justify-center">
+            <View className="flex-1 bg-white dark:bg-zinc-950 items-center justify-center">
                 <ActivityIndicator size="large" color="#000" />
             </View>
         );

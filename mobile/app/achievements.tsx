@@ -58,7 +58,7 @@ export default function AchievementsScreen() {
                     <View className="flex-row items-center mt-2">
                         <Star size={16} color="#FFC800" fill="#FFC800" />
                         <Text className="text-[#FFC800] font-bold ml-2">{user?.points || 0} XP</Text>
-                        <Text className="text-gray-600 mx-2">•</Text>
+                        <Text className="text-gray-600 dark:text-gray-400 mx-2">•</Text>
                         <Flame size={16} color="#FF9600" fill="#FF9600" />
                         <Text className="text-[#FF9600] font-bold ml-2">{user?.streak || 0} day streak</Text>
                     </View>

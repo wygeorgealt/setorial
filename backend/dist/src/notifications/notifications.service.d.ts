@@ -1,11 +1,18 @@
-import { HttpService } from '@nestjs/axios';
+import { Queue } from 'bullmq';
 import { PrismaService } from '../prisma.service';
 export declare class NotificationsService {
-    private httpService;
     private prisma;
+    private readonly notificationsQueue;
     private readonly logger;
-    constructor(httpService: HttpService, prisma: PrismaService);
-    sendPush(userId: string, title: string, body: string, data?: Record<string, any>): Promise<any>;
-    sendPushToMany(userIds: string[], title: string, body: string, data?: Record<string, any>): Promise<any>;
+    constructor(prisma: PrismaService, notificationsQueue: Queue);
+    sendPush(userId: string, title: string, body: string, data?: Record<string, any>): Promise<void>;
+    sendPushToMany(userIds: string[], title: string, body: string, data?: Record<string, any>): Promise<void>;
     private sendToTokens;
+    private generateSetorialHtml;
+    sendOtpEmail(email: string, otpCode: string, name?: string): Promise<void>;
+    sendPasswordResetEmail(email: string, otpCode: string, name?: string): Promise<void>;
+    sendWelcomeEmail(email: string, name: string): Promise<void>;
+    sendPayoutConfirmation(email: string, amount: number, month: string): Promise<void>;
+    sendBroadcastEmail(emails: string[], subject: string, htmlMessage: string): Promise<void>;
+    sendSupportEmail(userEmail: string, message: string): Promise<void>;
 }

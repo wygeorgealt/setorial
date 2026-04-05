@@ -14,14 +14,17 @@ const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma.service");
 const gamification_service_1 = require("../gamification/gamification.service");
 const store_service_1 = require("../store/store.service");
+const upload_service_1 = require("../upload/upload.service");
 let LearningService = class LearningService {
     prisma;
     gamificationService;
     storeService;
-    constructor(prisma, gamificationService, storeService) {
+    uploadService;
+    constructor(prisma, gamificationService, storeService, uploadService) {
         this.prisma = prisma;
         this.gamificationService = gamificationService;
         this.storeService = storeService;
+        this.uploadService = uploadService;
     }
     async createSubject(dto) {
         return this.prisma.subject.create({ data: dto });
@@ -57,8 +60,43 @@ let LearningService = class LearningService {
             include: { questions: true }
         });
     }
+    async updateLesson(id, dto) {
+        return this.prisma.$transaction(async (tx) => {
+            if (dto.questions) {
+                await tx.question.deleteMany({ where: { lessonId: id } });
+            }
+            return tx.lesson.update({
+                where: { id },
+                data: {
+                    ...(dto.name && { name: dto.name }),
+                    ...(dto.content && { content: dto.content }),
+                    ...(dto.rewardPoints && { rewardPoints: dto.rewardPoints }),
+                    ...(dto.questions && {
+                        questions: {
+                            create: dto.questions.map(q => ({
+                                text: q.text,
+                                options: q.options,
+                                correctOption: q.correctOption,
+                            }))
+                        }
+                    })
+                },
+                include: { questions: true }
+            });
+        });
+    }
     async getSubjects() {
-        return this.prisma.subject.findMany({ include: { topics: true } });
+        return this.prisma.subject.findMany({
+            include: {
+                topics: {
+                    include: {
+                        lessons: {
+                            orderBy: { order: 'asc' }
+                        }
+                    }
+                }
+            }
+        });
     }
     async getSubjectPathway(id, userId) {
         const subject = await this.prisma.subject.findUnique({
@@ -81,9 +119,9 @@ let LearningService = class LearningService {
         });
         if (!subject)
             throw new common_1.NotFoundException('Subject not found');
-        const annotatedTopics = subject.topics.map(topic => {
+        const annotatedTopics = subject.topics.map((topic) => {
             let foundCurrent = false;
-            const annotatedLessons = topic.lessons.map(lesson => {
+            const annotatedLessons = topic.lessons.map((lesson) => {
                 const isCompleted = lesson.userProgress && lesson.userProgress.length > 0;
                 let status = 'LOCKED';
                 if (isCompleted) {
@@ -107,7 +145,40 @@ let LearningService = class LearningService {
         });
         if (!lesson)
             throw new common_1.NotFoundException('Lesson not found');
+        if (lesson.videoUrl) {
+            lesson.videoUrl = await this.uploadService.getPresignedUrl(lesson.videoUrl, 3600);
+        }
         return lesson;
+    }
+    async updateLessonWithVideo(id, dto, video) {
+        return this.prisma.$transaction(async (tx) => {
+            let videoUrl = dto.videoUrl;
+            if (video) {
+                videoUrl = await this.uploadService.uploadFile(video, 'videos');
+            }
+            if (dto.questions) {
+                await tx.question.deleteMany({ where: { lessonId: id } });
+            }
+            return tx.lesson.update({
+                where: { id },
+                data: {
+                    ...(dto.name && { name: dto.name }),
+                    ...(dto.content && { content: dto.content }),
+                    ...(dto.rewardPoints && { rewardPoints: Number(dto.rewardPoints) }),
+                    videoUrl,
+                    ...(dto.questions && {
+                        questions: {
+                            create: dto.questions.map((q, index) => ({
+                                text: q.text,
+                                options: q.options,
+                                correctOption: Number(q.correctOption),
+                            }))
+                        }
+                    })
+                },
+                include: { questions: true }
+            });
+        });
     }
     async submitLesson(userId, dto) {
         const lesson = await this.prisma.lesson.findUnique({
@@ -169,6 +240,7 @@ exports.LearningService = LearningService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         gamification_service_1.GamificationService,
-        store_service_1.StoreService])
+        store_service_1.StoreService,
+        upload_service_1.UploadService])
 ], LearningService);
 //# sourceMappingURL=learning.service.js.map

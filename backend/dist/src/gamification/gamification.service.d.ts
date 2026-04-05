@@ -1,11 +1,12 @@
-import { OnModuleDestroy } from '@nestjs/common';
+import { OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
-export declare class GamificationService implements OnModuleDestroy {
+export declare class GamificationService implements OnModuleDestroy, OnModuleInit {
     private prisma;
     private notificationsService;
     private redis;
     constructor(prisma: PrismaService, notificationsService: NotificationsService);
+    onModuleInit(): Promise<void>;
     onModuleDestroy(): void;
     awardPoints(userId: string, points: number, action: string, subjectId?: string): Promise<void>;
     incrementStreak(userId: string): Promise<number>;

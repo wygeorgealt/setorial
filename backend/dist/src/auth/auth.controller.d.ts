@@ -4,11 +4,30 @@ export declare class AuthController {
     private authService;
     constructor(authService: AuthService);
     register(registerDto: RegisterDto): Promise<{
+        message: string;
+        email: string;
+    }>;
+    verifyOtp(body: {
+        email: string;
+        otp: string;
+    }): Promise<{
         user: any;
         token: string;
         refresh_token: string;
     }>;
-    login(loginDto: LoginDto): Promise<{
+    forgotPassword(body: {
+        email: string;
+    }): Promise<{
+        message: string;
+    }>;
+    resetPassword(body: {
+        email: string;
+        otp: string;
+        newPassword: string;
+    }): Promise<{
+        message: string;
+    }>;
+    login(loginDto: LoginDto, req: any): Promise<{
         user: any;
         token: string;
         refresh_token: string;

@@ -15,11 +15,18 @@ export declare class UsersService {
         name?: string;
         billingCountry?: string;
         expoPushToken?: string;
+        avatarUrl?: string;
     }): Promise<{
         id: string;
+        name: string | null;
+        createdAt: Date;
+        updatedAt: Date;
         email: string;
         password: string;
-        name: string | null;
+        isEmailVerified: boolean;
+        emailOtp: string | null;
+        emailOtpExpiresAt: Date | null;
+        avatarUrl: string | null;
         role: import("@prisma/client").$Enums.Role;
         tier: import("@prisma/client").$Enums.Tier;
         isVerified: boolean;
@@ -31,8 +38,6 @@ export declare class UsersService {
         lastActiveAt: Date | null;
         assessmentPassed: boolean;
         monetizationEligibleAt: Date | null;
-        createdAt: Date;
-        updatedAt: Date;
         isFrozen: boolean;
         isFlagged: boolean;
         expoPushToken: string | null;
@@ -45,7 +50,7 @@ export declare class UsersService {
         completedLessons: number;
         progress: number;
     }[]>;
-    getBanks(): Promise<any>;
+    getBanks(country?: string): Promise<any>;
     resolveAccount(accountNumber: string, bankCode: string): Promise<any>;
     private normalizeName;
     private namesMatch;

@@ -24,12 +24,47 @@ const mock_exams_module_1 = require("./mock-exams/mock-exams.module");
 const store_module_1 = require("./store/store.module");
 const notifications_module_1 = require("./notifications/notifications.module");
 const schedule_1 = require("@nestjs/schedule");
+const bullmq_1 = require("@nestjs/bullmq");
+const cache_manager_1 = require("@nestjs/cache-manager");
+const cache_manager_redis_yet_1 = require("cache-manager-redis-yet");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
         imports: [
+            bullmq_1.BullModule.forRootAsync({
+                useFactory: () => {
+                    const redisUrl = process.env.REDIS_PRIVATE_URL || process.env.REDIS_URL;
+                    if (redisUrl) {
+                        const url = new URL(redisUrl);
+                        return {
+                            connection: {
+                                host: url.hostname,
+                                port: parseInt(url.port || '6379'),
+                                username: url.username || undefined,
+                                password: url.password || undefined,
+                                tls: redisUrl.startsWith('rediss://') ? {} : undefined,
+                            }
+                        };
+                    }
+                    return {
+                        connection: { host: 'localhost', port: 6379 }
+                    };
+                }
+            }),
+            cache_manager_1.CacheModule.registerAsync({
+                isGlobal: true,
+                useFactory: async () => {
+                    const redisUrl = process.env.REDIS_PRIVATE_URL || process.env.REDIS_URL;
+                    return {
+                        store: await (0, cache_manager_redis_yet_1.redisStore)({
+                            url: redisUrl || 'redis://localhost:6379',
+                            ttl: 600000,
+                        }),
+                    };
+                },
+            }),
             schedule_1.ScheduleModule.forRoot(),
             auth_module_1.AuthModule,
             users_module_1.UsersModule,

@@ -1,10 +1,14 @@
 import { UsersService } from './users.service';
 import { GamificationService } from '../gamification/gamification.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { PayoutMethod } from '@prisma/client';
+import { UploadService } from '../upload/upload.service';
 export declare class UsersController {
     private usersService;
     private gamificationService;
-    constructor(usersService: UsersService, gamificationService: GamificationService);
+    private notificationsService;
+    private uploadService;
+    constructor(usersService: UsersService, gamificationService: GamificationService, notificationsService: NotificationsService, uploadService: UploadService);
     getMe(req: any): Promise<{
         points: number;
         streak: number;
@@ -21,9 +25,15 @@ export declare class UsersController {
         activeSub: any;
         detectedCountry: any;
         id?: string | undefined;
+        name?: string | null | undefined;
+        createdAt?: Date | undefined;
+        updatedAt?: Date | undefined;
         email?: string | undefined;
         password?: string | undefined;
-        name?: string | null | undefined;
+        isEmailVerified?: boolean | undefined;
+        emailOtp?: string | null | undefined;
+        emailOtpExpiresAt?: Date | null | undefined;
+        avatarUrl?: string | null | undefined;
         role?: import("@prisma/client").$Enums.Role | undefined;
         tier?: import("@prisma/client").$Enums.Tier | undefined;
         isVerified?: boolean | undefined;
@@ -35,8 +45,6 @@ export declare class UsersController {
         lastActiveAt?: Date | null | undefined;
         assessmentPassed?: boolean | undefined;
         monetizationEligibleAt?: Date | null | undefined;
-        createdAt?: Date | undefined;
-        updatedAt?: Date | undefined;
         isFrozen?: boolean | undefined;
         isFlagged?: boolean | undefined;
         expoPushToken?: string | null | undefined;
@@ -45,11 +53,17 @@ export declare class UsersController {
         name?: string;
         billingCountry?: string;
         expoPushToken?: string;
-    }): Promise<{
+    }, file?: Express.Multer.File): Promise<{
         id: string;
+        name: string | null;
+        createdAt: Date;
+        updatedAt: Date;
         email: string;
         password: string;
-        name: string | null;
+        isEmailVerified: boolean;
+        emailOtp: string | null;
+        emailOtpExpiresAt: Date | null;
+        avatarUrl: string | null;
         role: import("@prisma/client").$Enums.Role;
         tier: import("@prisma/client").$Enums.Tier;
         isVerified: boolean;
@@ -61,8 +75,6 @@ export declare class UsersController {
         lastActiveAt: Date | null;
         assessmentPassed: boolean;
         monetizationEligibleAt: Date | null;
-        createdAt: Date;
-        updatedAt: Date;
         isFrozen: boolean;
         isFlagged: boolean;
         expoPushToken: string | null;
@@ -75,17 +87,24 @@ export declare class UsersController {
         completedLessons: number;
         progress: number;
     }[]>;
+    sendSupport(req: any, message: string): Promise<void>;
     submitKyc(req: any, body: {
         payoutMethod: PayoutMethod;
         payoutAccount: Record<string, any>;
     }): Promise<any>;
-    getBanks(): Promise<any>;
+    getBanks(country?: string): Promise<any>;
     resolveAccount(accountNumber: string, bankCode: string): Promise<any>;
     getUser(id: string): Promise<{
         id: string;
+        name: string | null;
+        createdAt: Date;
+        updatedAt: Date;
         email: string;
         password: string;
-        name: string | null;
+        isEmailVerified: boolean;
+        emailOtp: string | null;
+        emailOtpExpiresAt: Date | null;
+        avatarUrl: string | null;
         role: import("@prisma/client").$Enums.Role;
         tier: import("@prisma/client").$Enums.Tier;
         isVerified: boolean;
@@ -97,8 +116,6 @@ export declare class UsersController {
         lastActiveAt: Date | null;
         assessmentPassed: boolean;
         monetizationEligibleAt: Date | null;
-        createdAt: Date;
-        updatedAt: Date;
         isFrozen: boolean;
         isFlagged: boolean;
         expoPushToken: string | null;

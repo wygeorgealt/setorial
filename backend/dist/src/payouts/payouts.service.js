@@ -8,6 +8,9 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var __param = (this && this.__param) || function (paramIndex, decorator) {
+    return function (target, key) { decorator(target, key, paramIndex); }
+};
 var PayoutsService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PayoutsService = void 0;
@@ -17,13 +20,17 @@ const prisma_service_1 = require("../prisma.service");
 const client_1 = require("@prisma/client");
 const paystack_utils_1 = require("./paystack-utils");
 const notifications_service_1 = require("../notifications/notifications.service");
+const bullmq_1 = require("@nestjs/bullmq");
+const bullmq_2 = require("bullmq");
 let PayoutsService = PayoutsService_1 = class PayoutsService {
     prisma;
     notificationsService;
+    payoutsQueue;
     logger = new common_1.Logger(PayoutsService_1.name);
-    constructor(prisma, notificationsService) {
+    constructor(prisma, notificationsService, payoutsQueue) {
         this.prisma = prisma;
         this.notificationsService = notificationsService;
+        this.payoutsQueue = payoutsQueue;
     }
     async simulatePayout(month, globalEstimatedRevenue) {
         const [year, m] = month.split('-').map(Number);
@@ -98,7 +105,7 @@ let PayoutsService = PayoutsService_1 = class PayoutsService {
         const endDate = new Date(year, m, 1);
         const verifiedUsers = await this.prisma.user.findMany({
             where: { kycStatus: 'APPROVED', isVerified: true, tier: { in: ['SILVER', 'GOLD'] } },
-            select: { id: true, billingCountry: true },
+            select: { id: true, billingCountry: true, email: true },
         });
         const verifiedIds = verifiedUsers.map((u) => u.id);
         if (verifiedIds.length === 0) {
@@ -169,6 +176,11 @@ let PayoutsService = PayoutsService_1 = class PayoutsService {
                     });
                     try {
                         await this.disburseFunds(userId, payAmount, currentRegion);
+                        const user = verifiedUsers.find((u) => u.id === userId);
+                        if (user && user.email) {
+                            this.notificationsService.sendPayoutConfirmation(user.email, payAmount, month)
+                                .catch(e => this.logger.warn(`Failed to send payout email to ${user.email}: ${e.message}`));
+                        }
                     }
                     catch (disbursementError) {
                         this.logger.error(`❌ Disbursement failed for user ${userId}: ${disbursementError.message}`);
@@ -209,10 +221,12 @@ let PayoutsService = PayoutsService_1 = class PayoutsService {
         };
     }
     async handleMonthlyPayout() {
+        if (process.env.IS_WORKER === 'true')
+            return;
         const now = new Date();
         const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-        this.logger.log(`⏰ Cron: 28th-of-month payout triggered for ${month}`);
-        await this.processPayout(month);
+        this.logger.log(`⏰ Cron: Adding payout processing job to queue for ${month}`);
+        await this.payoutsQueue.add('process-payout', { month });
     }
     async disburseFunds(userId, amount, region) {
         const user = await this.prisma.user.findUnique({ where: { id: userId } });
@@ -267,7 +281,9 @@ __decorate([
 ], PayoutsService.prototype, "handleMonthlyPayout", null);
 exports.PayoutsService = PayoutsService = PayoutsService_1 = __decorate([
     (0, common_1.Injectable)(),
+    __param(2, (0, bullmq_1.InjectQueue)('payouts')),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        notifications_service_1.NotificationsService])
+        notifications_service_1.NotificationsService,
+        bullmq_2.Queue])
 ], PayoutsService);
 //# sourceMappingURL=payouts.service.js.map

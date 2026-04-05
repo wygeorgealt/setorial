@@ -26,6 +26,9 @@ let GamificationService = class GamificationService {
         this.notificationsService = notificationsService;
         this.redis = new ioredis_1.default(process.env.REDIS_URL || 'redis://localhost:6379');
     }
+    async onModuleInit() {
+        await this.getStarterBadges();
+    }
     onModuleDestroy() {
         this.redis.disconnect();
     }
@@ -88,7 +91,6 @@ let GamificationService = class GamificationService {
         }
     }
     async checkAndAwardBadges(userId, context) {
-        await this.getStarterBadges();
         const earnedBadges = [];
         if (context.score !== undefined) {
             const quizCount = await this.prisma.pointsLedger.count({ where: { userId, action: 'Quiz Completion' } });
@@ -102,9 +104,11 @@ let GamificationService = class GamificationService {
         if (context.streak >= 7) {
             earnedBadges.push('7-Day Streak');
         }
-        for (const badgeName of earnedBadges) {
-            const badge = await this.prisma.badge.findUnique({ where: { name: badgeName } });
-            if (badge) {
+        if (earnedBadges.length > 0) {
+            const badges = await this.prisma.badge.findMany({
+                where: { name: { in: earnedBadges } }
+            });
+            for (const badge of badges) {
                 await this.prisma.userBadge.upsert({
                     where: { userId_badgeId: { userId, badgeId: badge.id } },
                     update: {},

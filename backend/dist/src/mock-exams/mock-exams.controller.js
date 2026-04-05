@@ -14,6 +14,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MockExamsController = void 0;
 const common_1 = require("@nestjs/common");
+const cache_manager_1 = require("@nestjs/cache-manager");
 const mock_exams_service_1 = require("./mock-exams.service");
 const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
 let MockExamsController = class MockExamsController {
@@ -68,6 +69,7 @@ __decorate([
 exports.MockExamsController = MockExamsController = __decorate([
     (0, common_1.Controller)('mocks'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseInterceptors)(cache_manager_1.CacheInterceptor),
     __metadata("design:paramtypes", [mock_exams_service_1.MockExamsService])
 ], MockExamsController);
 //# sourceMappingURL=mock-exams.controller.js.map

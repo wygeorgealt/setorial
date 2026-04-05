@@ -23,14 +23,20 @@ let WalletService = class WalletService {
             _sum: { amount: true },
         });
         const balance = result._sum.amount ? Number(result._sum.amount) : 0;
+        const lockedRateConfig = await this.prisma.globalConfig.findUnique({
+            where: { key: 'LOCKED_EXCHANGE_RATE' }
+        });
         const latestBatch = await this.prisma.payoutBatch.findFirst({
             where: { status: 'COMPLETED', exchangeRate: { not: null } },
             orderBy: { createdAt: 'desc' },
             select: { exchangeRate: true }
         });
+        const exchangeRate = lockedRateConfig?.value
+            ? parseFloat(lockedRateConfig.value)
+            : (latestBatch?.exchangeRate || 1600.0);
         return {
             balance,
-            exchangeRate: latestBatch?.exchangeRate || 1600.0
+            exchangeRate
         };
     }
     async addTransaction(userId, type, amount, reference) {

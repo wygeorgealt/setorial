@@ -237,6 +237,14 @@ let AdminController = class AdminController {
             return this.notificationsService.sendPushToMany(userIds, data.title, data.body, data.data);
         }
     }
+    async sendEmailBroadcast(data) {
+        const users = await this.prisma.user.findMany({
+            where: { role: 'STUDENT', isEmailVerified: true },
+            select: { email: true },
+        });
+        const emails = users.map(u => u.email);
+        return this.notificationsService.sendBroadcastEmail(emails, data.subject, data.body);
+    }
 };
 exports.AdminController = AdminController;
 __decorate([
@@ -368,6 +376,13 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "sendNotification", null);
+__decorate([
+    (0, common_1.Post)('notifications/email'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], AdminController.prototype, "sendEmailBroadcast", null);
 exports.AdminController = AdminController = __decorate([
     (0, common_1.Controller)('admin'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),

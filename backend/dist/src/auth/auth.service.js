@@ -48,30 +48,66 @@ const users_service_1 = require("../users/users.service");
 const jwt_1 = require("@nestjs/jwt");
 const bcrypt = __importStar(require("bcrypt"));
 const prisma_service_1 = require("../prisma.service");
+const notifications_service_1 = require("../notifications/notifications.service");
 let AuthService = class AuthService {
     usersService;
     jwtService;
     prisma;
-    constructor(usersService, jwtService, prisma) {
+    notificationsService;
+    constructor(usersService, jwtService, prisma, notificationsService) {
         this.usersService = usersService;
         this.jwtService = jwtService;
         this.prisma = prisma;
+        this.notificationsService = notificationsService;
     }
     async register(registerDto) {
         const existing = await this.usersService.findByEmail(registerDto.email);
         if (existing) {
             throw new common_1.BadRequestException('Email already in use');
         }
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpExpires = new Date(Date.now() + 15 * 60 * 1000);
         const hashedPassword = await bcrypt.hash(registerDto.password, 10);
-        const user = await this.usersService.createUser({
+        await this.usersService.createUser({
             email: registerDto.email,
             password: hashedPassword,
             name: registerDto.name,
+            emailOtp: otp,
+            emailOtpExpiresAt: otpExpires,
+            isEmailVerified: false,
         });
-        return this.generateAuthResponse(user);
+        await this.notificationsService.sendOtpEmail(registerDto.email, otp, registerDto.name || 'Student');
+        return {
+            message: 'Registration successful. Please check your email for the verification code.',
+            email: registerDto.email
+        };
     }
-    async login(loginDto) {
-        const user = await this.usersService.findByEmail(loginDto.email);
+    async verifyOtp(email, otp) {
+        const user = await this.usersService.findByEmail(email);
+        if (!user)
+            throw new common_1.BadRequestException('User not found');
+        if (user.isEmailVerified) {
+            throw new common_1.BadRequestException('Email already verified');
+        }
+        if (user.emailOtp !== otp) {
+            throw new common_1.BadRequestException('Invalid verification code');
+        }
+        if (user.emailOtpExpiresAt && new Date() > user.emailOtpExpiresAt) {
+            throw new common_1.BadRequestException('Verification code has expired');
+        }
+        const updatedUser = await this.prisma.user.update({
+            where: { id: user.id },
+            data: {
+                isEmailVerified: true,
+                emailOtp: null,
+                emailOtpExpiresAt: null,
+            }
+        });
+        await this.notificationsService.sendWelcomeEmail(updatedUser.email, updatedUser.name || 'Student');
+        return this.generateAuthResponse(updatedUser);
+    }
+    async login(loginDto, ipCountry) {
+        let user = await this.usersService.findByEmail(loginDto.email);
         if (!user) {
             throw new common_1.UnauthorizedException('Invalid credentials');
         }
@@ -79,6 +115,21 @@ let AuthService = class AuthService {
         if (!isPasswordValid) {
             throw new common_1.UnauthorizedException('Invalid credentials');
         }
+        if (!user.isEmailVerified) {
+            throw new common_1.UnauthorizedException('Please verify your email address first');
+        }
+        if (ipCountry && user.countryLocked && user.billingCountry && user.billingCountry.toUpperCase() !== ipCountry.toUpperCase()) {
+            if (!user.isFlagged) {
+                user = await this.prisma.user.update({
+                    where: { id: user.id },
+                    data: { isFlagged: true }
+                });
+            }
+        }
+        await this.prisma.user.update({
+            where: { id: user.id },
+            data: { lastActiveAt: new Date() }
+        });
         return this.generateAuthResponse(user);
     }
     async changePassword(userId, currentPassword, newPassword) {
@@ -94,6 +145,44 @@ let AuthService = class AuthService {
             data: { password: hashed },
         });
         return { message: 'Password updated successfully' };
+    }
+    async forgotPassword(email) {
+        const user = await this.usersService.findByEmail(email);
+        if (!user) {
+            return { message: 'If an account with that email exists, a password reset code has been sent.' };
+        }
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpExpires = new Date(Date.now() + 15 * 60 * 1000);
+        await this.prisma.user.update({
+            where: { id: user.id },
+            data: {
+                emailOtp: otp,
+                emailOtpExpiresAt: otpExpires,
+            }
+        });
+        await this.notificationsService.sendPasswordResetEmail(user.email, otp, user.name || 'Student');
+        return { message: 'If an account with that email exists, a password reset code has been sent.' };
+    }
+    async resetPassword(email, otp, newPassword) {
+        const user = await this.usersService.findByEmail(email);
+        if (!user)
+            throw new common_1.BadRequestException('User not found');
+        if (user.emailOtp !== otp) {
+            throw new common_1.BadRequestException('Invalid verification code');
+        }
+        if (user.emailOtpExpiresAt && new Date() > user.emailOtpExpiresAt) {
+            throw new common_1.BadRequestException('Verification code has expired');
+        }
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await this.prisma.user.update({
+            where: { id: user.id },
+            data: {
+                password: hashedPassword,
+                emailOtp: null,
+                emailOtpExpiresAt: null,
+            }
+        });
+        return { message: 'Password has been successfully reset. You can now log in.' };
     }
     generateAuthResponse(user) {
         const payload = { sub: user.id, email: user.email, role: user.role, tier: user.tier };
@@ -119,6 +208,7 @@ exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [users_service_1.UsersService,
         jwt_1.JwtService,
-        prisma_service_1.PrismaService])
+        prisma_service_1.PrismaService,
+        notifications_service_1.NotificationsService])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map

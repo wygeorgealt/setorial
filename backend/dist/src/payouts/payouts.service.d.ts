@@ -1,10 +1,12 @@
 import { PrismaService } from '../prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { Queue } from 'bullmq';
 export declare class PayoutsService {
     private prisma;
     private notificationsService;
+    private payoutsQueue;
     private readonly logger;
-    constructor(prisma: PrismaService, notificationsService: NotificationsService);
+    constructor(prisma: PrismaService, notificationsService: NotificationsService, payoutsQueue: Queue);
     simulatePayout(month: string, globalEstimatedRevenue?: number): Promise<{
         month: string;
         globalEstimatedRevenue: number | undefined;

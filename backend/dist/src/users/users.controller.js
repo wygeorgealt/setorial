@@ -17,20 +17,29 @@ const common_1 = require("@nestjs/common");
 const users_service_1 = require("./users.service");
 const jwt_auth_guard_1 = require("../auth/jwt-auth.guard");
 const gamification_service_1 = require("../gamification/gamification.service");
+const notifications_service_1 = require("../notifications/notifications.service");
+const platform_express_1 = require("@nestjs/platform-express");
+const upload_service_1 = require("../upload/upload.service");
 let UsersController = class UsersController {
     usersService;
     gamificationService;
-    constructor(usersService, gamificationService) {
+    notificationsService;
+    uploadService;
+    constructor(usersService, gamificationService, notificationsService, uploadService) {
         this.usersService = usersService;
         this.gamificationService = gamificationService;
+        this.notificationsService = notificationsService;
+        this.uploadService = uploadService;
     }
     async getMe(req) {
         const userId = req.user.userId;
-        const user = await this.usersService.findById(userId);
-        const points = await this.usersService.getPoints(userId);
-        const streak = await this.gamificationService.getStreak(userId);
-        const badges = await this.gamificationService.getUserBadges(userId);
-        const activeSub = await this.usersService.getActiveSubscription(userId);
+        const [user, points, streak, badges, activeSub] = await Promise.all([
+            this.usersService.findById(userId),
+            this.usersService.getPoints(userId),
+            this.gamificationService.getStreak(userId),
+            this.gamificationService.getUserBadges(userId),
+            this.usersService.getActiveSubscription(userId)
+        ]);
         let detectedCountry = null;
         if (user && !user.billingCountry) {
             try {
@@ -60,19 +69,32 @@ let UsersController = class UsersController {
             detectedCountry
         };
     }
-    async updateMe(req, body) {
-        const user = await this.usersService.updateProfile(req.user.userId, body);
+    async updateMe(req, body, file) {
+        let avatarUrl;
+        if (file) {
+            avatarUrl = await this.uploadService.uploadFile(file);
+        }
+        const user = await this.usersService.updateProfile(req.user.userId, {
+            ...body,
+            ...(avatarUrl ? { avatarUrl } : {})
+        });
         delete user.password;
         return user;
     }
     async getProgress(req) {
         return this.usersService.getLearningProgress(req.user.userId);
     }
+    async sendSupport(req, message) {
+        const user = await this.usersService.findById(req.user.userId);
+        if (!user)
+            throw new common_1.BadRequestException('User not found');
+        return this.notificationsService.sendSupportEmail(user.email, message);
+    }
     async submitKyc(req, body) {
         return this.usersService.submitKyc(req.user.userId, body);
     }
-    async getBanks() {
-        return this.usersService.getBanks();
+    async getBanks(country) {
+        return this.usersService.getBanks(country || 'nigeria');
     }
     async resolveAccount(accountNumber, bankCode) {
         return this.usersService.resolveAccount(accountNumber, bankCode);
@@ -97,10 +119,12 @@ __decorate([
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Patch)('me'),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('avatar')),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.UploadedFile)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:paramtypes", [Object, Object, Object]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "updateMe", null);
 __decorate([
@@ -113,6 +137,15 @@ __decorate([
 ], UsersController.prototype, "getProgress", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Post)('me/support'),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)('message')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], UsersController.prototype, "sendSupport", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Post)('me/kyc'),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Body)()),
@@ -123,8 +156,9 @@ __decorate([
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Get)('me/kyc/banks'),
+    __param(0, (0, common_1.Query)('country')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], UsersController.prototype, "getBanks", null);
 __decorate([
@@ -146,6 +180,8 @@ __decorate([
 exports.UsersController = UsersController = __decorate([
     (0, common_1.Controller)('users'),
     __metadata("design:paramtypes", [users_service_1.UsersService,
-        gamification_service_1.GamificationService])
+        gamification_service_1.GamificationService,
+        notifications_service_1.NotificationsService,
+        upload_service_1.UploadService])
 ], UsersController);
 //# sourceMappingURL=users.controller.js.map

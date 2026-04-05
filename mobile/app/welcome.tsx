@@ -81,6 +81,9 @@ export default function WelcomeScreen() {
 
                 <SafeAreaView className="flex-1 justify-between">
                     {/* Top Logo Area */}
+                    <View className="px-6 pt-12 z-10">
+
+                    </View>
 
                     {/* Bottom Content Area */}
                     <View className="pb-8">

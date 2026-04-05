@@ -18,12 +18,23 @@ export async function registerForPushNotificationsAsync() {
             return;
         }
 
-        token = (await Notifications.getExpoPushTokenAsync({
-            projectId: Constants.expoConfig?.extra?.eas?.projectId,
-        })).data;
+        try {
+            const projectId = Constants.expoConfig?.extra?.eas?.projectId || Constants.easConfig?.projectId;
+            if (!projectId) {
+                console.warn('Push Notifications disabled: No EAS projectId found in app.json.');
+                return undefined;
+            }
 
-        if (token) {
-            await authApi.updateProfile({ expoPushToken: token });
+            token = (await Notifications.getExpoPushTokenAsync({
+                projectId,
+            })).data;
+
+            if (token) {
+                // Ignore API update failures so they don't break the auth flow
+                await authApi.updateProfile({ expoPushToken: token }).catch(e => console.warn('Failed to upload push token', e));
+            }
+        } catch (e: any) {
+            console.warn('Failed to get push token:', e.message);
         }
     }
 
@@ -44,5 +55,7 @@ Notifications.setNotificationHandler({
         shouldShowAlert: true,
         shouldPlaySound: true,
         shouldSetBadge: false,
+        shouldShowBanner: true,
+        shouldShowList: true,
     }),
 });

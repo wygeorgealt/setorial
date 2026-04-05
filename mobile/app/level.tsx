@@ -1,10 +1,14 @@
-import { View, Text, TouchableOpacity, SafeAreaView, ActivityIndicator, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, SafeAreaView, ActivityIndicator, ScrollView, Dimensions } from "react-native";
 import { ChevronLeft, CheckCircle2, XCircle, Trophy, ArrowRight, Home, BookOpen } from "lucide-react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useColorScheme } from "nativewind";
+import Animated, { FadeIn, FadeOut, SlideInDown, useSharedValue, useAnimatedStyle, withSpring, withSequence, withTiming } from 'react-native-reanimated';
 import { learningApi } from "../services/api";
 
-// Lightweight inline markdown renderer — no external package needed
+const { width } = Dimensions.get('window');
+
+// Lightweight inline markdown renderer
 function MarkdownText({ content }: { content: string }) {
     const lines = content.split('\n');
     return (
@@ -13,12 +17,10 @@ function MarkdownText({ content }: { content: string }) {
                 const trimmed = line.trim();
                 if (!trimmed) return <View key={i} className="h-3" />;
 
-                // Headings
                 if (trimmed.startsWith('### ')) return <Text key={i} className="text-lg font-black text-gray-900 dark:text-white mt-4 mb-1">{trimmed.slice(4)}</Text>;
                 if (trimmed.startsWith('## '))  return <Text key={i} className="text-xl font-black text-gray-900 dark:text-white mt-5 mb-1">{trimmed.slice(3)}</Text>;
                 if (trimmed.startsWith('# '))   return <Text key={i} className="text-2xl font-black text-gray-900 dark:text-white mt-5 mb-2">{trimmed.slice(2)}</Text>;
 
-                // Bullet list
                 if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
                     return (
                         <View key={i} className="flex-row items-start mb-1.5">
@@ -28,7 +30,6 @@ function MarkdownText({ content }: { content: string }) {
                     );
                 }
 
-                // Numbered list
                 const numMatch = trimmed.match(/^(\d+)\. (.+)/);
                 if (numMatch) {
                     return (
@@ -39,7 +40,6 @@ function MarkdownText({ content }: { content: string }) {
                     );
                 }
 
-                // Regular paragraph
                 return <Text key={i} className="text-gray-700 dark:text-gray-200 text-base leading-relaxed mb-1.5">{parseInline(trimmed)}</Text>;
             })}
         </View>
@@ -47,7 +47,6 @@ function MarkdownText({ content }: { content: string }) {
 }
 
 function parseInline(text: string): React.ReactNode[] {
-    // Handle **bold** and *italic*
     const parts: React.ReactNode[] = [];
     const regex = /(\*\*(.+?)\*\*|\*(.+?)\*)/g;
     let last = 0;
@@ -69,32 +68,35 @@ function parseInline(text: string): React.ReactNode[] {
 export default function LevelScreen() {
     const router = useRouter();
     const { id } = useLocalSearchParams();
+    const { colorScheme } = useColorScheme();
+    const isDark = colorScheme === 'dark';
     
     const [lesson, setLesson] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    
-    // Phase tracking: 'reading' -> 'questions' -> 'finished'
     const [phase, setPhase] = useState<'reading' | 'questions' | 'finished'>('reading');
-    
     const [currentIndex, setCurrentIndex] = useState(0);
     const [selectedOption, setSelectedOption] = useState<number | null>(null);
+    const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+    const [showNext, setShowNext] = useState(false);
     const [answers, setAnswers] = useState<number[]>([]);
     const [result, setResult] = useState<any>(null);
     const [submitting, setSubmitting] = useState(false);
 
+    // Animation values
+    const checkScale = useSharedValue(1);
+    const buttonStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: checkScale.value }]
+    }));
+
     useEffect(() => {
-        if (id) {
-            fetchLesson();
-        }
+        if (id) fetchLesson();
     }, [id]);
 
     const fetchLesson = async () => {
         try {
             const res = await learningApi.getLesson(id as string);
             setLesson(res.data);
-            if (!res.data.content) {
-                setPhase('questions'); // Skip reading if no content
-            }
+            if (!res.data.content) setPhase('questions');
         } catch (error) {
             console.error('Failed to fetch lesson:', error);
         } finally {
@@ -103,16 +105,25 @@ export default function LevelScreen() {
     };
 
     const handleOptionSelect = (index: number) => {
-        if (selectedOption !== null) return;
+        if (showNext) return;
         setSelectedOption(index);
+        checkScale.value = withSequence(withSpring(1.05), withSpring(1));
+    };
+
+    const handleCheck = () => {
+        if (selectedOption === null) return;
+        const correct = lesson.questions[currentIndex].correctOption === selectedOption;
+        setIsCorrect(correct);
+        setShowNext(true);
+        checkScale.value = withSequence(withSpring(1.1, { damping: 10, stiffness: 200 }), withSpring(1));
     };
 
     const handleNext = () => {
-        if (selectedOption === null) return;
-
-        const newAnswers = [...answers, selectedOption];
+        const newAnswers = [...answers, selectedOption!];
         setAnswers(newAnswers);
         setSelectedOption(null);
+        setIsCorrect(null);
+        setShowNext(false);
 
         if (currentIndex < lesson.questions.length - 1) {
             setCurrentIndex(currentIndex + 1);
@@ -125,7 +136,7 @@ export default function LevelScreen() {
         setSubmitting(true);
         try {
             const res = await learningApi.submitLesson({
-                lessonId: id,
+                lessonId: id as string,
                 answers: finalAnswers
             });
             setResult(res.data);
@@ -140,7 +151,7 @@ export default function LevelScreen() {
 
     if (loading) {
         return (
-            <View className="flex-1 bg-white dark:bg-zinc-950 items-center justify-center">
+            <View className="flex-1 bg-white dark:bg-[#0B0D12] items-center justify-center">
                 <ActivityIndicator size="large" color="#58CC02" />
             </View>
         );
@@ -148,7 +159,7 @@ export default function LevelScreen() {
 
     if (!lesson) {
         return (
-            <View className="flex-1 bg-white dark:bg-zinc-950 items-center justify-center p-5">
+            <View className="flex-1 bg-white dark:bg-[#0B0D12] items-center justify-center p-5">
                 <Text className="text-gray-500 dark:text-gray-400 mb-4">Lesson not found</Text>
                 <TouchableOpacity onPress={() => router.back()} className="bg-black px-6 py-3 rounded-full">
                     <Text className="text-white font-bold">Go Back</Text>
@@ -173,13 +184,10 @@ export default function LevelScreen() {
                         <BookOpen size={28} color="#1899D6" />
                     </View>
                     <Text className="text-2xl font-black text-gray-900 dark:text-white mb-6 leading-tight">{lesson.name}</Text>
-                    
                     <MarkdownText content={lesson.content || ''} />
-
                     <View className="h-20" />
                 </ScrollView>
 
-                {/* Bottom Bar */}
                 <View className="p-5 border-t-2 border-gray-100 dark:border-gray-800 bg-white dark:bg-[#0B0D12]">
                     <TouchableOpacity
                         activeOpacity={0.8}
@@ -198,34 +206,36 @@ export default function LevelScreen() {
     if (phase === 'finished') {
         return (
             <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12] p-5 items-center justify-center">
-                <View className="w-24 h-24 bg-green-100 dark:bg-green-900/30 rounded-full items-center justify-center mb-6">
-                    <Trophy size={48} color="#58CC02" />
-                </View>
-                <Text className="text-3xl font-black text-black dark:text-white mb-2">Lesson Complete!</Text>
-                
-                {lesson.questions?.length > 0 && (
-                    <Text className="text-gray-500 dark:text-gray-400 text-lg mb-8 font-medium">You scored {result?.score} out of {result?.total}</Text>
-                )}
-
-                <View className="bg-gray-50 dark:bg-[#1E222B] w-full p-6 rounded-[24px] mb-10 border-2 border-gray-100 dark:border-gray-800">
-                    <View className="flex-row justify-between mb-4 items-center">
-                        <Text className="text-gray-500 dark:text-gray-400 font-bold text-[15px] uppercase">XP Earned</Text>
-                        <Text className="text-[#FFC800] dark:text-[#FFD900] font-black text-xl">+{result?.pointsEarned} XP</Text>
+                <Animated.View entering={FadeIn} className="items-center w-full">
+                    <View className="w-24 h-24 bg-green-100 dark:bg-green-900/30 rounded-full items-center justify-center mb-6">
+                        <Trophy size={48} color="#58CC02" />
                     </View>
-                    <View className="h-[2px] bg-gray-200 dark:bg-[#272B36] mb-4" />
-                    <View className="flex-row justify-between items-center">
-                        <Text className="text-gray-500 dark:text-gray-400 font-bold text-[15px] uppercase">Status</Text>
-                        <Text className="text-[#58CC02] dark:text-[#58CC02] font-black text-lg">{result?.passed ? 'PASSED' : 'COMPLETED'}</Text>
-                    </View>
-                </View>
+                    <Text className="text-3xl font-black text-black dark:text-white mb-2">Lesson Complete!</Text>
+                    
+                    {lesson.questions?.length > 0 && (
+                        <Text className="text-gray-500 dark:text-gray-400 text-lg mb-8 font-medium">You scored {result?.score} out of {result?.total}</Text>
+                    )}
 
-                <TouchableOpacity
-                    activeOpacity={0.8}
-                    onPress={() => router.back()}
-                    className="bg-[#58CC02] w-full p-4 rounded-2xl items-center justify-center border-b-4 border-[#46A302] border-t-[#58CC02] border-x-[#58CC02]"
-                >
-                    <Text className="text-white font-bold text-[17px] uppercase tracking-wider">Continue</Text>
-                </TouchableOpacity>
+                    <View className="bg-gray-50 dark:bg-[#1E222B] w-full p-6 rounded-[24px] mb-10 border-2 border-gray-100 dark:border-gray-800">
+                        <View className="flex-row justify-between mb-4 items-center">
+                            <Text className="text-gray-500 dark:text-gray-400 font-bold text-[15px] uppercase">XP Earned</Text>
+                            <Text className="text-[#FFC800] dark:text-[#FFD900] font-black text-xl">+{result?.pointsEarned} XP</Text>
+                        </View>
+                        <View className="h-[2px] bg-gray-200 dark:bg-[#272B36] mb-4" />
+                        <View className="flex-row justify-between items-center">
+                            <Text className="text-gray-500 dark:text-gray-400 font-bold text-[15px] uppercase">Status</Text>
+                            <Text className="text-[#58CC02] dark:text-[#58CC02] font-black text-lg">{result?.passed ? 'PASSED' : 'COMPLETED'}</Text>
+                        </View>
+                    </View>
+
+                    <TouchableOpacity
+                        activeOpacity={0.8}
+                        onPress={() => router.back()}
+                        className="bg-[#58CC02] w-full p-4 rounded-2xl items-center justify-center border-b-4 border-[#46A302] border-t-[#58CC02] border-x-[#58CC02]"
+                    >
+                        <Text className="text-white font-bold text-[17px] uppercase tracking-wider">Continue</Text>
+                    </TouchableOpacity>
+                </Animated.View>
             </SafeAreaView>
         );
     }
@@ -234,78 +244,125 @@ export default function LevelScreen() {
     const progressPercent = ((currentIndex) / lesson.questions.length) * 100;
 
     return (
-        <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12] p-5">
-            {/* Header */}
-            <View className="flex-row items-center justify-between mb-8">
-                <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 flex items-center justify-center -ml-2">
-                    <XCircle size={28} color="#AFAFAF" />
-                </TouchableOpacity>
-
-                {/* Progress Bar */}
-                <View className="h-4 bg-[#E5E5E5] dark:bg-[#272B36] rounded-full flex-1 mx-4 overflow-hidden relative">
-                    <View
-                        style={{ width: `${progressPercent}%` }}
-                        className="h-full bg-[#58CC02] rounded-full absolute left-0 top-0 transition-all duration-300 ease-out"
-                    >
-                        <View className="absolute top-1 left-2 right-2 h-[4px] bg-white dark:bg-zinc-950/30 rounded-full" />
+        <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12]">
+            <View className="flex-1 px-5 pt-5 pb-2">
+                <View className="flex-row items-center justify-between mb-8">
+                    <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 flex items-center justify-center -ml-2">
+                        <XCircle size={28} color="#AFAFAF" />
+                    </TouchableOpacity>
+                    <View className="h-4 bg-[#E5E5E5] dark:bg-[#272B36] rounded-full flex-1 mx-4 overflow-hidden relative">
+                        <View
+                            style={{ width: `${progressPercent}%` }}
+                            className="h-full bg-[#58CC02] rounded-full absolute left-0 top-0 transition-all duration-300 ease-out"
+                        >
+                            <View className="absolute top-1 left-2 right-2 h-[4px] bg-white dark:bg-zinc-950/30 rounded-full" />
+                        </View>
                     </View>
+                    <View className="w-10 h-10" />
                 </View>
 
-                <View className="w-10 h-10 items-center justify-center" />
+                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+                    <Text className="text-2xl font-black text-[#4B4B4B] dark:text-white mb-8 leading-tight">
+                        {currentQuestion.text}
+                    </Text>
+
+                    {currentQuestion.options.map((option: string, index: number) => {
+                        const isSelected = selectedOption === index;
+                        const isWrong = isSelected && isCorrect === false;
+                        const isRight = (isSelected && isCorrect === true) || (isCorrect !== null && index === currentQuestion.correctOption);
+
+                        let borderColor = isDark ? '#272B36' : '#E5E5E5';
+                        let bgColor = isDark ? '#1E222B' : 'white';
+                        let textColor = isDark ? 'white' : '#4B4B4B';
+                        let shadowColor = isDark ? '#1E222B' : '#E5E5E5';
+
+                        if (isSelected && isCorrect === null) {
+                            borderColor = '#1899D6';
+                            bgColor = isDark ? '#1CB0F625' : '#DDF4FF';
+                            textColor = '#1899D6';
+                            shadowColor = '#1899D6';
+                        } else if (isRight) {
+                            borderColor = '#58CC02';
+                            bgColor = isDark ? '#58CC0225' : '#D7FFB8';
+                            textColor = '#58CC02';
+                            shadowColor = '#58CC02';
+                        } else if (isWrong) {
+                            borderColor = '#FF4B4B';
+                            bgColor = isDark ? '#FF4B4B25' : '#FFDCDC';
+                            textColor = '#FF4B4B';
+                            shadowColor = '#FF4B4B';
+                        }
+
+                        return (
+                            <Animated.View key={index} className="mb-4">
+                                <TouchableOpacity
+                                    activeOpacity={0.8}
+                                    onPress={() => handleOptionSelect(index)}
+                                    disabled={showNext}
+                                    style={{
+                                        borderColor,
+                                        backgroundColor: bgColor,
+                                        borderBottomWidth: 4,
+                                        borderBottomColor: shadowColor
+                                    }}
+                                    className="flex-row items-center p-5 rounded-2xl border-2"
+                                >
+                                    <View style={{ borderColor: isSelected || isRight || isWrong ? 'transparent' : (isDark ? '#272B36' : '#E5E5E5'), backgroundColor: isSelected || isRight || isWrong ? textColor : 'transparent' }} className="w-8 h-8 rounded-full border-2 items-center justify-center mr-4">
+                                        {(isSelected || isRight || isWrong) ? (
+                                            <View className="w-2 h-2 bg-white rounded-full" />
+                                        ) : (
+                                            <Text className="text-[#AFAFAF] font-bold text-sm">{index + 1}</Text>
+                                        )}
+                                    </View>
+                                    <Text style={{ color: textColor }} className="flex-1 font-bold text-[17px]">
+                                        {option}
+                                    </Text>
+                                </TouchableOpacity>
+                            </Animated.View>
+                        );
+                    })}
+                </ScrollView>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
-                <Text className="text-2xl font-bold text-[#4B4B4B] dark:text-white mb-8 leading-tight">
-                    {currentQuestion.text}
-                </Text>
-
-                {currentQuestion.options.map((option: string, index: number) => {
-                    const isSelected = selectedOption === index;
-                    return (
-                        <TouchableOpacity
-                            key={index}
-                            activeOpacity={0.8}
-                            onPress={() => handleOptionSelect(index)}
-                            className={`flex-row items-center p-4 rounded-2xl mb-4 border-2 border-b-4 ${isSelected
-                                ? 'border-[#1899D6] dark:border-[#1CB0F6] bg-[#DDF4FF] dark:bg-[#1CB0F6]/20 border-t-[#1CB0F6] border-x-[#1CB0F6] dark:border-t-[#1CB0F6] dark:border-x-[#1CB0F6]'
-                                : 'border-[#E5E5E5] dark:border-[#272B36] bg-white dark:bg-[#1E222B]'
-                                }`}
-                        >
-                            <View className={`w-8 h-8 rounded-full border-2 items-center justify-center mr-4 ${isSelected ? 'border-[#1899D6] dark:border-transparent bg-[#1CB0F6]' : 'border-[#E5E5E5] dark:border-[#272B36]'
-                                }`}>
-                                {isSelected && <View className="w-3 h-3 bg-white dark:bg-zinc-950 rounded-full" />}
-                                {!isSelected && <Text className="text-[#AFAFAF] font-bold text-sm">{index + 1}</Text>}
-                            </View>
-                            <Text className={`flex-1 font-bold text-[17px] ${isSelected ? 'text-[#1899D6] dark:text-[#1CB0F6]' : 'text-[#4B4B4B] dark:text-white'
-                                }`}>
-                                {option}
+            <View className={`pt-4 px-5 pb-8 border-t-2 border-gray-100 dark:border-gray-800 ${isCorrect === true ? 'bg-[#D7FFB8] dark:bg-[#1A2E1A]' : isCorrect === false ? 'bg-[#FFDCDC] dark:bg-[#2E1A1A]' : 'bg-white dark:bg-[#0B0D12]'}`}>
+                {isCorrect !== null && (
+                    <Animated.View entering={SlideInDown} className="mb-6 flex-row items-center">
+                        <View className={`w-12 h-12 rounded-full items-center justify-center mr-4 ${isCorrect ? 'bg-[#58CC02]' : 'bg-[#FF4B4B]'}`}>
+                            {isCorrect ? <CheckCircle2 size={28} color="white" /> : <XCircle size={28} color="white" />}
+                        </View>
+                        <View>
+                            <Text className={`font-black text-2xl ${isCorrect ? 'text-[#58CC02]' : 'text-[#FF4B4B]'}`}>
+                                {isCorrect ? 'Amazing!' : 'Incorrect'}
                             </Text>
-                        </TouchableOpacity>
-                    );
-                })}
-            </ScrollView>
+                            {!isCorrect && (
+                                <Text className="text-[#FF4B4B] font-bold text-sm">
+                                    Correct: {currentQuestion.options[currentQuestion.correctOption]}
+                                </Text>
+                            )}
+                        </View>
+                    </Animated.View>
+                )}
 
-            {/* Bottom Button */}
-            <View className="mt-auto pt-4 pb-2 border-t-2 border-gray-100 dark:border-gray-800 -mx-5 px-5 bg-white dark:bg-[#0B0D12]">
-                <TouchableOpacity
-                    onPress={handleNext}
-                    activeOpacity={0.8}
-                    disabled={selectedOption === null || submitting}
-                    className={`p-4 rounded-2xl items-center flex-row justify-center border-b-4 ${selectedOption === null || submitting
-                        ? 'bg-[#E5E5E5] dark:bg-[#272B36] border-[#CECECE] dark:border-[#1E222B]'
-                        : 'bg-[#58CC02] border-[#46A302] border-t-[#58CC02] border-x-[#58CC02]'
-                        }`}
-                >
-                    {submitting ? (
-                        <ActivityIndicator color="#FFF" />
-                    ) : (
-                        <Text className={`font-bold text-[17px] uppercase tracking-wider ${selectedOption === null || submitting ? 'text-[#AFAFAF]' : 'text-white'}`}>
-                            {currentIndex === lesson.questions.length - 1 ? 'Check & Finish' : 'Check'}
-                        </Text>
-                    )}
-                </TouchableOpacity>
+                <Animated.View style={buttonStyle}>
+                    <TouchableOpacity
+                        onPress={showNext ? handleNext : handleCheck}
+                        activeOpacity={0.9}
+                        disabled={selectedOption === null || submitting}
+                        className={`p-4 rounded-2xl items-center justify-center border-b-4 ${selectedOption === null || submitting
+                            ? 'bg-[#E5E5E5] dark:bg-[#272B36] border-[#CECECE] dark:border-[#1E222B]'
+                            : isCorrect === true ? 'bg-[#58CC02] border-[#46A302]' : isCorrect === false ? 'bg-[#FF4B4B] border-[#EA2B2B]' : 'bg-[#58CC02] border-[#46A302]'
+                            }`}
+                    >
+                        {submitting ? (
+                            <ActivityIndicator color="#FFF" />
+                        ) : (
+                            <Text className={`font-black text-[17px] uppercase tracking-widest ${selectedOption === null || submitting ? 'text-[#AFAFAF]' : 'text-white'}`}>
+                                {showNext ? (currentIndex === lesson.questions.length - 1 ? 'Finish' : 'Continue') : 'Check'}
+                            </Text>
+                        )}
+                    </TouchableOpacity>
+                </Animated.View>
             </View>
         </SafeAreaView>
     );
 }
-

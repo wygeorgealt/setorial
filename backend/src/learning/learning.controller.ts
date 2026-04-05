@@ -66,15 +66,15 @@ export class LearningController {
         return this.learningService.getLesson(id);
     }
 
+    @Post('lessons/submit')
+    async submitLesson(@Request() req: any, @Body() dto: SubmitLessonDto) {
+        return this.learningService.submitLesson(req.user.userId, dto);
+    }
+
     @Roles(Role.ADMIN)
     @Post('lessons/:id') // Using POST to act as PATCH or PUT easily from Axios without CORS patch issues
     async updateLesson(@Param('id') id: string, @Body() dto: Partial<CreateLessonDto>) {
         return this.learningService.updateLesson(id, dto);
-    }
-
-    @Post('lessons/submit')
-    async submitLesson(@Request() req: any, @Body() dto: SubmitLessonDto) {
-        return this.learningService.submitLesson(req.user.userId, dto);
     }
 }
 

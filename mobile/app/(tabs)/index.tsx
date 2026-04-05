@@ -6,6 +6,7 @@ import { useAuthStore } from '../../store/authStore';
 import { useState, useEffect, useCallback } from 'react';
 import { authApi, walletApi, learningApi } from '../../services/api';
 import { getTierColors } from '../../utils/theme';
+import { ScaleButton } from '../../components/ScaleButton';
 
 export default function HomeScreen() {
     const router = useRouter();
@@ -100,21 +101,20 @@ export default function HomeScreen() {
                                 <Text className="text-[#4B4B4B] dark:text-white font-medium text-lg">${balance.usd.toFixed(2)}</Text>
                             </View>
                         </View>
-                        <TouchableOpacity
-                            activeOpacity={0.8}
+                        <ScaleButton
                             onPress={() => router.push('/payout-history')}
                             className="py-3 px-6 rounded-xl border-b-4 border-opacity-80"
                             style={{ backgroundColor: theme.primary, borderColor: theme.primaryDark }}
                         >
                             <Text className="text-white font-bold text-[13px] tracking-widest uppercase">History</Text>
-                        </TouchableOpacity>
+                        </ScaleButton>
                     </View>
                 )}
 
                 {/* Promo Card -> Duolingo Style Super Card */}
                 {!['SILVER', 'GOLD'].includes(user?.tier || '') && (
-                    <TouchableOpacity
-                        activeOpacity={0.9}
+                    <ScaleButton
+                        onPress={() => {}} // User hasn't specified upgrade path yet
                         className="bg-[#FFC800] border-2 border-b-4 border-[#E5B400] border-t-[#FFC800] border-x-[#FFC800] rounded-2xl p-6 flex-row items-center mb-10 overflow-hidden relative"
                     >
                         <View className="w-2/3 pr-4 z-10">
@@ -131,14 +131,13 @@ export default function HomeScreen() {
                         <View className="absolute right-[-10px] bottom-[-20px] opacity-70">
                             <Trophy size={140} color="#E5B400" />
                         </View>
-                    </TouchableOpacity>
+                    </ScaleButton>
                 )}
 
                 {/* Mock Exams Access */}
                 <View className="mb-10">
                     <Text className="text-black dark:text-white font-bold text-xl tracking-tight mb-4">Preparation</Text>
-                    <TouchableOpacity
-                        activeOpacity={0.8}
+                    <ScaleButton
                         onPress={() => router.push('/mock-exams')}
                         className="bg-white dark:bg-[#1E222B] border-2 border-[#E5E5E5] dark:border-[#272B36] p-5 rounded-2xl border-b-4 flex-row items-center justify-between"
                     >
@@ -149,34 +148,9 @@ export default function HomeScreen() {
                         <View className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 items-center justify-center border-2 border-[#1CB0F6]">
                             <Clock size={24} color="#1CB0F6" />
                         </View>
-                    </TouchableOpacity>
+                    </ScaleButton>
                 </View>
 
-                {/* Holdings / Courses */}
-                <View className="mb-10">
-                    <Text className="text-black dark:text-white font-bold text-xl tracking-tight mb-4">My Courses</Text>
-                    {subjects.length > 0 ? (
-                        subjects.slice(0, 3).map((subject: any) => (
-                            <TouchableOpacity
-                                key={subject.id}
-                                activeOpacity={0.8}
-                                onPress={() => router.push(`/course-detail?id=${subject.id}`)}
-                                className="flex-row items-center p-4 mb-3 bg-white dark:bg-[#1E222B] border-2 border-[#E5E5E5] dark:border-[#272B36] border-b-4 rounded-2xl"
-                            >
-                                <View className="w-10 h-10 bg-[#58CC02]/20 rounded-xl items-center justify-center mr-4">
-                                    <Star size={20} color="#58CC02" />
-                                </View>
-                                <View className="flex-1">
-                                    <Text className="text-[#4B4B4B] dark:text-white font-bold text-[15px]">{subject.name}</Text>
-                                    <Text className="text-[#AFAFAF] dark:text-gray-400 text-xs font-bold uppercase tracking-wider">{subject.topics?.length || 0} units</Text>
-                                </View>
-                                <ChevronRight size={18} color="#CECECE" />
-                            </TouchableOpacity>
-                        ))
-                    ) : (
-                        <Text className="text-gray-400 dark:text-gray-500 text-sm">No active courses. Scroll below to discover new subjects.</Text>
-                    )}
-                </View>
 
                 {/* Popular on Stake / Top Subjects */}
                 <View className="mb-6">
@@ -194,11 +168,10 @@ export default function HomeScreen() {
                             const theme = colors[index % colors.length];
 
                             return (
-                                <TouchableOpacity
+                                <ScaleButton
                                     key={subject.id}
-                                    activeOpacity={0.8}
                                     onPress={() => router.push(`/course-detail?id=${subject.id}`)}
-                                    className="p-5 rounded-2xl mb-4 border-2 border-b-4 flex-row items-center justify-between"
+                                    className="p-5 rounded-2xl mb-4 border-2 border-b-4 flex-row items-center justify-between overflow-hidden"
                                     style={{
                                         backgroundColor: theme.bg,
                                         borderColor: theme.border,
@@ -216,7 +189,7 @@ export default function HomeScreen() {
                                     <View className="w-12 h-12 bg-white dark:bg-zinc-950/20 rounded-full items-center justify-center">
                                         <ArrowUpRight size={24} color="#FFF" />
                                     </View>
-                                </TouchableOpacity>
+                                </ScaleButton>
                             )
                         })
                     ) : (

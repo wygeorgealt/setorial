@@ -95,6 +95,15 @@ export default function AdminDashboard() {
     const [discounts, setDiscounts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
+    // Lesson Modal State
+    const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
+    const [editingLesson, setEditingLesson] = useState<any>(null);
+    const [lessonForm, setLessonForm] = useState({ name: '', content: '', videoFile: null as File | null });
+
+    // Mock AI Modal State
+    const [isMockAiModalOpen, setIsMockAiModalOpen] = useState(false);
+    const [mockAiForm, setMockAiForm] = useState({ subjectId: '', title: '', numQuestions: '30' });
+
     // Filters
     const [tierFilter, setTierFilter] = useState('');
     const [kycFilter, setKycFilter] = useState('');
@@ -294,7 +303,7 @@ export default function AdminDashboard() {
         const numLevels = prompt('How many levels (lessons) should the AI generate? (e.g. 5)');
         if (!numLevels || isNaN(Number(numLevels))) return;
 
-        if (!confirm(`Generate ${numLevels} AI levels for "${topicName}"? This may take up to a minute depending on the LLM's response time.`)) return;
+        if (!confirm(`Generate ${numLevels} AI levels for "${topicName}"? This will generate textbook-length content. This may take up to a minute.`)) return;
         
         setLoading(true);
         try {
@@ -302,7 +311,42 @@ export default function AdminDashboard() {
             alert('Levels successfully generated!');
             fetchData();
         } catch (err: any) {
-            alert(err.response?.data?.message || 'Failed to generate levels. Make sure GEMINI_API_KEY is set in backend.');
+            alert(err.response?.data?.message || 'Failed to generate levels.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRegenerateLesson = async (lessonId: string, lessonName: string) => {
+        if (!confirm(`Are you sure you want to REGENERATE AI content for "${lessonName}"? This will overwrite the current content and questions with deep textbook-style material.`)) return;
+        
+        setLoading(true);
+        try {
+            await adminApi.regenerateLesson(lessonId);
+            alert('Lesson successfully regenerated with high-depth content!');
+            fetchData();
+        } catch (err: any) {
+            alert(err.response?.data?.message || 'Failed to regenerate lesson');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleGenerateAiMock = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            await adminApi.generateAiMock({ 
+                subjectId: mockAiForm.subjectId, 
+                title: mockAiForm.title, 
+                numQuestions: Number(mockAiForm.numQuestions) 
+            });
+            alert('AI Mock Exam generated successfully!');
+            setIsMockAiModalOpen(false);
+            fetchData();
+        } catch (err: any) {
+            alert(err.response?.data?.message || 'Failed to generate mock exam');
+        } finally {
             setLoading(false);
         }
     };
@@ -410,20 +454,35 @@ export default function AdminDashboard() {
         }
     };
 
-    const handleEditLesson = async (lesson: any) => {
-        const newName = prompt('Lesson name:', lesson.name);
-        if (!newName) return;
-        
-        // This is a naive text prompt for content editing
-        const newContent = prompt('Edit markdown content:', lesson.content || '');
-        if (newContent !== null) {
-            try {
-                await adminApi.updateLesson(lesson.id, { name: newName, content: newContent });
-                alert('Lesson updated successfully!');
-                fetchData();
-            } catch (err) {
-                alert('Failed to update lesson');
+    const handleEditLesson = (lesson: any) => {
+        setEditingLesson(lesson);
+        setLessonForm({
+            name: lesson.name,
+            content: lesson.content || '',
+            videoFile: null
+        });
+        setIsLessonModalOpen(true);
+    };
+
+    const handleSaveLesson = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            const formData = new FormData();
+            formData.append('name', lessonForm.name);
+            formData.append('content', lessonForm.content);
+            if (lessonForm.videoFile) {
+                formData.append('video', lessonForm.videoFile);
             }
+
+            await adminApi.updateLesson(editingLesson.id, formData);
+            alert('Lesson updated successfully!');
+            setIsLessonModalOpen(false);
+            fetchData();
+        } catch (err: any) {
+            alert(err.response?.data?.message || 'Failed to update lesson');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -473,6 +532,16 @@ export default function AdminDashboard() {
                                                 </div>
                                             </div>
                                             <div className="flex items-center space-x-2">
+                                                <button
+                                                    onClick={() => {
+                                                        setMockAiForm({ ...mockAiForm, subjectId: subject.id, title: `AI Mock Exam for ${subject.name}` });
+                                                        setIsMockAiModalOpen(true);
+                                                    }}
+                                                    className="btn-secondary h-9 px-4 text-xs !bg-purple-50 !text-purple-700 !ring-purple-200"
+                                                >
+                                                    <Wand2 size={14} className="mr-2" />
+                                                    AI Mock
+                                                </button>
                                                 <button
                                                     onClick={() => handleCreateTopic(subject.id)}
                                                     className="btn-secondary h-9 px-4 text-xs"
@@ -532,14 +601,24 @@ export default function AdminDashboard() {
                                                         {topic.lessons && topic.lessons.length > 0 && (
                                                             <div className="bg-zinc-50 px-4 py-3 space-y-2">
                                                                 {topic.lessons.map((lesson: any) => (
-                                                                    <div key={lesson.id} className="flex items-center justify-between text-sm py-1 border-b border-zinc-200 last:border-0">
+                                                                    <div key={lesson.id} className="flex items-center justify-between text-sm py-1 border-b border-zinc-200 last:border-0 hover:bg-zinc-100/50 px-2 rounded-md transition-colors">
                                                                         <span className="text-zinc-700 font-medium">Lvl {lesson.order}: {lesson.name}</span>
-                                                                        <button 
-                                                                            onClick={() => handleEditLesson(lesson)}
-                                                                            className="text-xs text-indigo-600 hover:text-indigo-800 font-medium px-2 py-1 rounded-md hover:bg-indigo-50 transition-colors"
-                                                                        >
-                                                                            Edit Content
-                                                                        </button>
+                                                                        <div className="flex items-center space-x-3">
+                                                                            <button 
+                                                                                onClick={() => handleRegenerateLesson(lesson.id, lesson.name)}
+                                                                                className="text-[10px] text-purple-600 hover:text-purple-800 font-bold uppercase tracking-wider px-2 py-1 rounded-md hover:bg-purple-50 transition-colors flex items-center"
+                                                                                title="Regenerate with High Depth AI"
+                                                                            >
+                                                                                <RefreshCcw size={12} className="mr-1" />
+                                                                                Regen AI
+                                                                            </button>
+                                                                            <button 
+                                                                                onClick={() => handleEditLesson(lesson)}
+                                                                                className="text-xs text-indigo-600 hover:text-indigo-800 font-medium px-2 py-1 rounded-md hover:bg-indigo-50 transition-colors"
+                                                                            >
+                                                                                Edit & Video
+                                                                            </button>
+                                                                        </div>
                                                                     </div>
                                                                 ))}
                                                             </div>
@@ -1325,6 +1404,119 @@ export default function AdminDashboard() {
                                     className="btn-primary h-10 px-8 text-sm"
                                 >
                                     {editingPricing ? 'Save Changes' : 'Create Region'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Lesson Edit Modal */}
+            {isLessonModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-zinc-950/20 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-xl ring-1 ring-zinc-950/5 w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="px-8 py-6 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50">
+                            <div>
+                                <h3 className="text-lg font-semibold text-zinc-900">Edit Lesson: {editingLesson?.name}</h3>
+                                <p className="text-xs text-zinc-500 mt-0.5">Update content and upload protected video content.</p>
+                            </div>
+                            <button onClick={() => setIsLessonModalOpen(false)} className="text-zinc-400 hover:text-zinc-600 transition-colors">
+                                <XCircle size={20} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSaveLesson} className="flex flex-col flex-1 overflow-hidden">
+                            <div className="p-8 overflow-y-auto space-y-6">
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider ml-1">Lesson Name</label>
+                                    <input
+                                        type="text"
+                                        className="input-field"
+                                        value={lessonForm.name}
+                                        onChange={(e) => setLessonForm({ ...lessonForm, name: e.target.value })}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider ml-1">Markdown Content</label>
+                                    <textarea
+                                        className="input-field min-h-[300px] py-4 font-mono text-sm leading-relaxed"
+                                        value={lessonForm.content}
+                                        onChange={(e) => setLessonForm({ ...lessonForm, content: e.target.value })}
+                                        placeholder="Enter detailed textbook-style markdown here..."
+                                        required
+                                    />
+                                </div>
+
+                                <div className="space-y-1.5 p-6 bg-zinc-50 rounded-xl border-2 border-dashed border-zinc-200">
+                                    <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider block mb-2">Lesson Video (R2 Protected)</label>
+                                    <input
+                                        type="file"
+                                        accept="video/*"
+                                        className="text-sm text-zinc-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-zinc-900 file:text-white hover:file:bg-zinc-800"
+                                        onChange={(e) => setLessonForm({ ...lessonForm, videoFile: e.target.files?.[0] || null })}
+                                    />
+                                    {editingLesson?.videoUrl && (
+                                        <p className="mt-2 text-xs text-emerald-600 font-medium">✓ Current video exists. Uploading a new one will replace it.</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="px-8 py-6 border-t border-zinc-100 bg-zinc-50/50 flex justify-end space-x-3">
+                                <button type="button" onClick={() => setIsLessonModalOpen(false)} className="btn-secondary h-10 px-6 text-sm">Cancel</button>
+                                <button type="submit" className="btn-primary h-10 px-8 text-sm" disabled={loading}>
+                                    {loading ? 'Saving...' : 'Save Lesson'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* AI Mock Exam Modal */}
+            {isMockAiModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-zinc-950/20 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-xl ring-1 ring-zinc-950/5 w-full max-w-lg overflow-hidden flex flex-col">
+                        <div className="px-8 py-6 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50">
+                            <div>
+                                <h3 className="text-lg font-semibold text-zinc-900">Generate AI Mock Exam</h3>
+                                <p className="text-xs text-zinc-500 mt-0.5">The AI will create diverse questions based on the subject.</p>
+                            </div>
+                            <button onClick={() => setIsMockAiModalOpen(false)} className="text-zinc-400 hover:text-zinc-600 transition-colors">
+                                <XCircle size={20} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleGenerateAiMock} className="p-8 space-y-6">
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider ml-1">Exam Title</label>
+                                <input
+                                    type="text"
+                                    className="input-field"
+                                    value={mockAiForm.title}
+                                    onChange={(e) => setMockAiForm({ ...mockAiForm, title: e.target.value })}
+                                    required
+                                />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider ml-1">Number of Questions (20-60)</label>
+                                <input
+                                    type="number"
+                                    min="20"
+                                    max="60"
+                                    className="input-field"
+                                    value={mockAiForm.numQuestions}
+                                    onChange={(e) => setMockAiForm({ ...mockAiForm, numQuestions: e.target.value })}
+                                    required
+                                />
+                            </div>
+
+                            <div className="pt-4 flex justify-end space-x-3">
+                                <button type="button" onClick={() => setIsMockAiModalOpen(false)} className="btn-secondary h-10 px-6 text-sm">Cancel</button>
+                                <button type="submit" className="btn-primary bg-purple-600 hover:bg-purple-700 h-10 px-8 text-sm" disabled={loading}>
+                                    {loading ? 'Generating...' : 'Start AI Generation'}
                                 </button>
                             </div>
                         </form>

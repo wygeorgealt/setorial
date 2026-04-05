@@ -63,13 +63,19 @@ export const adminApi = {
     deleteTopic: (id: string) => api.delete(`/learning/topics/${id}`),
     generateAiLevels: (data: { subjectId: string, topicName: string, numLevels: number }) => 
         api.post('/learning/ai/generate-levels', data),
+    regenerateLesson: (id: string) => api.post(`/learning/lessons/${id}/regenerate`),
+    generateAiMock: (data: { subjectId: string, title: string, numQuestions?: number }) => 
+        api.post('/learning/ai/generate-mock', data),
     getLesson: (id: string) => api.get(`/learning/lessons/${id}`),
-    updateLesson: (id: string, data: any) => api.post(`/learning/lessons/${id}`, data),
+    updateLesson: (id: string, data: any) => {
+        // If data is FormData (containing video), axial handles it
+        return api.post(`/learning/lessons/${id}`, data);
+    },
 
     // Mock Exams
     getMocks: () => api.get('/mocks'),
     getMockDetails: (id: string) => api.get(`/mocks/${id}`),
-    createMock: (data: any) => api.post('/admin/mocks', data), // Assuming admin route for creation
+    createMock: (data: any) => api.post('/admin/mocks', data), 
     deleteMock: (id: string) => api.delete(`/admin/mocks/${id}`),
 
     // Notifications

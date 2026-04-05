@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Delete, Body, Param, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Get, Delete, Body, Param, UseGuards, Request, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { LearningService } from './learning.service';
 import { AiContentService } from './ai-content.service';
 import { CreateSubjectDto, CreateTopicDto, CreateLessonDto, SubmitLessonDto, GenerateAiLevelsDto } from './dto/learning.dto';
@@ -6,6 +6,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { Role } from '@prisma/client';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('learning')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -22,6 +23,18 @@ export class LearningController {
     }
 
     @Roles(Role.ADMIN)
+    @Post('ai/generate-mock')
+    async generateAiMock(@Body() dto: { subjectId: string, title: string, numQuestions?: number }) {
+        return this.aiContentService.generateMockExam(dto.subjectId, dto.title, dto.numQuestions);
+    }
+
+    @Roles(Role.ADMIN)
+    @Post('lessons/:id/regenerate')
+    async regenerateLesson(@Param('id') id: string) {
+        return this.aiContentService.regenerateLesson(id);
+    }
+
+    @Roles(Role.ADMIN)
     @Post('subjects')
     async createSubject(@Body() dto: CreateSubjectDto) {
         return this.learningService.createSubject(dto);
@@ -31,24 +44,6 @@ export class LearningController {
     @Delete('subjects/:id')
     async deleteSubject(@Param('id') id: string) {
         return this.learningService.deleteSubject(id);
-    }
-
-    @Roles(Role.ADMIN)
-    @Post('topics')
-    async createTopic(@Body() dto: CreateTopicDto) {
-        return this.learningService.createTopic(dto);
-    }
-
-    @Roles(Role.ADMIN)
-    @Delete('topics/:id')
-    async deleteTopic(@Param('id') id: string) {
-        return this.learningService.deleteTopic(id);
-    }
-
-    @Roles(Role.ADMIN)
-    @Post('lessons')
-    async createLesson(@Body() dto: CreateLessonDto) {
-        return this.learningService.createLesson(dto);
     }
 
     @Get('subjects')
@@ -72,9 +67,19 @@ export class LearningController {
     }
 
     @Roles(Role.ADMIN)
-    @Post('lessons/:id') // Using POST to act as PATCH or PUT easily from Axios without CORS patch issues
-    async updateLesson(@Param('id') id: string, @Body() dto: Partial<CreateLessonDto>) {
-        return this.learningService.updateLesson(id, dto);
+    @Post('lessons/:id')
+    @UseInterceptors(FileInterceptor('video'))
+    async updateLesson(
+        @Param('id') id: string,
+        @Body() dto: any,
+        @UploadedFile() video?: Express.Multer.File
+    ) {
+        const updateData = { ...dto };
+        // If nested JSON strings come in from FormData, parse them
+        if (typeof updateData.questions === 'string') {
+            updateData.questions = JSON.parse(updateData.questions);
+        }
+        return this.learningService.updateLessonWithVideo(id, updateData, video);
     }
 }
 

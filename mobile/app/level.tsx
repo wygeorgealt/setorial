@@ -3,6 +3,7 @@ import { ChevronLeft, CheckCircle2, XCircle, Trophy, ArrowRight, Home, BookOpen 
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useState, useEffect, useCallback } from "react";
 import { useColorScheme } from "nativewind";
+import { Video, ResizeMode } from 'expo-av';
 import Animated, { FadeIn, FadeOut, SlideInDown, useSharedValue, useAnimatedStyle, withSpring, withSequence, withTiming } from 'react-native-reanimated';
 import { learningApi } from "../services/api";
 
@@ -180,6 +181,21 @@ export default function LevelScreen() {
                 </View>
 
                 <ScrollView className="flex-1 px-6 pt-6" showsVerticalScrollIndicator={false}>
+                    {lesson.videoUrl && (
+                        <View className="mb-6 rounded-2xl overflow-hidden border-2 border-gray-100 dark:border-gray-800 bg-black">
+                            <Video
+                                source={{ uri: lesson.videoUrl }}
+                                rate={1.0}
+                                volume={1.0}
+                                isMuted={false}
+                                resizeMode={ResizeMode.CONTAIN}
+                                shouldPlay={false}
+                                isLooping={false}
+                                useNativeControls
+                                style={{ width: '100%', height: 210 }}
+                            />
+                        </View>
+                    )}
                     <View className="w-14 h-14 bg-blue-100 dark:bg-blue-900/30 rounded-2xl items-center justify-center mb-6">
                         <BookOpen size={28} color="#1899D6" />
                     </View>

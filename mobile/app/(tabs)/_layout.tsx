@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { LayoutGrid, Search, Wallet, MoreHorizontal, ShoppingBag } from 'lucide-react-native';
+import { Home, Search, Wallet, MoreHorizontal, ShoppingBag } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { View } from 'react-native';
 import { useAuthStore } from '../../store/authStore';
@@ -18,17 +18,24 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: isDark ? '#13151A' : '#FFFFFF',
+          position: 'absolute',
+          bottom: 20,
+          left: 20,
+          right: 20,
+          backgroundColor: isDark ? '#1E222B' : '#FFFFFF',
           borderTopWidth: 0,
-          height: 85,
-          paddingHorizontal: 12,
-          paddingBottom: 25,
-          paddingTop: 12,
-          elevation: 10,
+          height: 70,
+          borderRadius: 25,
+          paddingHorizontal: 5,
+          paddingBottom: 15,
+          paddingTop: 15,
+          elevation: 15,
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.05,
-          shadowRadius: 10,
+          shadowOffset: { width: 0, height: 5 },
+          shadowOpacity: 0.1,
+          shadowRadius: 15,
+          borderWidth: 2,
+          borderColor: isDark ? '#272B36' : '#E5E5E5',
         },
         tabBarActiveTintColor: activeColor,
         tabBarInactiveTintColor: '#AFAFAF',
@@ -51,7 +58,7 @@ export default function TabLayout() {
               alignItems: 'center',
               justifyContent: 'center',
             }}>
-              <LayoutGrid size={22} color={color} strokeWidth={focused ? 2.5 : 2} />
+              <Home size={22} color={color} strokeWidth={focused ? 2.5 : 2} />
             </View>
           ),
         }}

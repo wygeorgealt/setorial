@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma.service';
 import { CreateSubjectDto, CreateTopicDto, CreateLessonDto, SubmitLessonDto } from './dto/learning.dto';
 import { GamificationService } from '../gamification/gamification.service';
 import { StoreService } from '../store/store.service';
+import { UploadService } from '../upload/upload.service';
 
 @Injectable()
 export class LearningService {
@@ -10,6 +11,7 @@ export class LearningService {
         private prisma: PrismaService,
         private gamificationService: GamificationService,
         private storeService: StoreService,
+        private uploadService: UploadService,
     ) { }
 
     async createSubject(dto: CreateSubjectDto) {
@@ -18,8 +20,6 @@ export class LearningService {
 
     async deleteSubject(id: string) {
         return this.prisma.$transaction(async (tx) => {
-            // Because Topic -> Subject relation missing onDelete: Cascade,
-            // we delete topics first. Lessons cascade automatically from Topic.
             await tx.topic.deleteMany({ where: { subjectId: id } });
             return tx.subject.delete({ where: { id } });
         });
@@ -56,7 +56,6 @@ export class LearningService {
     async updateLesson(id: string, dto: Partial<CreateLessonDto>) {
         return this.prisma.$transaction(async (tx) => {
             if (dto.questions) {
-                // Remove existing questions for full replacement
                 await tx.question.deleteMany({ where: { lessonId: id } });
             }
             
@@ -117,28 +116,26 @@ export class LearningService {
 
         if (!subject) throw new NotFoundException('Subject not found');
 
-        // Annotate sequence status: 'COMPLETED', 'CURRENT' (unlocked), 'LOCKED'
-        const annotatedTopics = subject.topics.map(topic => {
+        const annotatedTopics = await Promise.all(subject.topics.map(async (topic) => {
             let foundCurrent = false;
 
-            const annotatedLessons = topic.lessons.map(lesson => {
+            const annotatedLessons = await Promise.all(topic.lessons.map(async (lesson) => {
                 const isCompleted = lesson.userProgress && lesson.userProgress.length > 0;
                 
                 let status = 'LOCKED';
                 if (isCompleted) {
                     status = 'COMPLETED';
                 } else if (!foundCurrent) {
-                    status = 'CURRENT'; // First incomplete lesson
+                    status = 'CURRENT';
                     foundCurrent = true;
                 }
 
-                // Remove userProgress array from output to clean up payload
                 const { userProgress, ...rest } = lesson;
                 return { ...rest, status, score: isCompleted ? userProgress[0].score : null };
-            });
+            }));
 
             return { ...topic, lessons: annotatedLessons };
-        });
+        }));
 
         return { ...subject, topics: annotatedTopics };
     }
@@ -149,7 +146,46 @@ export class LearningService {
             include: { questions: { select: { id: true, text: true, options: true } } },
         });
         if (!lesson) throw new NotFoundException('Lesson not found');
+
+        if (lesson.videoUrl) {
+            lesson.videoUrl = await this.uploadService.getPresignedUrl(lesson.videoUrl, 3600);
+        }
+
         return lesson;
+    }
+
+    async updateLessonWithVideo(id: string, dto: any, video?: Express.Multer.File) {
+        return this.prisma.$transaction(async (tx) => {
+            let videoUrl = dto.videoUrl;
+
+            if (video) {
+                videoUrl = await this.uploadService.uploadFile(video, 'videos');
+            }
+
+            if (dto.questions) {
+                await tx.question.deleteMany({ where: { lessonId: id } });
+            }
+
+            return tx.lesson.update({
+                where: { id },
+                data: {
+                    ...(dto.name && { name: dto.name }),
+                    ...(dto.content && { content: dto.content }),
+                    ...(dto.rewardPoints && { rewardPoints: Number(dto.rewardPoints) }),
+                    videoUrl,
+                    ...(dto.questions && {
+                        questions: {
+                            create: dto.questions.map((q, index) => ({
+                                text: q.text,
+                                options: q.options,
+                                correctOption: Number(q.correctOption),
+                            }))
+                        }
+                    })
+                },
+                include: { questions: true }
+            });
+        });
     }
 
     async submitLesson(userId: string, dto: SubmitLessonDto) {
@@ -172,14 +208,13 @@ export class LearningService {
             breakdown.push({ questionId: q.id, isCorrect, correctOption: q.correctOption });
         });
 
-        const passThreshold = Math.ceil(lesson.questions.length * 0.7); // 70% to pass
+        const passThreshold = Math.ceil(lesson.questions.length * 0.7);
         const passed = score >= passThreshold || lesson.questions.length === 0;
 
         let pointsEarned = 0;
         let isFirstCompletion = false;
 
         if (passed) {
-            // Check if user already completed it
             const existingProgress = await this.prisma.userProgress.findUnique({
                 where: { userId_lessonId: { userId, lessonId: lesson.id } }
             });
@@ -198,7 +233,6 @@ export class LearningService {
                 const hasBoost = await this.storeService.hasActiveBoost(userId);
                 if (hasBoost) pointsEarned *= 2;
 
-                // Award points
                 await this.gamificationService.awardPoints(
                     userId,
                     pointsEarned,
@@ -208,17 +242,14 @@ export class LearningService {
             }
         }
 
-        // Just increment streak for activity, even if failed
         const currentStreak = await this.gamificationService.incrementStreak(userId);
 
-        // Check badges
         await this.gamificationService.checkAndAwardBadges(userId, {
             streak: currentStreak,
             score: score,
             total: lesson.questions.length
         });
 
-        // Bump lastActiveAt
         await this.prisma.user.update({
             where: { id: userId },
             data: { lastActiveAt: new Date() }
@@ -227,4 +258,3 @@ export class LearningService {
         return { score, total: lesson.questions.length, breakdown, pointsEarned, passed, isFirstCompletion };
     }
 }
-

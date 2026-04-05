@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
 
@@ -32,8 +33,6 @@ export class UploadService {
         Key: fileName,
         Body: file.buffer,
         ContentType: file.mimetype,
-        // Cloudflare R2 usually inherits bucket permissions, but we can set ACL if needed
-        // ACL: 'public-read', 
       });
 
       await this.s3Client.send(command);
@@ -43,6 +42,26 @@ export class UploadService {
     } catch (error) {
       this.logger.error(`Failed to upload file to R2: ${error.message}`, error.stack);
       throw error;
+    }
+  }
+
+  async getPresignedUrl(keyOrUrl: string, expiresIn: number = 3600): Promise<string> {
+    // If it's a full URL, extract the key
+    let key = keyOrUrl;
+    if (keyOrUrl.startsWith('http')) {
+      key = keyOrUrl.replace(`${this.publicUrl}/`, '');
+    }
+
+    try {
+      const command = new GetObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+      });
+
+      return await getSignedUrl(this.s3Client, command, { expiresIn });
+    } catch (error) {
+      this.logger.error(`Failed to generate signed URL: ${error.message}`);
+      return keyOrUrl; // Fallback to original
     }
   }
 }

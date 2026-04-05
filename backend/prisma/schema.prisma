@@ -124,6 +124,7 @@ model Lesson {
   id           String         @id @default(uuid())
   name         String
   content      String? // Markdown or rich text content for the lesson
+  videoUrl     String? // R2 link or signed URL reference
   order        Int            @default(1) // Determines the sequence 1, 2, 3...
   rewardPoints Int            @default(10) // Base points for completion
   topicId      String

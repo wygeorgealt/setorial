@@ -15,8 +15,8 @@ export class UploadService {
       region: process.env.AWS_REGION || 'auto',
       endpoint: process.env.AWS_ENDPOINT,
       credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID as string,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY as string,
       },
       forcePathStyle: process.env.AWS_USE_PATH_STYLE_ENDPOINT === 'true',
     });

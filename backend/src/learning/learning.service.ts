@@ -115,11 +115,12 @@ export class LearningService {
         });
 
         if (!subject) throw new NotFoundException('Subject not found');
-
-        const annotatedTopics = await Promise.all(subject.topics.map(async (topic) => {
+        
+        // Optimize pathway annotation - removed redundant synchronous Promise.all
+        const annotatedTopics = subject.topics.map((topic) => {
             let foundCurrent = false;
 
-            const annotatedLessons = await Promise.all(topic.lessons.map(async (lesson) => {
+            const annotatedLessons = topic.lessons.map((lesson) => {
                 const isCompleted = lesson.userProgress && lesson.userProgress.length > 0;
                 
                 let status = 'LOCKED';
@@ -132,10 +133,10 @@ export class LearningService {
 
                 const { userProgress, ...rest } = lesson;
                 return { ...rest, status, score: isCompleted ? userProgress[0].score : null };
-            }));
+            });
 
             return { ...topic, lessons: annotatedLessons };
-        }));
+        });
 
         return { ...subject, topics: annotatedTopics };
     }
@@ -144,7 +145,7 @@ export class LearningService {
         const lesson = await this.prisma.lesson.findUnique({
             where: { id },
             include: { questions: { select: { id: true, text: true, options: true } } },
-        });
+        }) as any;
         if (!lesson) throw new NotFoundException('Lesson not found');
 
         if (lesson.videoUrl) {
@@ -175,7 +176,7 @@ export class LearningService {
                     videoUrl,
                     ...(dto.questions && {
                         questions: {
-                            create: dto.questions.map((q, index) => ({
+                            create: dto.questions.map((q: any, index: number) => ({
                                 text: q.text,
                                 options: q.options,
                                 correctOption: Number(q.correctOption),

@@ -1,4 +1,5 @@
 import { Controller, Post, Get, Delete, Body, Param, UseGuards, Request, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 import { LearningService } from './learning.service';
 import { AiContentService } from './ai-content.service';
 import { CreateSubjectDto, CreateTopicDto, CreateLessonDto, SubmitLessonDto, GenerateAiLevelsDto } from './dto/learning.dto';
@@ -10,6 +11,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('learning')
 @UseGuards(JwtAuthGuard, RolesGuard)
+@UseInterceptors(CacheInterceptor)
 export class LearningController {
     constructor(
         private readonly learningService: LearningService,

@@ -100,6 +100,8 @@ model UserBadge {
   awardedAt DateTime @default(now())
 
   @@unique([userId, badgeId]) // A user can only earn a specific badge once
+  @@index([userId])
+  @@index([badgeId])
 }
 
 model Subject {
@@ -118,6 +120,8 @@ model Topic {
   lessons   Lesson[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([subjectId])
 }
 
 model Lesson {
@@ -133,6 +137,9 @@ model Lesson {
   userProgress UserProgress[]
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
+
+  @@index([topicId])
+  @@index([order])
 }
 
 model UserProgress {
@@ -145,6 +152,8 @@ model UserProgress {
   completedAt DateTime @default(now())
 
   @@unique([userId, lessonId]) // A user can only complete a lesson once for progression
+  @@index([userId])
+  @@index([lessonId])
 }
 
 model Question {
@@ -158,6 +167,9 @@ model Question {
   correctOption Int
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  @@index([lessonId])
+  @@index([mockExamId])
 }
 
 model MockExam {
@@ -190,6 +202,10 @@ model MockAttempt {
   tabSwitches Int        @default(0)
   startedAt   DateTime   @default(now())
   completedAt DateTime?
+
+  @@index([userId])
+  @@index([mockExamId])
+  @@index([status])
 }
 
 enum WalletTxType {
@@ -228,6 +244,9 @@ model UserPowerUp {
   isActive    Boolean   @default(true)
   activatedAt DateTime  @default(now())
   expiresAt   DateTime?
+
+  @@index([userId])
+  @@index([powerUpId])
 }
 
 model WalletLedger {
@@ -240,6 +259,11 @@ model WalletLedger {
   region       String? // ISO country code for regional tracking
   exchangeRate Float? // Transparency: rate used for this specific entry
   createdAt    DateTime     @default(now())
+
+  @@index([userId])
+  @@index([type])
+  @@index([region])
+  @@index([createdAt])
 }
 
 model PointsLedger {
@@ -249,6 +273,10 @@ model PointsLedger {
   action    String
   points    Int
   createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
 }
 
 enum PayoutStatus {
@@ -315,6 +343,10 @@ model SubscriptionRecord {
   currentPeriodEnd   DateTime // Expiry date
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([currentPeriodEnd])
 }
 
 model DiscountCode {

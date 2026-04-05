@@ -1,21 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
-import { lastValueFrom } from 'rxjs';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { PrismaService } from '../prisma.service';
-import { Resend } from 'resend';
 
 @Injectable()
 export class NotificationsService {
     private readonly logger = new Logger(NotificationsService.name);
-    private readonly resend: Resend;
-    private readonly globalFrom = process.env.EMAIL_FROM_ADDRESS || 'Setorial <onboarding@resend.dev>';
-
+    
     constructor(
-        private httpService: HttpService,
         private prisma: PrismaService,
-    ) {
-        this.resend = new Resend(process.env.RESEND_API_KEY || 're_dummy');
-    }
+        @InjectQueue('notifications') private readonly notificationsQueue: Queue
+    ) {}
 
     /**
      * Sends a push notification to a specific user.
@@ -31,7 +26,12 @@ export class NotificationsService {
             return;
         }
 
-        return this.sendToTokens([user.expoPushToken], title, body, data);
+        await this.notificationsQueue.add('push', {
+            tokens: [user.expoPushToken],
+            title,
+            body,
+            payload: data,
+        });
     }
 
     /**
@@ -46,37 +46,19 @@ export class NotificationsService {
         const tokens = users.map(u => u.expoPushToken!).filter(t => !!t);
         if (tokens.length === 0) return;
 
-        return this.sendToTokens(tokens, title, body, data);
+        await this.notificationsQueue.add('push', {
+            tokens,
+            title,
+            body,
+            payload: data,
+        });
     }
 
     /**
-     * Internal helper to call Expo Push API.
+     * @deprecated Use queue instead. Internal helper to call Expo Push API.
      */
     private async sendToTokens(tokens: string[], title: string, body: string, data: Record<string, any> = {}) {
-        const messages = tokens.map(token => ({
-            to: token,
-            sound: 'default',
-            title,
-            body,
-            data,
-        }));
-
-        try {
-            const response = await lastValueFrom(
-                this.httpService.post('https://exp.host/--/api/v2/push/send', messages, {
-                    headers: {
-                        'Accept': 'application/json',
-                        'Accept-encoding': 'gzip, deflate',
-                        'Content-Type': 'application/json',
-                    },
-                })
-            );
-
-            this.logger.log(`Push notifications sent to ${tokens.length} tokens.`);
-            return response.data;
-        } catch (error) {
-            this.logger.error('Failed to send push notifications via Expo', error.response?.data || error.message);
-        }
+        // ... replaced by processor
     }
 
     // ─── EMAIL INTEGRATION (RESEND) ──────────────────────────────────────────
@@ -122,20 +104,13 @@ export class NotificationsService {
         `;
 
         try {
-            const { data, error } = await this.resend.emails.send({
-                from: this.globalFrom,
+            await this.notificationsQueue.add('email', {
                 to: email,
                 subject: 'Setorial Verification Code',
                 html: this.generateSetorialHtml(title, content)
             });
-            
-            if (error) {
-                this.logger.error(`Resend rejected OTP email to ${email}: ${error.message}`);
-            } else {
-                this.logger.log(`OTP Email sent to ${email} (ID: ${data?.id})`);
-            }
         } catch (err: any) {
-            this.logger.error(`Failed to send OTP to ${email}: ${err.message}`);
+            this.logger.error(`Failed to queue OTP to ${email}: ${err.message}`);
         }
     }
 
@@ -152,20 +127,13 @@ export class NotificationsService {
         `;
 
         try {
-            const { data, error } = await this.resend.emails.send({
-                from: this.globalFrom,
+            await this.notificationsQueue.add('email', {
                 to: email,
                 subject: 'Setorial Password Reset',
                 html: this.generateSetorialHtml(title, content)
             });
-
-            if (error) {
-                this.logger.error(`Resend rejected Password Reset email to ${email}: ${error.message}`);
-            } else {
-                this.logger.log(`Password Reset Email sent to ${email} (ID: ${data?.id})`);
-            }
         } catch (err: any) {
-            this.logger.error(`Exception sending Password Reset to ${email}: ${err.message}`);
+            this.logger.error(`Exception queuing Password Reset to ${email}: ${err.message}`);
         }
     }
 
@@ -184,14 +152,13 @@ export class NotificationsService {
         `;
 
         try {
-            await this.resend.emails.send({
-                from: this.globalFrom,
+            await this.notificationsQueue.add('email', {
                 to: email,
                 subject: 'Welcome to Setorial!',
                 html: this.generateSetorialHtml(title, content)
             });
         } catch (err: any) {
-            this.logger.error(`Failed to send Welcome email to ${email}: ${err.message}`);
+            this.logger.error(`Failed to queue Welcome email to ${email}: ${err.message}`);
         }
     }
 
@@ -204,14 +171,13 @@ export class NotificationsService {
         `;
 
         try {
-            await this.resend.emails.send({
-                from: this.globalFrom,
+            await this.notificationsQueue.add('email', {
                 to: email,
                 subject: 'Setorial Reward Payout Processing',
                 html: this.generateSetorialHtml(title, content)
             });
         } catch (err: any) {
-            this.logger.error(`Failed to send Payout Email to ${email}`);
+            this.logger.error(`Failed to queue Payout Email to ${email}`);
         }
     }
 
@@ -220,8 +186,6 @@ export class NotificationsService {
         const html = this.generateSetorialHtml(title, htmlMessage);
 
         try {
-            // Resend supports bulk up to 50 recipients per API call using batch.
-            // For simplicity in testing, we'll map them. In prod, chunk into 50s.
             const chunks = [];
             for (let i = 0; i < emails.length; i += 50) {
                 chunks.push(emails.slice(i, i + 50));
@@ -229,16 +193,15 @@ export class NotificationsService {
 
             for (const chunk of chunks) {
                 const batchPayload = chunk.map(email => ({
-                    from: this.globalFrom,
+                    from: process.env.EMAIL_FROM_ADDRESS || 'Setorial <onboarding@resend.dev>',
                     to: email,
                     subject,
                     html
                 }));
-                await this.resend.batch.send(batchPayload as any);
+                await this.notificationsQueue.add('email-batch', { batch: batchPayload });
             }
-            this.logger.log(`Broadcast completed to ${emails.length} users.`);
         } catch (err: any) {
-            this.logger.error(`Broadcast failed: ${err.message}`);
+            this.logger.error(`Broadcast queuing failed: ${err.message}`);
         }
     }
 
@@ -251,16 +214,14 @@ export class NotificationsService {
         `;
 
         try {
-            await this.resend.emails.send({
-                from: this.globalFrom,
+            await this.notificationsQueue.add('email', {
                 to: 'setorialapp@gmail.com',
                 replyTo: userEmail,
                 subject: `Support Request [${userEmail}]`,
                 html: this.generateSetorialHtml(title, content)
             });
-            this.logger.log(`Support ticket forwarded to setorialapp@gmail.com`);
         } catch (err: any) {
-            this.logger.error(`Support ticket delivery failed: ${err.message}`);
+            this.logger.error(`Support ticket queuing failed: ${err.message}`);
         }
     }
 }

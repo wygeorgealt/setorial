@@ -1,10 +1,10 @@
-import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import Redis from 'ioredis';
 import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
-export class GamificationService implements OnModuleDestroy {
+export class GamificationService implements OnModuleDestroy, OnModuleInit {
     private redis: Redis;
 
     constructor(
@@ -12,6 +12,10 @@ export class GamificationService implements OnModuleDestroy {
         private notificationsService: NotificationsService,
     ) {
         this.redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+    }
+
+    async onModuleInit() {
+        await this.getStarterBadges();
     }
 
     onModuleDestroy() {
@@ -96,8 +100,6 @@ export class GamificationService implements OnModuleDestroy {
     }
 
     async checkAndAwardBadges(userId: string, context: { streak: number, score?: number, total?: number }) {
-        await this.getStarterBadges();
-
         const earnedBadges = [];
 
         // Condition: First Quiz
@@ -118,16 +120,19 @@ export class GamificationService implements OnModuleDestroy {
             earnedBadges.push('7-Day Streak');
         }
 
-        // Award them
-        for (const badgeName of earnedBadges) {
-            const badge = await this.prisma.badge.findUnique({ where: { name: badgeName } });
-            if (badge) {
-                // Ignore if already have it due to composite unique key
+        // Award them efficiently in a single batch where possible
+        if (earnedBadges.length > 0) {
+            const badges = await this.prisma.badge.findMany({ 
+                where: { name: { in: earnedBadges } } 
+            });
+            
+            for (const badge of badges) {
+                // Upsert handles composite unique key userId_badgeId
                 await this.prisma.userBadge.upsert({
                     where: { userId_badgeId: { userId, badgeId: badge.id } },
                     update: {},
                     create: { userId, badgeId: badge.id }
-                }).catch(() => { }); // catch unique constraint race conditions
+                }).catch(() => { }); 
             }
         }
     }

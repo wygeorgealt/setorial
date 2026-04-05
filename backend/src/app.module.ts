@@ -16,6 +16,8 @@ import { StoreModule } from './store/store.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { BullModule } from '@nestjs/bullmq';
+import { CacheModule } from '@nestjs/cache-manager';
+import { redisStore } from 'cache-manager-redis-yet';
 
 @Module({
   imports: [
@@ -39,6 +41,18 @@ import { BullModule } from '@nestjs/bullmq';
         };
       }
     }),
+    CacheModule.registerAsync({
+      isGlobal: true,
+      useFactory: async () => {
+        const redisUrl = process.env.REDIS_PRIVATE_URL || process.env.REDIS_URL;
+        return {
+          store: await redisStore({
+            url: redisUrl || 'redis://localhost:6379',
+            ttl: 600000, // 10 minutes in milliseconds
+          }),
+        };
+      },
+    }),
     ScheduleModule.forRoot(),
     AuthModule,
     UsersModule,
@@ -58,4 +72,3 @@ import { BullModule } from '@nestjs/bullmq';
   providers: [AppService],
 })
 export class AppModule { }
-

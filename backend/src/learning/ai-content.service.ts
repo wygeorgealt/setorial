@@ -50,26 +50,26 @@ Respond ONLY with a valid JSON object. Do not include markdown tags:
 }`;
 
         return this.executeGeneration(prompt, async (data) => {
-            const createdLevels = [];
-            for (const level of data.levels) {
-                const newLesson = await this.prisma.lesson.create({
-                    data: {
-                        name: level.name,
-                        topicId: topic.id,
-                        content: level.content,
-                        order: level.order,
-                        questions: {
-                            create: level.questions.map((q: any) => ({
-                                text: q.text,
-                                options: q.options,
-                                correctOption: q.correctOption
-                            }))
-                        }
-                    },
-                    include: { questions: true }
-                });
-                createdLevels.push(newLesson);
-            }
+            const createdLevels = await Promise.all(
+                data.levels.map((level: any) =>
+                    this.prisma.lesson.create({
+                        data: {
+                            name: level.name,
+                            topicId: topic.id,
+                            content: level.content,
+                            order: level.order,
+                            questions: {
+                                create: level.questions.map((q: any) => ({
+                                    text: q.text,
+                                    options: q.options,
+                                    correctOption: q.correctOption
+                                }))
+                            }
+                        },
+                        include: { questions: true }
+                    })
+                )
+            );
             return { topic, levels: createdLevels };
         });
     }

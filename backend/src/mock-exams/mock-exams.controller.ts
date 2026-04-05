@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, Request, UseInterceptors } from '@nestjs/common';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 import { MockExamsService } from './mock-exams.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('mocks')
 @UseGuards(JwtAuthGuard)
+@UseInterceptors(CacheInterceptor)
 export class MockExamsController {
     constructor(private readonly mockService: MockExamsService) { }
 

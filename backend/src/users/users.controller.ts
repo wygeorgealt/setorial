@@ -21,11 +21,14 @@ export class UsersController {
     @Get('me')
     async getMe(@Request() req: any) {
         const userId = req.user.userId;
-        const user = await this.usersService.findById(userId);
-        const points = await this.usersService.getPoints(userId);
-        const streak = await this.gamificationService.getStreak(userId);
-        const badges = await this.gamificationService.getUserBadges(userId);
-        const activeSub = await this.usersService.getActiveSubscription(userId);
+        
+        const [user, points, streak, badges, activeSub] = await Promise.all([
+            this.usersService.findById(userId),
+            this.usersService.getPoints(userId),
+            this.gamificationService.getStreak(userId),
+            this.gamificationService.getUserBadges(userId),
+            this.usersService.getActiveSubscription(userId)
+        ]);
 
         let detectedCountry = null;
         if (user && !user.billingCountry) {

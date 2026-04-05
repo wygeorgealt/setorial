@@ -121,6 +121,54 @@ export class AuthService {
         return { message: 'Password updated successfully' };
     }
 
+    async forgotPassword(email: string) {
+        const user = await this.usersService.findByEmail(email);
+        if (!user) {
+            // We return a standard success message even if the user is not found to prevent email enumeration
+            return { message: 'If an account with that email exists, a password reset code has been sent.' };
+        }
+
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+
+        await this.prisma.user.update({
+            where: { id: user.id },
+            data: {
+                emailOtp: otp,
+                emailOtpExpiresAt: otpExpires,
+            }
+        });
+
+        await this.notificationsService.sendPasswordResetEmail(user.email, otp, user.name || 'Student');
+
+        return { message: 'If an account with that email exists, a password reset code has been sent.' };
+    }
+
+    async resetPassword(email: string, otp: string, newPassword: string) {
+        const user = await this.usersService.findByEmail(email);
+        if (!user) throw new BadRequestException('User not found');
+
+        if (user.emailOtp !== otp) {
+            throw new BadRequestException('Invalid verification code');
+        }
+
+        if (user.emailOtpExpiresAt && new Date() > user.emailOtpExpiresAt) {
+            throw new BadRequestException('Verification code has expired');
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await this.prisma.user.update({
+            where: { id: user.id },
+            data: {
+                password: hashedPassword,
+                emailOtp: null,
+                emailOtpExpiresAt: null,
+            }
+        });
+
+        return { message: 'Password has been successfully reset. You can now log in.' };
+    }
+
     private generateAuthResponse(user: any) {
         const payload = { sub: user.id, email: user.email, role: user.role, tier: user.tier };
         const { password, ...userWithoutPassword } = user;

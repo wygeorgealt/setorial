@@ -3,7 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 
 import { useAuthStore } from '../store/authStore';
 
-const API_URL = 'https://truthful-florence-firstness.ngrok-free.dev';
+const API_URL = 'https://backend-production-fc72.up.railway.app';
 
 export const api = axios.create({
     baseURL: API_URL,
@@ -37,6 +37,8 @@ export const authApi = {
     getMe: () => api.get('/users/me'),
     updateProfile: (data: any) => api.patch('/users/me', data),
     changePassword: (data: any) => api.patch('/auth/password', data),
+    forgotPassword: (data: { email: string }) => api.post('/auth/forgot-password', data),
+    resetPassword: (data: { email: string; otp: string; newPassword: string }) => api.post('/auth/reset-password', data),
     getProgress: () => api.get('/users/me/progress'),
 };
 

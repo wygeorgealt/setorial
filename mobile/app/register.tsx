@@ -31,7 +31,11 @@ export default function RegisterScreen() {
             setError("");
 
             const response = await authApi.register({ email, password, name });
-            await setAuth(response.data.user, response.data.token);
+            // Registration doesn't return a token yet. We need to go to OTP verification.
+            router.push({
+                pathname: "/verification",
+                params: { email: email }
+            });
         } catch (err: any) {
             const message = err.response?.data?.message;
             setError(Array.isArray(message) ? message[0] : message || "Registration failed");

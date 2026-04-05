@@ -17,6 +17,16 @@ export class AuthController {
         return this.authService.verifyOtp(body.email, body.otp);
     }
 
+    @Post('forgot-password')
+    async forgotPassword(@Body() body: { email: string }) {
+        return this.authService.forgotPassword(body.email);
+    }
+
+    @Post('reset-password')
+    async resetPassword(@Body() body: { email: string; otp: string; newPassword: string }) {
+        return this.authService.resetPassword(body.email, body.otp, body.newPassword);
+    }
+
     @HttpCode(HttpStatus.OK)
     @Post('login')
     async login(@Body() loginDto: LoginDto, @Request() req: any) {

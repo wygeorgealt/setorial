@@ -122,15 +122,50 @@ export class NotificationsService {
         `;
 
         try {
-            await this.resend.emails.send({
+            const { data, error } = await this.resend.emails.send({
                 from: this.globalFrom,
                 to: email,
                 subject: 'Setorial Verification Code',
                 html: this.generateSetorialHtml(title, content)
             });
-            this.logger.log(`OTP Email sent to ${email}`);
+            
+            if (error) {
+                this.logger.error(`Resend rejected OTP email to ${email}: ${error.message}`);
+            } else {
+                this.logger.log(`OTP Email sent to ${email} (ID: ${data?.id})`);
+            }
         } catch (err: any) {
             this.logger.error(`Failed to send OTP to ${email}: ${err.message}`);
+        }
+    }
+
+    async sendPasswordResetEmail(email: string, otpCode: string, name: string = 'Student') {
+        const title = 'Reset Your Password';
+        const content = `
+            <p>Hi ${name},</p>
+            <p>We received a request to reset your Setorial password. Enter the following 6-digit code in the app to proceed:</p>
+            <div style="background-color: #f4f4f5; border-radius: 8px; padding: 20px; text-align: center; margin: 32px 0;">
+                <span style="font-size: 32px; font-weight: 800; color: #18181b; letter-spacing: 8px;">${otpCode}</span>
+            </div>
+            <p>If you didn't request this, you can safely ignore this email.</p>
+            <p>This code will expire in 15 minutes.</p>
+        `;
+
+        try {
+            const { data, error } = await this.resend.emails.send({
+                from: this.globalFrom,
+                to: email,
+                subject: 'Setorial Password Reset',
+                html: this.generateSetorialHtml(title, content)
+            });
+
+            if (error) {
+                this.logger.error(`Resend rejected Password Reset email to ${email}: ${error.message}`);
+            } else {
+                this.logger.log(`Password Reset Email sent to ${email} (ID: ${data?.id})`);
+            }
+        } catch (err: any) {
+            this.logger.error(`Exception sending Password Reset to ${email}: ${err.message}`);
         }
     }
 

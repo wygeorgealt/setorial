@@ -81,11 +81,6 @@ export default function WelcomeScreen() {
 
                 <SafeAreaView className="flex-1 justify-between">
                     {/* Top Logo Area */}
-                    <View className="px-6 pt-12 z-10">
-                        <View className="bg-white/10 self-start px-3 py-1.5 rounded-md">
-                            <Text className="text-white font-black text-2xl tracking-tighter italic">SETORIAL</Text>
-                        </View>
-                    </View>
 
                     {/* Bottom Content Area */}
                     <View className="pb-8">

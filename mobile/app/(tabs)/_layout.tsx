@@ -2,6 +2,7 @@ import { Tabs } from 'expo-router';
 import { Home, Search, Wallet, MoreHorizontal, ShoppingBag } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../store/authStore';
 import { getTierColors } from '../../utils/theme';
 
@@ -9,6 +10,7 @@ export default function TabLayout() {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
   const { user } = useAuthStore();
+  const insets = useSafeAreaInsets();
 
   const theme = getTierColors(user?.tier);
   const activeColor = isDark ? theme.border : theme.primary;
@@ -19,16 +21,16 @@ export default function TabLayout() {
         headerShown: false,
         tabBarStyle: {
           position: 'absolute',
-          bottom: 20,
-          left: 20,
-          right: 20,
+          bottom: Math.max(20, insets.bottom + 10),
+          left: 24,
+          right: 24,
           backgroundColor: isDark ? '#1E222B' : '#FFFFFF',
           borderTopWidth: 0,
-          height: 70,
-          borderRadius: 25,
-          paddingHorizontal: 5,
-          paddingBottom: 15,
-          paddingTop: 15,
+          height: 65,
+          borderRadius: 30,
+          paddingHorizontal: 10,
+          paddingBottom: 0,
+          paddingTop: 0,
           elevation: 15,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 5 },
@@ -52,7 +54,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <View style={{
               backgroundColor: focused ? (isDark ? '#272B36' : '#F3F4F6') : 'transparent',
-              paddingHorizontal: 20,
+              paddingHorizontal: 14,
               paddingVertical: 8,
               borderRadius: 20,
               alignItems: 'center',
@@ -70,7 +72,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <View style={{
               backgroundColor: focused ? (isDark ? '#272B36' : '#F3F4F6') : 'transparent',
-              paddingHorizontal: 20,
+              paddingHorizontal: 14,
               paddingVertical: 8,
               borderRadius: 20,
               alignItems: 'center',
@@ -88,7 +90,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <View style={{
               backgroundColor: focused ? (isDark ? '#272B36' : '#F3F4F6') : 'transparent',
-              paddingHorizontal: 20,
+              paddingHorizontal: 14,
               paddingVertical: 8,
               borderRadius: 20,
               alignItems: 'center',
@@ -106,7 +108,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <View style={{
               backgroundColor: focused ? (isDark ? '#272B36' : '#F3F4F6') : 'transparent',
-              paddingHorizontal: 20,
+              paddingHorizontal: 14,
               paddingVertical: 8,
               borderRadius: 20,
               alignItems: 'center',
@@ -124,7 +126,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <View style={{
               backgroundColor: focused ? (isDark ? '#272B36' : '#F3F4F6') : 'transparent',
-              paddingHorizontal: 20,
+              paddingHorizontal: 14,
               paddingVertical: 8,
               borderRadius: 20,
               alignItems: 'center',

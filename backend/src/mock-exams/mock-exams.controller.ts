@@ -5,7 +5,6 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('mocks')
 @UseGuards(JwtAuthGuard)
-@UseInterceptors(CacheInterceptor)
 export class MockExamsController {
     constructor(private readonly mockService: MockExamsService) { }
 

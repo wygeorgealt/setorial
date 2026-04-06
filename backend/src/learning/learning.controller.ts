@@ -11,7 +11,6 @@ import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('learning')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@UseInterceptors(CacheInterceptor)
 export class LearningController {
     constructor(
         private readonly learningService: LearningService,

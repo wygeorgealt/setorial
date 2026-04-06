@@ -94,6 +94,7 @@ export default function AdminDashboard() {
     const [mocks, setMocks] = useState<any[]>([]);
     const [discounts, setDiscounts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [generatingSyllabus, setGeneratingSyllabus] = useState(false);
 
     // Lesson Modal State
     const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
@@ -354,11 +355,31 @@ export default function AdminDashboard() {
     const handleCreateSubject = async () => {
         const name = prompt('Subject Name? (e.g. Mathematics)');
         const iconInfo = prompt('Icon Identifier or URL? (e.g. math)');
+        
         if (name && iconInfo) {
             try {
-                await adminApi.createSubject({ name, iconInfo, description: 'New Subject' });
+                setLoading(true);
+                const res = await adminApi.createSubject({ name, iconInfo, description: 'New Subject' });
+                const subjectId = res.data.id;
+
+                const numTopics = prompt('How many topics should the AI generate for this subject? (e.g. 5)');
+                if (numTopics && !isNaN(Number(numTopics))) {
+                    setLoading(false);
+                    setGeneratingSyllabus(true);
+                    try {
+                        await adminApi.generateFullSubject({ subjectId, numTopics: Number(numTopics) });
+                        alert('Full Subject Syllabus Generated Successfully!');
+                    } catch (err: any) {
+                        alert(err.response?.data?.message || 'AI Generation partially failed. Please check the subject.');
+                    } finally {
+                        setGeneratingSyllabus(false);
+                    }
+                }
                 fetchData();
-            } catch (err) { alert('Failed to create'); }
+            } catch (err) { 
+                alert('Failed to create subject'); 
+                setLoading(false);
+            }
         }
     };
 
@@ -1521,6 +1542,27 @@ export default function AdminDashboard() {
                             </div>
                         </form>
                     </div>
+                </div>
+            )}
+            {generatingSyllabus && (
+                <div className="fixed inset-0 bg-zinc-900/80 backdrop-blur-md z-[100] flex flex-col items-center justify-center p-6 text-center">
+                    <div className="w-24 h-24 relative mb-8">
+                        <div className="absolute inset-0 border-4 border-indigo-500/20 rounded-full"></div>
+                        <div className="absolute inset-0 border-4 border-t-indigo-500 rounded-full animate-spin"></div>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <Wand2 size={40} className="text-indigo-400 animate-pulse" />
+                        </div>
+                    </div>
+                    <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">Wormhole Active</h2>
+                    <p className="text-indigo-200 text-lg max-w-md mx-auto leading-relaxed">
+                        The AI is currently building the full curriculum, drafting high-depth lessons, and generating study materials...
+                    </p>
+                    <div className="mt-8 flex space-x-2">
+                        <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                        <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                        <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce"></div>
+                    </div>
+                    <p className="mt-12 text-zinc-500 text-sm font-medium uppercase tracking-widest">Please do not close this tab</p>
                 </div>
             )}
         </div>

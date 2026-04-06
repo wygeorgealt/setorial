@@ -24,6 +24,12 @@ export class LearningController {
     }
 
     @Roles(Role.ADMIN)
+    @Post('ai/generate-full-subject')
+    async generateFullSubject(@Body() dto: { subjectId: string, numTopics: number }) {
+        return this.aiContentService.generateFullSyllabus(dto.subjectId, dto.numTopics);
+    }
+
+    @Roles(Role.ADMIN)
     @Post('ai/generate-mock')
     async generateAiMock(@Body() dto: { subjectId: string, title: string, numQuestions?: number }) {
         return this.aiContentService.generateMockExam(dto.subjectId, dto.title, dto.numQuestions);

@@ -155,6 +155,34 @@ Respond ONLY with valid JSON:
         });
     }
 
+    async generateFullSyllabus(subjectId: string, numTopics: number = 5) {
+        const subject = await this.prisma.subject.findUnique({ where: { id: subjectId } });
+        if (!subject) throw new Error('Subject not found');
+
+        // Step 1: Generate Topics
+        const topicPrompt = `Generate exactly ${numTopics} curriculum topics for the subject "${subject.name}".
+Respond ONLY with a JSON object:
+{
+  "topics": ["Topic 1 Name", "Topic 2 Name", ...]
+}`;
+
+        const topicData = await this.executeGeneration(topicPrompt, async (data) => data);
+        const topicNames = topicData.topics;
+
+        // Step 2: Generate Lessons for each topic
+        const results = [];
+        for (const topicName of topicNames) {
+            try {
+                const topicResult = await this.generateLevelsForTopic(subjectId, topicName, 3);
+                results.push(topicResult);
+            } catch (err) {
+                this.logger.error(`Failed to generate levels for topic ${topicName}: ${err.message}`);
+            }
+        }
+
+        return { subject, topics: results };
+    }
+
     private async executeGeneration(prompt: string, saveCallback: (data: any) => Promise<any>) {
         try {
             const response = await axios.post(

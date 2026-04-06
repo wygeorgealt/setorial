@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Delete, Body, Param, UseGuards, Request, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Post, Get, Delete, Body, Param, Query, UseGuards, Request, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { CacheInterceptor } from '@nestjs/cache-manager';
 import { LearningService } from './learning.service';
 import { AiContentService } from './ai-content.service';
@@ -69,6 +69,11 @@ export class LearningController {
     @Delete('topics/:id')
     async deleteTopic(@Param('id') id: string) {
         return this.learningService.deleteTopic(id);
+    }
+
+    @Get('search')
+    async search(@Query('q') query: string) {
+        return this.learningService.searchSubjects(query);
     }
 
     @Get('subjects')

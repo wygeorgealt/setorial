@@ -157,18 +157,18 @@ export class LearningService {
         if (!subject) throw new NotFoundException('Subject not found');
         
         // Optimize pathway annotation - removed redundant synchronous Promise.all
+        let globalFoundCurrent = false;
+        
         const annotatedTopics = subject.topics.map((topic) => {
-            let foundCurrent = false;
-
             const annotatedLessons = topic.lessons.map((lesson) => {
                 const isCompleted = lesson.userProgress && lesson.userProgress.length > 0;
                 
                 let status = 'LOCKED';
                 if (isCompleted) {
                     status = 'COMPLETED';
-                } else if (!foundCurrent) {
+                } else if (!globalFoundCurrent) {
                     status = 'CURRENT';
-                    foundCurrent = true;
+                    globalFoundCurrent = true;
                 }
 
                 const { userProgress, ...rest } = lesson;
@@ -184,7 +184,7 @@ export class LearningService {
     async getLesson(id: string) {
         const lesson = await this.prisma.lesson.findUnique({
             where: { id },
-            include: { questions: { select: { id: true, text: true, options: true } } },
+            include: { questions: { select: { id: true, text: true, options: true, correctOption: true } } },
         }) as any;
         if (!lesson) throw new NotFoundException('Lesson not found');
 
@@ -297,5 +297,35 @@ export class LearningService {
         });
 
         return { score, total: lesson.questions.length, breakdown, pointsEarned, passed, isFirstCompletion };
+    }
+
+    async searchSubjects(query: string) {
+        // Deep search across Subject, Topic, and Lesson names
+        return this.prisma.subject.findMany({
+            where: {
+                OR: [
+                    { name: { contains: query, mode: 'insensitive' } },
+                    { topics: { some: { name: { contains: query, mode: 'insensitive' } } } },
+                    { topics: { some: { lessons: { some: { name: { contains: query, mode: 'insensitive' } } } } } }
+                ]
+            },
+            include: {
+                topics: {
+                    select: {
+                        name: true,
+                        lessons: {
+                            where: { name: { contains: query, mode: 'insensitive' } },
+                            select: { name: true }
+                        }
+                    },
+                    where: {
+                        OR: [
+                            { name: { contains: query, mode: 'insensitive' } },
+                            { lessons: { some: { name: { contains: query, mode: 'insensitive' } } } }
+                        ]
+                    }
+                }
+            }
+        });
     }
 }

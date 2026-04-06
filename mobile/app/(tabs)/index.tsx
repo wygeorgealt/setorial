@@ -186,7 +186,7 @@ export default function HomeScreen() {
                                             {subject.topics?.length || 0} Topics
                                         </Text>
                                     </View>
-                                    <View className="w-12 h-12 bg-white dark:bg-zinc-950/20 rounded-full items-center justify-center">
+                                    <View className="w-12 h-12 bg-black/10 dark:bg-black/20 rounded-full items-center justify-center">
                                         <ArrowUpRight size={24} color="#FFF" />
                                     </View>
                                 </ScaleButton>

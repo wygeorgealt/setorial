@@ -1,142 +1,154 @@
 import { Tabs } from 'expo-router';
 import { Home, Search, Wallet, MoreHorizontal, ShoppingBag } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
-import { View } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../store/authStore';
 import { getTierColors } from '../../utils/theme';
+import Animated, { useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
-export default function TabLayout() {
+const ICON_SIZE = 20;
+
+const TAB_CONFIG = [
+  { name: 'index', label: 'Home', Icon: Home, color: '#58CC02' },
+  { name: 'courses', label: 'Discover', Icon: Search, color: '#1CB0F6' },
+  { name: 'statistics', label: 'Wallet', Icon: Wallet, color: '#FFC800' },
+  { name: 'store', label: 'Store', Icon: ShoppingBag, color: '#CE82FF' },
+  { name: 'profile', label: 'More', Icon: MoreHorizontal, color: '#FF4B4B' },
+];
+
+function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const { user } = useAuthStore();
   const insets = useSafeAreaInsets();
-
+  const { user } = useAuthStore();
   const theme = getTierColors(user?.tier);
-  const activeColor = isDark ? theme.border : theme.primary;
+  const accentColor = isDark ? theme.border : theme.primary;
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          position: 'absolute',
-          bottom: Math.max(20, insets.bottom + 10),
-          left: 24,
-          right: 24,
-          backgroundColor: isDark ? '#1E222B' : '#FFFFFF',
-          borderTopWidth: 0,
-          height: 65,
-          borderRadius: 30,
-          paddingHorizontal: 10,
-          paddingBottom: 0,
-          paddingTop: 0,
-          elevation: 15,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 5 },
-          shadowOpacity: 0.1,
-          shadowRadius: 15,
-          borderWidth: 2,
-          borderColor: isDark ? '#272B36' : '#E5E5E5',
-        },
-        tabBarActiveTintColor: activeColor,
-        tabBarInactiveTintColor: '#AFAFAF',
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '700',
-          marginTop: 2,
+    <View style={[styles.barOuter, { bottom: Math.max(14, insets.bottom) }]}>
+      <View style={[
+        styles.barContainer,
+        {
+          backgroundColor: isDark ? '#171A21' : '#F0F1F5',
+          borderColor: isDark ? '#272B36' : '#D8DAE0',
         }
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={{
-              backgroundColor: focused ? (isDark ? '#272B36' : '#F3F4F6') : 'transparent',
-              paddingHorizontal: 14,
-              paddingVertical: 8,
-              borderRadius: 20,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-              <Home size={22} color={color} strokeWidth={focused ? 2.5 : 2} />
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="courses"
-        options={{
-          title: 'Discover',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={{
-              backgroundColor: focused ? (isDark ? '#272B36' : '#F3F4F6') : 'transparent',
-              paddingHorizontal: 14,
-              paddingVertical: 8,
-              borderRadius: 20,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-              <Search size={22} color={color} strokeWidth={focused ? 2.5 : 2} />
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="statistics"
-        options={{
-          title: 'Wallet',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={{
-              backgroundColor: focused ? (isDark ? '#272B36' : '#F3F4F6') : 'transparent',
-              paddingHorizontal: 14,
-              paddingVertical: 8,
-              borderRadius: 20,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-              <Wallet size={22} color={color} strokeWidth={focused ? 2.5 : 2} />
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="store"
-        options={{
-          title: 'Store',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={{
-              backgroundColor: focused ? (isDark ? '#272B36' : '#F3F4F6') : 'transparent',
-              paddingHorizontal: 14,
-              paddingVertical: 8,
-              borderRadius: 20,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-              <ShoppingBag size={22} color={color} strokeWidth={focused ? 2.5 : 2} />
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarIcon: ({ color, focused }) => (
-            <View style={{
-              backgroundColor: focused ? (isDark ? '#272B36' : '#F3F4F6') : 'transparent',
-              paddingHorizontal: 14,
-              paddingVertical: 8,
-              borderRadius: 20,
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-              <MoreHorizontal size={22} color={color} strokeWidth={focused ? 2.5 : 2} />
-            </View>
-          ),
-        }}
-      />
+      ]}>
+        {state.routes.map((route, index) => {
+          const focused = state.index === index;
+          const config = TAB_CONFIG[index];
+          if (!config) return null;
+          const { Icon } = config;
+
+          const onPress = () => {
+            const event = navigation.emit({
+              type: 'tabPress',
+              target: route.key,
+              canPreventDefault: true,
+            });
+            if (!focused && !event.defaultPrevented) {
+              navigation.navigate(route.name);
+            }
+          };
+
+          const iconColor = focused ? (isDark ? '#000' : '#FFF') : (isDark ? '#6B7280' : '#9CA3AF');
+          const circleColor = focused ? config.color : (isDark ? '#252930' : '#E0E2E8');
+
+          return (
+            <TouchableOpacity
+              key={route.key}
+              onPress={onPress}
+              activeOpacity={0.7}
+              style={[
+                styles.tabButton,
+                focused && styles.tabButtonActive,
+                focused && {
+                  backgroundColor: isDark ? '#252930' : '#E0E2E8',
+                },
+              ]}
+            >
+              <View style={[styles.iconCircle, { backgroundColor: circleColor }]}>
+                <Icon size={ICON_SIZE} color={iconColor} strokeWidth={focused ? 2.5 : 1.8} />
+              </View>
+              {focused && (
+                <Text
+                  style={[
+                    styles.label,
+                    { color: isDark ? '#F9FAFB' : '#1F2937' }
+                  ]}
+                  numberOfLines={1}
+                >
+                  {config.label}
+                </Text>
+              )}
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+export default function TabLayout() {
+  return (
+    <Tabs
+      tabBar={(props) => <CustomTabBar {...props} />}
+      screenOptions={{ headerShown: false }}
+    >
+      <Tabs.Screen name="index" />
+      <Tabs.Screen name="courses" />
+      <Tabs.Screen name="statistics" />
+      <Tabs.Screen name="store" />
+      <Tabs.Screen name="profile" />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  barOuter: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  barContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 7,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    gap: 6,
+    maxWidth: Dimensions.get('window').width - 48,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 20,
+  },
+  tabButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    borderRadius: 16,
+    padding: 3,
+  },
+  tabButtonActive: {
+    paddingHorizontal: 8,
+    paddingRight: 14,
+    gap: 7,
+  },
+  iconCircle: {
+    width: 46,
+    height: 46,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  label: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+});

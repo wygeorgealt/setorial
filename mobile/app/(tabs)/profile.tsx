@@ -147,6 +147,8 @@ export default function ProfileScreen() {
                     <Text className="text-[#FF4B4B] font-bold ml-2 text-[17px] uppercase tracking-wider">Log Out</Text>
                 </TouchableOpacity>
 
+                <View className="h-32" />
+
             </ScrollView>
         </SafeAreaView>
     );

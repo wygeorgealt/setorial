@@ -46,23 +46,16 @@ export default function RootLayout() {
     }, [token, isLoading, segments, showSplash]);
 
     useEffect(() => {
-        const loadTheme = async () => {
-            const savedTheme = await SecureStore.getItemAsync('theme');
-            if (savedTheme === 'dark' || savedTheme === 'light') {
-                setColorScheme(savedTheme);
-            } else {
-                const systemTheme = Appearance.getColorScheme();
-                if (systemTheme) setColorScheme(systemTheme);
-            }
-        };
-        loadTheme();
+        // Clear any previously saved theme override so system theme always wins
+        SecureStore.deleteItemAsync('theme').catch(() => {});
 
+        // Set initial theme from system
+        const systemTheme = Appearance.getColorScheme();
+        if (systemTheme) setColorScheme(systemTheme);
+
+        // Listen for system theme changes manually
         const subscription = Appearance.addChangeListener(({ colorScheme: newScheme }) => {
-            SecureStore.getItemAsync('theme').then((savedTheme) => {
-                if (!savedTheme && newScheme) {
-                    setColorScheme(newScheme);
-                }
-            });
+            if (newScheme) setColorScheme(newScheme);
         });
 
         return () => subscription.remove();

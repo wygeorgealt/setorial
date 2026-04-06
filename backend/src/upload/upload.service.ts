@@ -12,6 +12,9 @@ export class UploadService {
   private readonly publicUrl = process.env.AWS_URL;
 
   constructor() {
+    if (!process.env.AWS_ENDPOINT) {
+      this.logger.warn('AWS_ENDPOINT is not defined. File uploads may attempt to connect to AWS instead of Cloudflare R2.');
+    }
     this.s3Client = new S3Client({
       region: process.env.AWS_REGION || 'auto',
       endpoint: process.env.AWS_ENDPOINT,
@@ -19,7 +22,7 @@ export class UploadService {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID as string,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY as string,
       },
-      forcePathStyle: process.env.AWS_USE_PATH_STYLE_ENDPOINT === 'true',
+      forcePathStyle: true, // Crucial for R2 connection compatibility
     });
   }
 

@@ -1,22 +1,13 @@
 import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Switch } from 'react-native';
-import { useColorScheme } from 'nativewind';
-import { ChevronLeft, User, Bell, Shield, CircleHelp, Info, Moon } from 'lucide-react-native';
+import { ChevronLeft, User, Bell, Shield, CircleHelp } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { useState, useEffect } from 'react';
-import * as SecureStore from 'expo-secure-store';
+import { useState } from 'react';
 
 export default function SettingsScreen() {
     const router = useRouter();
-    const { colorScheme, setColorScheme } = useColorScheme();
     const [notifications, setNotifications] = useState(true);
-    const [darkMode, setDarkMode] = useState(colorScheme === 'dark');
 
-    const handleDarkModeToggle = async (value: boolean) => {
-        setDarkMode(value);
-        const newTheme = value ? 'dark' : 'light';
-        setColorScheme(newTheme);
-        await SecureStore.setItemAsync('theme', newTheme);
-    };
+
 
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12]">
@@ -52,18 +43,6 @@ export default function SettingsScreen() {
 
                 <View className="h-10" />
 
-                {/* Appearance Section */}
-                <Text className="text-gray-400 font-bold mb-4 uppercase text-xs tracking-widest">Appearance</Text>
-                <SettingRow icon={<Moon size={20} color="#000" />} label="Dark Mode">
-                    <Switch
-                        value={darkMode}
-                        onValueChange={handleDarkModeToggle}
-                        trackColor={{ false: '#E2E8F0', true: '#000' }}
-                    />
-                </SettingRow>
-
-                <View className="h-10" />
-
                 {/* Support Section */}
                 <Text className="text-gray-400 font-bold mb-4 uppercase text-xs tracking-widest">Support</Text>
                 <SettingRow
@@ -79,7 +58,7 @@ export default function SettingsScreen() {
                 <SettingRow label="Terms of Service" onPress={() => router.push('/terms')} />
                 <SettingRow label="Privacy Policy" onPress={() => router.push('/privacy')} />
 
-                <View className="h-20" />
+                <View className="h-32" />
             </ScrollView>
         </SafeAreaView>
     );

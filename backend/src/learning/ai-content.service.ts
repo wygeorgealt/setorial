@@ -25,53 +25,57 @@ export class AiContentService {
             });
         }
 
-        const prompt = `You are an expert academic content creator. Generate a textbook-length learning pathway for the subject "${subject.name}", focusing on "${topicName}".
-Generate exactly ${numLevels} levels/lessons in sequential order.
-For each lesson:
-1. Provide a comprehensive, high-depth lesson in Markdown. It must feel like a quality textbook chapter (~800-1200 words). Include sections like "Introduction", "Core Principles", "Detailed Analysis", "Practical Examples", and "Summary".
-2. Generate 5 challenging multiple-choice questions based on the depth of the lesson.
-
-Respond ONLY with a valid JSON object. Do not include markdown tags:
+        // Step 1: Discover Lesson Titles
+        const titlePrompt = `For the subject "${subject.name}" and the topic "${topicName}", suggest exactly ${numLevels} textbook chapter titles in logical learning order.
+Respond ONLY with a JSON object:
 {
-  "levels": [
-    {
-      "name": "Detailed Chapter Title",
-      "order": 1,
-      "content": "Full textbook-style markdown content...",
-      "questions": [
-        {
-          "text": "The question text",
-          "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
-          "correctOption": 0
-        }
-      ]
-    }
-  ]
+  "titles": ["Chapter 1 Name", "Chapter 2 Name", ...]
 }`;
 
-        return this.executeGeneration(prompt, async (data) => {
-            const createdLevels = await Promise.all(
-                data.levels.map((level: any) =>
-                    this.prisma.lesson.create({
-                        data: {
-                            name: level.name,
-                            topicId: topic.id,
-                            content: level.content,
-                            order: level.order,
-                            questions: {
-                                create: level.questions.map((q: any) => ({
-                                    text: q.text,
-                                    options: q.options,
-                                    correctOption: q.correctOption
-                                }))
-                            }
-                        },
-                        include: { questions: true }
-                    })
-                )
-            );
-            return { topic, levels: createdLevels };
-        });
+        const { titles } = await this.executeGeneration(titlePrompt, async (data) => data);
+
+        // Step 2: Generate Deep Content for each title
+        const createdLessons = [];
+        for (let i = 0; i < titles.length; i++) {
+            const lessonData = await this.generateLessonContent(subject.name, topicName, titles[i]);
+            const lesson = await this.prisma.lesson.create({
+                data: {
+                    name: titles[i],
+                    topicId: topic.id,
+                    content: lessonData.content,
+                    order: i + 1,
+                    questions: {
+                        create: lessonData.questions.map((q: any) => ({
+                            text: q.text,
+                            options: q.options,
+                            correctOption: q.correctOption
+                        }))
+                    }
+                },
+                include: { questions: true }
+            });
+            createdLessons.push(lesson);
+        }
+
+        return { topic, levels: createdLessons };
+    }
+
+    private async generateLessonContent(subjectName: string, topicName: string, lessonName: string) {
+        const prompt = `You are writing a professional textbook chapter.
+Subject: "${subjectName}".
+Topic: "${topicName}".
+Chapter Title: "${lessonName}".
+
+Provide high-depth textbook-style content (~800-1200 words). Include sections like "Introduction", "Core Principles", "Detailed Analysis", "Practical Examples", and "Summary". 
+Also generate 5 challenging multiple-choice questions based on this specific content.
+
+Respond ONLY with valid JSON:
+{
+  "content": "Full textbook markdown...",
+  "questions": [ { "text": "...", "options": ["A", "B", "C", "D"], "correctOption": 0 } ]
+}`;
+
+        return this.executeGeneration(prompt, async (data) => data);
     }
 
     async regenerateLesson(lessonId: string) {
@@ -81,35 +85,27 @@ Respond ONLY with a valid JSON object. Do not include markdown tags:
         });
         if (!lesson) throw new Error('Lesson not found');
 
-        const prompt = `You are rewriting a textbook chapter for "${lesson.topic.subject.name}". 
-Topic: "${lesson.topic.name}".
-Specific Chapter Title: "${lesson.name}".
-Provide a fresh, deep, textbook-style content (~1000 words) and 5 new challenging questions.
+        const data = await this.generateLessonContent(
+            lesson.topic.subject.name,
+            lesson.topic.name,
+            lesson.name
+        );
 
-Respond ONLY with valid JSON:
-{
-  "name": "${lesson.name}",
-  "content": "New textbook markdown...",
-  "questions": [ { "text": "...", "options": [...], "correctOption": 0 } ]
-}`;
-
-        return this.executeGeneration(prompt, async (data) => {
-            return await this.prisma.$transaction(async (tx) => {
-                await tx.question.deleteMany({ where: { lessonId } });
-                return tx.lesson.update({
-                    where: { id: lessonId },
-                    data: {
-                        content: data.content,
-                        questions: {
-                            create: data.questions.map((q: any) => ({
-                                text: q.text,
-                                options: q.options,
-                                correctOption: q.correctOption
-                            }))
-                        }
-                    },
-                    include: { questions: true }
-                });
+        return await this.prisma.$transaction(async (tx) => {
+            await tx.question.deleteMany({ where: { lessonId } });
+            return tx.lesson.update({
+                where: { id: lessonId },
+                data: {
+                    content: data.content,
+                    questions: {
+                        create: data.questions.map((q: any) => ({
+                            text: q.text,
+                            options: q.options,
+                            correctOption: q.correctOption
+                        }))
+                    }
+                },
+                include: { questions: true }
             });
         });
     }
@@ -200,7 +196,8 @@ Respond ONLY with a JSON object:
                         { role: 'system', content: 'You are a professional academic JSON generator. You provide deep, accurate, and extensive educational content.' },
                         { role: 'user', content: prompt }
                     ],
-                    response_format: { type: 'json_object' }
+                    response_format: { type: 'json_object' },
+                    max_tokens: 8192
                 },
                 { headers: { 'Authorization': `Bearer ${this.deepseekKey}` } }
             );

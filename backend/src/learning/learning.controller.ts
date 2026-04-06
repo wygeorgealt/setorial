@@ -53,6 +53,24 @@ export class LearningController {
         return this.learningService.deleteSubject(id);
     }
 
+    @Roles(Role.ADMIN)
+    @Post('topics')
+    async createTopic(@Body() dto: CreateTopicDto) {
+        return this.learningService.createTopic(dto);
+    }
+
+    @Roles(Role.ADMIN)
+    @Post('topics/:id')
+    async updateTopic(@Param('id') id: string, @Body() dto: any) {
+        return this.learningService.updateTopic(id, dto);
+    }
+
+    @Roles(Role.ADMIN)
+    @Delete('topics/:id')
+    async deleteTopic(@Param('id') id: string) {
+        return this.learningService.deleteTopic(id);
+    }
+
     @Get('subjects')
     async getSubjects() {
         return this.learningService.getSubjects();
@@ -66,6 +84,12 @@ export class LearningController {
     @Get('lessons/:id')
     async getLesson(@Param('id') id: string) {
         return this.learningService.getLesson(id);
+    }
+
+    @Roles(Role.ADMIN)
+    @Post('lessons')
+    async createLesson(@Body() dto: CreateLessonDto) {
+        return this.learningService.createLesson(dto);
     }
 
     @Post('lessons/submit')

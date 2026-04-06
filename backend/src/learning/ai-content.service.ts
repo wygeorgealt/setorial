@@ -180,6 +180,13 @@ Respond ONLY with a JSON object:
             }
         }
 
+        // Step 3: Generate a Mock Exam for the subject
+        try {
+            await this.generateMockExam(subjectId, `${subject.name} - Standardized Pro Mock`, 30);
+        } catch (err) {
+            this.logger.error(`Failed to generate subject mock exam: ${err.message}`);
+        }
+
         return { subject, topics: results };
     }
 

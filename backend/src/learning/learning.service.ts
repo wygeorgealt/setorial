@@ -46,6 +46,20 @@ export class LearningService {
         }
     }
 
+    async updateTopic(id: string, data: any) {
+        try {
+            return await this.prisma.topic.update({
+                where: { id },
+                data
+            });
+        } catch (error) {
+            if (error.code === 'P2002') {
+                throw new ConflictException(`A topic with the name "${data.name}" already exists in this subject.`);
+            }
+            throw error;
+        }
+    }
+
     async deleteTopic(id: string) {
         const topic = await this.prisma.topic.findUnique({ where: { id } });
         if (!topic) throw new NotFoundException('Topic not found');

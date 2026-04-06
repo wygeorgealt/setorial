@@ -16,6 +16,7 @@ import {
     Globe,
     Map,
     Edit2,
+    Edit3,
     Trash2,
     Plus,
     RefreshCcw,
@@ -24,7 +25,8 @@ import {
     Layers,
     Ticket,
     Bell,
-    Percent
+    Percent,
+    X
 } from 'lucide-react';
 import { adminApi } from './api';
 
@@ -137,6 +139,11 @@ export default function AdminDashboard() {
         goldAnnual: '0',
         isActive: true
     });
+
+    // Topic Modal State
+    const [isTopicModalOpen, setIsTopicModalOpen] = useState(false);
+    const [editingTopic, setEditingTopic] = useState<any>(null);
+    const [topicForm, setTopicForm] = useState({ name: '', description: '', order: 0 });
 
     useEffect(() => {
         fetchData();
@@ -395,6 +402,40 @@ export default function AdminDashboard() {
         }
     };
 
+    const handleEditTopic = (topic: any) => {
+        setEditingTopic(topic);
+        setTopicForm({
+            name: topic.name,
+            description: topic.description || '',
+            order: topic.order || 0
+        });
+        setIsTopicModalOpen(true);
+    };
+
+    const handleSaveTopic = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            await adminApi.updateTopic(editingTopic.id, topicForm);
+            alert('Topic updated successfully!');
+            setIsTopicModalOpen(false);
+            fetchData();
+        } catch (err: any) {
+            alert(err.response?.data?.message || 'Failed to update topic');
+        }
+    };
+
+    const handleCreateLesson = async (topicId: string) => {
+        const name = prompt('Lesson Name? (e.g. Introduction to Physics)');
+        if (!name) return;
+        try {
+            await adminApi.createLesson({ topicId, name, questions: [] });
+            alert('Lesson created successfully! You can now edit its content.');
+            fetchData();
+        } catch (err: any) {
+            alert(err.response?.data?.message || 'Failed to create lesson');
+        }
+    };
+
     const handleDeleteSubject = async (id: string, name: string) => {
         if (!confirm(`Delete subject "${name}" and ALL its topics and lessons? This cannot be undone.`)) return;
         try {
@@ -595,18 +636,34 @@ export default function AdminDashboard() {
                                                                 </div>
                                                             </div>
                                                             <div className="flex items-center space-x-2">
+                                                                <button 
+                                                                    onClick={() => handleCreateLesson(topic.id)}
+                                                                    className="h-8 px-3 flex items-center justify-center rounded-lg bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-indigo-600 transition-colors ring-1 ring-zinc-200 text-[11px] font-bold uppercase tracking-wider"
+                                                                    title="Add Lesson Manually"
+                                                                >
+                                                                    <Plus size={14} className="mr-1" />
+                                                                    Lesson
+                                                                </button>
+                                                                <button 
+                                                                    onClick={() => handleEditTopic(topic)}
+                                                                    className="h-8 px-3 flex items-center justify-center rounded-lg bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-indigo-600 transition-colors ring-1 ring-zinc-200 text-[11px] font-bold uppercase tracking-wider"
+                                                                    title="Edit Topic Details"
+                                                                >
+                                                                    <Edit3 size={14} className="mr-1" />
+                                                                    Edit
+                                                                </button>
                                                                 {(!topic.lessons || topic.lessons.length === 0) ? (
                                                                     <button
                                                                         onClick={() => handleGenerateAiLevels(subject.id, topic.name)}
-                                                                        className="flex items-center space-x-2 bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold px-4 py-2 rounded-lg transition-colors text-xs ring-1 ring-purple-600/20"
+                                                                        className="h-8 px-3 flex items-center justify-center rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 transition-colors ring-1 ring-purple-200 text-[11px] font-bold uppercase tracking-wider"
                                                                     >
-                                                                        <Wand2 size={14} />
-                                                                        <span>Generate AI Course</span>
+                                                                        <Wand2 size={14} className="mr-1" />
+                                                                        Scan AI
                                                                     </button>
                                                                 ) : (
-                                                                    <div className="flex items-center space-x-2 bg-emerald-50 text-emerald-700 font-semibold px-4 py-2 rounded-lg text-xs ring-1 ring-emerald-600/20">
-                                                                        <CheckCircle2 size={14} />
-                                                                        <span>AI Generated</span>
+                                                                    <div className="h-8 px-3 flex items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 text-[10px] font-bold uppercase tracking-wider">
+                                                                        <CheckCircle2 size={14} className="mr-1" />
+                                                                        Synced
                                                                     </div>
                                                                 )}
                                                                 <button
@@ -1544,6 +1601,59 @@ export default function AdminDashboard() {
                     </div>
                 </div>
             )}
+            {/* Topic Edit Modal */}
+            {isTopicModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-zinc-950/20 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-xl ring-1 ring-zinc-950/5 w-full max-w-lg overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
+                        <div className="px-8 py-6 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
+                            <div>
+                                <h3 className="text-lg font-semibold text-zinc-900">Edit Topic: {editingTopic?.name}</h3>
+                                <p className="text-xs text-zinc-500 mt-0.5">Modify topic name, description, or ordering.</p>
+                            </div>
+                            <button onClick={() => setIsTopicModalOpen(false)} className="text-zinc-400 hover:text-zinc-600 transition-colors">
+                                <XCircle size={20} />
+                            </button>
+                        </div>
+                        <form onSubmit={handleSaveTopic} className="flex flex-col">
+                            <div className="p-8 space-y-6">
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider ml-1">Topic Name</label>
+                                    <input
+                                        type="text"
+                                        className="input-field"
+                                        value={topicForm.name}
+                                        onChange={(e) => setTopicForm({ ...topicForm, name: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider ml-1">Description</label>
+                                    <textarea
+                                        className="input-field min-h-[120px] py-4 leading-relaxed resize-none"
+                                        value={topicForm.description}
+                                        onChange={(e) => setTopicForm({ ...topicForm, description: e.target.value })}
+                                    />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider ml-1">Order Index</label>
+                                    <input
+                                        type="number"
+                                        className="input-field"
+                                        value={topicForm.order}
+                                        onChange={(e) => setTopicForm({ ...topicForm, order: Number(e.target.value) })}
+                                        required
+                                    />
+                                </div>
+                            </div>
+                            <div className="px-8 py-6 border-t border-zinc-100 bg-zinc-50/50 flex justify-end space-x-3">
+                                <button type="button" onClick={() => setIsTopicModalOpen(false)} className="btn-secondary h-10 px-6 text-sm">Cancel</button>
+                                <button type="submit" className="btn-primary h-10 px-8 text-sm">Save Changes</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
             {generatingSyllabus && (
                 <div className="fixed inset-0 bg-zinc-900/80 backdrop-blur-md z-[100] flex flex-col items-center justify-center p-6 text-center">
                     <div className="w-24 h-24 relative mb-8">

@@ -61,6 +61,8 @@ export const adminApi = {
     deleteSubject: (id: string) => api.delete(`/learning/subjects/${id}`),
     createTopic: (data: any) => api.post('/learning/topics', data),
     deleteTopic: (id: string) => api.delete(`/learning/topics/${id}`),
+    updateTopic: (id: string, data: any) => api.post(`/learning/topics/${id}`, data),
+    createLesson: (data: any) => api.post('/learning/lessons', data),
     generateAiLevels: (data: { subjectId: string, topicName: string, numLevels: number }) => 
         api.post('/learning/ai/generate-levels', data),
     generateFullSubject: (data: { subjectId: string, numTopics: number }) => 

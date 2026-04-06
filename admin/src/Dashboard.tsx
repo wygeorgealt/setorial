@@ -375,7 +375,7 @@ export default function AdminDashboard() {
                     setGeneratingSyllabus(true);
                     try {
                         await adminApi.generateFullSubject({ subjectId, numTopics: Number(numTopics) });
-                        alert('Full Subject Syllabus Generated Successfully!');
+                        alert('Wormhole Opened! The full syllabus is being built in the background. Please check back in a few minutes to see all topics and lessons.');
                     } catch (err: any) {
                         alert(err.response?.data?.message || 'AI Generation partially failed. Please check the subject.');
                     } finally {

@@ -26,7 +26,7 @@ export class LearningController {
     @Roles(Role.ADMIN)
     @Post('ai/generate-full-subject')
     async generateFullSubject(@Body() dto: { subjectId: string, numTopics: number }) {
-        return this.aiContentService.generateFullSyllabus(dto.subjectId, dto.numTopics);
+        return this.aiContentService.queueFullSyllabusGeneration(dto.subjectId, dto.numTopics);
     }
 
     @Roles(Role.ADMIN)

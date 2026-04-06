@@ -6,10 +6,17 @@ import { GamificationModule } from '../gamification/gamification.module';
 import { StoreModule } from '../store/store.module';
 import { AiContentService } from './ai-content.service';
 import { UploadModule } from '../upload/upload.module';
+import { BullModule } from '@nestjs/bullmq';
+import { AiContentProcessor } from './ai-content.processor';
 
 @Module({
-  imports: [GamificationModule, StoreModule, UploadModule],
-  providers: [LearningService, PrismaService, AiContentService],
+  imports: [
+    GamificationModule,
+    StoreModule,
+    UploadModule,
+    BullModule.registerQueue({ name: 'ai-content' })
+  ],
+  providers: [LearningService, PrismaService, AiContentService, AiContentProcessor],
   controllers: [LearningController],
   exports: [LearningService, AiContentService],
 })

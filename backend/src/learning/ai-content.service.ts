@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import axios from 'axios';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class AiContentService {
@@ -10,7 +12,17 @@ export class AiContentService {
 
     constructor(
         private prisma: PrismaService,
+        @InjectQueue('ai-content') private aiQueue: Queue
     ) { }
+
+    async queueFullSyllabusGeneration(subjectId: string, numTopics: number) {
+        await this.aiQueue.add('generate-full-subject', { subjectId, numTopics }, {
+            removeOnComplete: true,
+            attempts: 3,
+            backoff: { type: 'exponential', delay: 1000 }
+        });
+        return { message: 'Wormhole opened. Generating syllabus in the background...' };
+    }
 
     async generateLevelsForTopic(subjectId: string, topicName: string, numLevels: number = 3) {
         const subject = await this.prisma.subject.findUnique({ where: { id: subjectId } });

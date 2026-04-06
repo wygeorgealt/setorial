@@ -19,6 +19,9 @@ export class LearningService {
     }
 
     async deleteSubject(id: string) {
+        const subject = await this.prisma.subject.findUnique({ where: { id } });
+        if (!subject) throw new NotFoundException('Subject not found');
+
         return this.prisma.$transaction(async (tx) => {
             await tx.topic.deleteMany({ where: { subjectId: id } });
             return tx.subject.delete({ where: { id } });
@@ -30,6 +33,8 @@ export class LearningService {
     }
 
     async deleteTopic(id: string) {
+        const topic = await this.prisma.topic.findUnique({ where: { id } });
+        if (!topic) throw new NotFoundException('Topic not found');
         return this.prisma.topic.delete({ where: { id } });
     }
 

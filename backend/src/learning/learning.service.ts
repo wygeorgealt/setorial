@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { CreateSubjectDto, CreateTopicDto, CreateLessonDto, SubmitLessonDto } from './dto/learning.dto';
 import { GamificationService } from '../gamification/gamification.service';
@@ -15,7 +15,14 @@ export class LearningService {
     ) { }
 
     async createSubject(dto: CreateSubjectDto) {
-        return this.prisma.subject.create({ data: dto });
+        try {
+            return await this.prisma.subject.create({ data: dto });
+        } catch (error) {
+            if (error.code === 'P2002') {
+                throw new ConflictException(`A subject with the name "${dto.name}" already exists.`);
+            }
+            throw error;
+        }
     }
 
     async deleteSubject(id: string) {
@@ -29,7 +36,14 @@ export class LearningService {
     }
 
     async createTopic(dto: CreateTopicDto) {
-        return this.prisma.topic.create({ data: dto });
+        try {
+            return await this.prisma.topic.create({ data: dto });
+        } catch (error) {
+            if (error.code === 'P2002') {
+                throw new ConflictException(`A topic with the name "${dto.name}" already exists in this subject.`);
+            }
+            throw error;
+        }
     }
 
     async deleteTopic(id: string) {
@@ -39,23 +53,30 @@ export class LearningService {
     }
 
     async createLesson(dto: CreateLessonDto) {
-        return this.prisma.lesson.create({
-            data: {
-                name: dto.name,
-                topicId: dto.topicId,
-                content: dto.content,
-                order: dto.order ?? 1,
-                rewardPoints: dto.rewardPoints ?? 10,
-                questions: {
-                    create: dto.questions.map(q => ({
-                        text: q.text,
-                        options: q.options,
-                        correctOption: q.correctOption,
-                    })),
-                }
-            },
-            include: { questions: true }
-        });
+        try {
+            return await this.prisma.lesson.create({
+                data: {
+                    name: dto.name,
+                    topicId: dto.topicId,
+                    content: dto.content,
+                    order: dto.order ?? 1,
+                    rewardPoints: dto.rewardPoints ?? 10,
+                    questions: {
+                        create: dto.questions.map(q => ({
+                            text: q.text,
+                            options: q.options,
+                            correctOption: q.correctOption,
+                        })),
+                    }
+                },
+                include: { questions: true }
+            });
+        } catch (error) {
+            if (error.code === 'P2002') {
+                throw new ConflictException(`A lesson with the name "${dto.name}" already exists in this topic.`);
+            }
+            throw error;
+        }
     }
 
     async updateLesson(id: string, dto: Partial<CreateLessonDto>) {

@@ -47,7 +47,7 @@ export default function CourseDetailScreen() {
     return (
         <SafeAreaView className="flex-1 bg-[#F5F5F5] dark:bg-[#0B0D12]">
             {/* Header */}
-            <View className="flex-row items-center p-5 bg-white dark:bg-[#1E222B] shadow-sm z-10 border-b-2 border-gray-100 dark:border-gray-800">
+            <View className="flex-row items-center px-6 py-5 bg-white dark:bg-[#1E222B] shadow-sm z-10 border-b-2 border-gray-100 dark:border-gray-800">
                 <TouchableOpacity onPress={() => router.back()} className="mr-4">
                     <ChevronLeft size={28} color="#AFAFAF" />
                 </TouchableOpacity>
@@ -56,7 +56,7 @@ export default function CourseDetailScreen() {
 
             <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 100, paddingTop: 20 }}>
                 {subject.topics?.map((topic: any, topicIndex: number) => (
-                    <View key={topic.id} className="mb-10 mt-4">
+                    <View key={topic.id} className="mb-10 mt-4 px-6">
                         {/* Topic Header */}
                         <TouchableOpacity
                             activeOpacity={0.9}
@@ -68,7 +68,7 @@ export default function CourseDetailScreen() {
                                     alert("No lessons available in this unit yet.");
                                 }
                             }}
-                            className="bg-[#58CC02] mx-4 p-5 rounded-[24px] mb-8 shadow-sm border-b-4 border-[#46A302]"
+                            className="bg-[#58CC02] p-6 rounded-[24px] mb-8 shadow-sm border-b-4 border-[#46A302]"
                         >
                             <Text className="text-white/80 font-black text-base uppercase tracking-wider">Unit {topicIndex + 1}</Text>
                             <Text className="text-white font-bold text-xl mt-1">{topic.name}</Text>

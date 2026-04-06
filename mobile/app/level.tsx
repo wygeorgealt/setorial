@@ -1,8 +1,7 @@
-import { View, Text, TouchableOpacity, SafeAreaView, ActivityIndicator, ScrollView, Dimensions } from "react-native";
+import { View, Text, TouchableOpacity, SafeAreaView, ActivityIndicator, ScrollView, Dimensions, useColorScheme } from "react-native";
 import { ChevronLeft, CheckCircle2, XCircle, Trophy, ArrowRight, Home, BookOpen } from "lucide-react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useState, useEffect, useCallback } from "react";
-import { useColorScheme } from "nativewind";
 import { Video, ResizeMode } from 'expo-av';
 import Animated, { FadeIn, FadeOut, SlideInDown, useSharedValue, useAnimatedStyle, withSpring, withSequence, withTiming } from 'react-native-reanimated';
 import { learningApi } from "../services/api";
@@ -69,7 +68,7 @@ function parseInline(text: string): React.ReactNode[] {
 export default function LevelScreen() {
     const router = useRouter();
     const { id } = useLocalSearchParams();
-    const { colorScheme } = useColorScheme();
+    const colorScheme = useColorScheme();
     const isDark = colorScheme === 'dark';
     
     const [lesson, setLesson] = useState<any>(null);
@@ -221,8 +220,9 @@ export default function LevelScreen() {
 
     if (phase === 'finished') {
         return (
-            <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12] p-5 items-center justify-center">
-                <Animated.View entering={FadeIn} className="items-center w-full">
+            <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12]">
+                <View className="flex-1 px-8 items-center justify-center">
+                    <Animated.View entering={FadeIn} className="items-center w-full">
                     <View className="w-24 h-24 bg-green-100 dark:bg-green-900/30 rounded-full items-center justify-center mb-6">
                         <Trophy size={48} color="#58CC02" />
                     </View>
@@ -252,6 +252,7 @@ export default function LevelScreen() {
                         <Text className="text-white font-bold text-[17px] uppercase tracking-wider">Continue</Text>
                     </TouchableOpacity>
                 </Animated.View>
+                </View>
             </SafeAreaView>
         );
     }
@@ -351,9 +352,11 @@ export default function LevelScreen() {
                                 {isCorrect ? 'Amazing!' : 'Incorrect'}
                             </Text>
                             {!isCorrect && (
-                                <Text className="text-[#FF4B4B] font-bold text-sm">
-                                    Correct: {currentQuestion.options[currentQuestion.correctOption]}
-                                </Text>
+                                <View className="mt-1">
+                                    <Text className="text-[#FF4B4B] font-bold text-sm">
+                                        Correct: {currentQuestion.options[currentQuestion.correctOption]}
+                                    </Text>
+                                </View>
                             )}
                         </View>
                     </Animated.View>

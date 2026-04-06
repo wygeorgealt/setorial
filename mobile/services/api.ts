@@ -62,6 +62,7 @@ export const learningApi = {
     getSubject: (id: string) => api.get(`/learning/subjects/${id}`),
     getLesson: (id: string) => api.get(`/learning/lessons/${id}`),
     submitLesson: (data: any) => api.post('/learning/lessons/submit', data),
+    search: (q: string) => api.get(`/learning/search?q=${q}`),
     regenerateLesson: (id: string) => api.post(`/learning/lessons/${id}/regenerate`),
     generateAiLevels: (data: { subjectId: string, topicName: string, numLevels: number }) => 
         api.post('/learning/ai/generate-levels', data),

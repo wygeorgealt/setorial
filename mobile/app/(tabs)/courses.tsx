@@ -9,6 +9,7 @@ export default function CoursesScreen() {
     const router = useRouter();
     const [subjects, setSubjects] = useState<any[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [isSearching, setIsSearching] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
 
     const fetchData = async () => {
@@ -20,19 +21,37 @@ export default function CoursesScreen() {
         }
     };
 
-    useEffect(() => {
-        fetchData();
-    }, []);
-
     const onRefresh = useCallback(async () => {
         setRefreshing(true);
         await fetchData();
         setRefreshing(false);
     }, []);
 
-    const filteredSubjects = subjects.filter(s =>
-        s.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            if (searchQuery.trim()) {
+                handleSearch(searchQuery);
+            } else {
+                fetchData();
+            }
+        }, 500);
+
+        return () => clearTimeout(timeoutId);
+    }, [searchQuery]);
+
+    const handleSearch = async (q: string) => {
+        setIsSearching(true);
+        try {
+            const res = await learningApi.search(q);
+            setSubjects(res.data);
+        } catch (error) {
+            console.error('Search failed:', error);
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
+    const filteredSubjects = subjects;
 
     const getSubjectColor = (index: number) => {
         const colors = ['bg-blue-100', 'bg-purple-100', 'bg-green-100', 'bg-orange-100', 'bg-pink-100'];

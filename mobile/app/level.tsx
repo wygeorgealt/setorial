@@ -204,6 +204,9 @@ export default function LevelScreen() {
                 </ScrollView>
 
                 <View className="p-5 border-t-2 border-gray-100 dark:border-gray-800 bg-white dark:bg-[#0B0D12]">
+                    <View className="mb-4 items-center">
+                        <Text className="text-gray-400 dark:text-gray-500 font-bold text-xs uppercase tracking-widest">Pass Requirement: 60%</Text>
+                    </View>
                     <TouchableOpacity
                         activeOpacity={0.8}
                         onPress={() => lesson.questions?.length > 0 ? setPhase('questions') : submitLesson([])}
@@ -226,10 +229,17 @@ export default function LevelScreen() {
                     <View className="w-24 h-24 bg-green-100 dark:bg-green-900/30 rounded-full items-center justify-center mb-6">
                         <Trophy size={48} color="#58CC02" />
                     </View>
-                    <Text className="text-3xl font-black text-black dark:text-white mb-2">Lesson Complete!</Text>
+                    <Text className="text-3xl font-black text-black dark:text-white mb-2">
+                        {result?.passed ? 'Lesson Complete!' : 'Keep Training!'}
+                    </Text>
                     
                     {lesson.questions?.length > 0 && (
-                        <Text className="text-gray-500 dark:text-gray-400 text-lg mb-8 font-medium">You scored {result?.score} out of {result?.total}</Text>
+                        <Text className="text-gray-500 dark:text-gray-400 text-lg mb-8 font-medium">
+                            {result?.passed 
+                                ? `You scored ${result?.score} out of ${result?.total}`
+                                : `You need ${Math.ceil(result?.total * 0.6)} to unlock the next level.`
+                            }
+                        </Text>
                     )}
 
                     <View className="bg-gray-50 dark:bg-[#1E222B] w-full p-6 rounded-[24px] mb-10 border-2 border-gray-100 dark:border-gray-800">
@@ -240,16 +250,20 @@ export default function LevelScreen() {
                         <View className="h-[2px] bg-gray-200 dark:bg-[#272B36] mb-4" />
                         <View className="flex-row justify-between items-center">
                             <Text className="text-gray-500 dark:text-gray-400 font-bold text-[15px] uppercase">Status</Text>
-                            <Text className="text-[#58CC02] dark:text-[#58CC02] font-black text-lg">{result?.passed ? 'PASSED' : 'COMPLETED'}</Text>
+                            <Text className={`${result?.passed ? 'text-[#58CC02]' : 'text-[#FF4B4B]'} font-black text-lg`}>
+                                {result?.passed ? 'PASSED' : 'RETRY REQUIRED'}
+                            </Text>
                         </View>
                     </View>
 
                     <TouchableOpacity
                         activeOpacity={0.8}
-                        onPress={() => router.back()}
-                        className="bg-[#58CC02] w-full p-4 rounded-2xl items-center justify-center border-b-4 border-[#46A302] border-t-[#58CC02] border-x-[#58CC02]"
+                        onPress={() => result?.passed ? router.back() : setPhase('questions')}
+                        className={`${result?.passed ? 'bg-[#58CC02] border-[#46A302]' : 'bg-[#1CB0F6] border-[#1899D6]'} w-full p-4 rounded-2xl items-center justify-center border-b-4`}
                     >
-                        <Text className="text-white font-bold text-[17px] uppercase tracking-wider">Continue</Text>
+                        <Text className="text-white font-bold text-[17px] uppercase tracking-wider">
+                            {result?.passed ? 'Continue' : 'Try Again'}
+                        </Text>
                     </TouchableOpacity>
                 </Animated.View>
                 </View>

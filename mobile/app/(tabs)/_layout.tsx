@@ -1,7 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Home, Search, Wallet, MoreHorizontal, ShoppingBag } from 'lucide-react-native';
-import { useColorScheme } from 'nativewind';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, useColorScheme } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../store/authStore';
 import { getTierColors } from '../../utils/theme';
@@ -19,7 +18,7 @@ const TAB_CONFIG = [
 ];
 
 function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
-  const { colorScheme } = useColorScheme();
+  const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const insets = useSafeAreaInsets();
   const { user } = useAuthStore();

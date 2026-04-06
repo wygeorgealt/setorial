@@ -1,11 +1,10 @@
-import { View, Text, SafeAreaView, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, SafeAreaView, TouchableOpacity, ScrollView, useColorScheme } from "react-native";
 import { useRouter } from "expo-router";
-import { useColorScheme } from "nativewind";
 import { ChevronLeft, Info, HelpCircle, ShieldCheck } from "lucide-react-native";
 
 export default function AboutScreen() {
     const router = useRouter();
-    const { colorScheme } = useColorScheme();
+    const colorScheme = useColorScheme();
     const isDark = colorScheme === "dark";
 
     return (

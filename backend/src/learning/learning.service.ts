@@ -249,7 +249,7 @@ export class LearningService {
             breakdown.push({ questionId: q.id, isCorrect, correctOption: q.correctOption });
         });
 
-        const passThreshold = Math.ceil(lesson.questions.length * 0.7);
+        const passThreshold = Math.ceil(lesson.questions.length * 0.6);
         const passed = score >= passThreshold || lesson.questions.length === 0;
 
         let pointsEarned = 0;

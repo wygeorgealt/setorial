@@ -11,8 +11,11 @@ export class MockExamsService {
         private gamificationService: GamificationService
     ) { }
 
-    async getAvailableMocks() {
-        return this.prisma.mockExam.findMany({
+    async getAvailableMocks(userId: string) {
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        const isPremium = user && (user.tier === 'SILVER' || user.tier === 'GOLD');
+
+        const mocks = await this.prisma.mockExam.findMany({
             where: { isActive: true },
             select: {
                 id: true,
@@ -23,6 +26,12 @@ export class MockExamsService {
                 _count: { select: { questions: true } }
             }
         });
+
+        if (isPremium) {
+            return mocks.map(m => ({ ...m, price: 0 }));
+        }
+
+        return mocks;
     }
 
     async getMockDetails(mockId: string) {
@@ -46,7 +55,14 @@ export class MockExamsService {
         }
 
         // Must pay for ticket
-        const price = Number(mock.price);
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        const isPremium = user && (user.tier === 'SILVER' || user.tier === 'GOLD');
+
+        let price = Number(mock.price);
+        if (isPremium) {
+            price = 0;
+        }
+
         if (price > 0) {
             const hasSufficientBalance = await this.walletService.deductBalance(userId, price, 'Mock Exam Access');
             if (!hasSufficientBalance) {

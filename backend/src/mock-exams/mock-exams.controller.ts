@@ -9,8 +9,8 @@ export class MockExamsController {
     constructor(private readonly mockService: MockExamsService) { }
 
     @Get()
-    getAvailableMocks() {
-        return this.mockService.getAvailableMocks();
+    getAvailableMocks(@Request() req: any) {
+        return this.mockService.getAvailableMocks(req.user.userId);
     }
 
     @Get(':id')

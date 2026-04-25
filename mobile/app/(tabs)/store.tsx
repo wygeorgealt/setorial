@@ -1,3 +1,4 @@
+import { SoundButton } from '../../components/SoundButton';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Snowflake, Zap, ShoppingBag, CheckCircle } from 'lucide-react-native';
@@ -148,7 +149,7 @@ export default function StoreScreen() {
                                     </View>
                                 </View>
 
-                                <TouchableOpacity
+                                <SoundButton
                                     activeOpacity={0.8}
                                     onPress={() => handleBuy(item)}
                                     disabled={buying === item.type}
@@ -158,7 +159,7 @@ export default function StoreScreen() {
                                     <Text className="text-white font-bold text-[15px] uppercase tracking-wider">
                                         {buying === item.type ? 'Processing...' : `Buy for ₦${item.price}`}
                                     </Text>
-                                </TouchableOpacity>
+                                </SoundButton>
                             </View>
                         );
                     })

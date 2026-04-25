@@ -129,7 +129,16 @@ function buildScript(encodedContent: string): string {
     '      if (!line) continue;',
     '      var numMatch = line.match(/^(\\d+)[.):] +(.*)/);',
     '      var bulletMatch = line.match(/^[\\-\\*\\u2022]\\s+(.*)/);',
-    '      if (numMatch) {',
+    '      var h3Match = line.match(/^### +(.*)/);',
+    '      var h2Match = line.match(/^## +(.*)/);',
+    '      var h1Match = line.match(/^# +(.*)/);',
+    '      if (h3Match) {',
+    '        out += \'<h3>\' + formatInline(h3Match[1]) + \'</h3>\';',
+    '      } else if (h2Match) {',
+    '        out += \'<h2>\' + formatInline(h2Match[1]) + \'</h2>\';',
+    '      } else if (h1Match) {',
+    '        out += \'<h1>\' + formatInline(h1Match[1]) + \'</h1>\';',
+    '      } else if (numMatch) {',
     '        out += \'<div class="list-item"><div class="list-index">\' + numMatch[1] + \'</div><div class="list-content">\' + formatInline(numMatch[2]) + \'</div></div>\';',
     '      } else if (bulletMatch) {',
     '        out += \'<div class="list-item"><div class="bullet-dot">\\u2022</div><div class="list-content">\' + formatInline(bulletMatch[1]) + \'</div></div>\';',
@@ -205,9 +214,9 @@ function MathTextInner({
   const processedContent = React.useMemo(() => wrapBareLaTeX(content), [content]);
   const encodedContent = React.useMemo(() => encodeURIComponent(processedContent), [processedContent]);
 
-  // Check if content has any potential math — if not, skip expensive WebView
+  // Check if content has any potential math or markdown — if not, skip expensive WebView
   const hasMath = React.useMemo(() => {
-    return /[\$\\]/.test(content) || /[²³⁴⁵⁶⁷⁸⁹⁰₀₁₂₃₄₅₆₇₈₉]/.test(content);
+    return /[\$\\#\*\-]/.test(content) || /^\s*\d+\.\s/m.test(content) || /[²³⁴⁵⁶⁷⁸⁹⁰₀₁₂₃₄₅₆₇₈₉]/.test(content);
   }, [content]);
 
   // For plain text without math, render natively for performance
@@ -264,6 +273,10 @@ function MathTextInner({
     .katex-display > .katex { text-align: left !important; display: inline-block; }
     strong, b { font-weight: 900; color: ${strongColor}; }
     em, i { font-style: italic; }
+    h1, h2, h3 { color: ${strongColor}; margin: 1.5em 0 0.5em 0; line-height: 1.3; font-weight: 900; }
+    h1 { font-size: 1.7em; }
+    h2 { font-size: 1.4em; }
+    h3 { font-size: 1.25em; }
   </style>
 </head>
 <body>

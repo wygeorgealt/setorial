@@ -2,7 +2,7 @@ import { Audio, AVPlaybackSource } from 'expo-av';
 import { Platform } from 'react-native';
 import { useAuthStore } from '../store/authStore';
 
-type SoundName = 'correct' | 'incorrect' | 'victory' | 'complete';
+type SoundName = 'correct' | 'incorrect' | 'victory' | 'complete' | 'tap' | 'pop' | 'boop';
 
 // Sound asset mapping — preloaded on first use
 const SOUND_SOURCES: Record<SoundName, AVPlaybackSource> = {
@@ -10,6 +10,9 @@ const SOUND_SOURCES: Record<SoundName, AVPlaybackSource> = {
     incorrect: require('../assets/sounds/incorrect.mp3'),
     victory: require('../assets/sounds/victory.mp3'),
     complete: require('../assets/sounds/complete.mp3'),
+    tap: require('../assets/sounds/tap.wav'),
+    pop: require('../assets/sounds/pop.wav'),
+    boop: require('../assets/sounds/boop.wav'),
 };
 
 // Cache loaded Audio.Sound instances for reuse

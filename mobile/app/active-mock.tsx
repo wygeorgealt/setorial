@@ -1,3 +1,4 @@
+import { SoundButton } from '../components/SoundButton';
 import { View, Text, TouchableOpacity, ScrollView, AppState, Alert, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Clock, ArrowLeft, CheckCircle2 } from 'lucide-react-native';
@@ -129,9 +130,9 @@ export default function ActiveMockScreen() {
         <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12]">
             {/* Header */}
             <View className="flex-row items-center justify-between px-5 py-4 border-b-2 border-[#E5E5E5] dark:border-[#272B36]">
-                <TouchableOpacity onPress={confirmSubmit}>
+                <SoundButton onPress={confirmSubmit}>
                     <ArrowLeft size={24} color="#000" className="dark:text-white" />
-                </TouchableOpacity>
+                </SoundButton>
                 <Text className="text-black dark:text-white font-bold text-lg">{mock.title}</Text>
 
                 <View className="bg-red-100 dark:bg-red-900/30 px-3 py-1 rounded-full flex-row items-center">
@@ -150,7 +151,7 @@ export default function ActiveMockScreen() {
                         {q.options.map((opt: string, optIndex: number) => {
                             const isSelected = answers[qIndex] === optIndex;
                             return (
-                                <TouchableOpacity
+                                <SoundButton
                                     key={optIndex}
                                     activeOpacity={0.8}
                                     onPress={() => handleSelectOption(qIndex, optIndex)}
@@ -166,13 +167,13 @@ export default function ActiveMockScreen() {
                                     <View style={{ flex: 1 }}>
                                         <MathText content={opt} color={isSelected ? '#1CB0F6' : (isDark ? '#D1D5DB' : '#4B4B4B')} fontSize={16} />
                                     </View>
-                                </TouchableOpacity>
+                                </SoundButton>
                             );
                         })}
                     </View>
                 ))}
 
-                <TouchableOpacity
+                <SoundButton
                     onPress={confirmSubmit}
                     disabled={isSubmitting}
                     className="bg-[#58CC02] border-b-4 border-[#58A700] rounded-2xl py-4 flex-row items-center justify-center mb-10"
@@ -181,7 +182,7 @@ export default function ActiveMockScreen() {
                     <Text className="text-white font-bold text-lg uppercase tracking-wider">
                         Submit Exam
                     </Text>
-                </TouchableOpacity>
+                </SoundButton>
             </ScrollView>
         </SafeAreaView>
     );

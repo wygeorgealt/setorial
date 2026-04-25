@@ -1,3 +1,4 @@
+import { SoundButton } from '../components/SoundButton';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Clock, FileText, Lock } from 'lucide-react-native';
@@ -59,9 +60,9 @@ export default function MockExamsScreen() {
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12]">
             <View className="flex-row items-center px-5 py-4 border-b-2 border-[#E5E5E5] dark:border-[#272B36]">
-                <TouchableOpacity onPress={() => router.back()} className="mr-4">
+                <SoundButton onPress={() => router.back()} className="mr-4">
                     <ArrowLeft size={24} color={user?.tier === 'FREE' ? '#000' : '#FFF'} className="dark:text-white" />
-                </TouchableOpacity>
+                </SoundButton>
                 <Text className="text-black dark:text-white text-xl font-bold">Standardized Mocks</Text>
             </View>
 
@@ -90,14 +91,14 @@ export default function MockExamsScreen() {
                                 </View>
                             </View>
 
-                            <TouchableOpacity
+                            <SoundButton
                                 onPress={() => handleStartMock(mock)}
                                 activeOpacity={0.8}
                                 className="bg-[#1CB0F6] flex-row justify-center items-center py-3 rounded-xl border-b-4 border-[#1899D6]"
                             >
                                 <Lock size={18} color="#FFF" style={{ marginRight: 6 }} />
                                 <Text className="text-white font-bold text-[15px] uppercase tracking-wider">Unlock for ₦{mock.price}</Text>
-                            </TouchableOpacity>
+                            </SoundButton>
                         </View>
                     ))
                 ) : (

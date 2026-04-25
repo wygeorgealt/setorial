@@ -1,3 +1,4 @@
+import { SoundButton } from '../components/SoundButton';
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, Info, CalendarClock } from 'lucide-react-native';
@@ -29,9 +30,9 @@ export default function PayoutHistoryScreen() {
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12]">
             <View className="flex-row items-center justify-between px-5 py-6">
-                <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 items-center justify-center">
+                <SoundButton onPress={() => router.back()} className="w-10 h-10 items-center justify-center">
                     <ChevronLeft size={24} color="#AFAFAF" />
-                </TouchableOpacity>
+                </SoundButton>
                 <Text className="text-black dark:text-white font-bold text-xl">Payout History</Text>
                 <View className="w-10" />
             </View>

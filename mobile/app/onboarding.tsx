@@ -1,0 +1,275 @@
+import { SoundButton } from '../components/SoundButton';
+import { View, Text, SafeAreaView, Image, TouchableOpacity, ScrollView, Animated } from "react-native";
+import { useRouter } from "expo-router";
+import { useState, useRef, useEffect } from "react";
+import { ArrowLeft } from "lucide-react-native";
+
+// Types
+type StepConfig = {
+    id: number;
+    question: string;
+    type: 'options' | 'notification';
+    multiSelect?: boolean;
+    maxSelections?: number;
+    options?: { id: string; title: string; subtitle?: string; recommended?: boolean }[];
+};
+
+const STEPS: StepConfig[] = [
+    {
+        id: 1,
+        question: "What would you like to learn?",
+        type: 'options',
+        multiSelect: true,
+        maxSelections: 3,
+        options: [
+            { id: 'math', title: 'Mathematics' },
+            { id: 'science', title: 'Sciences' },
+            { id: 'languages', title: 'Languages' },
+            { id: 'tech', title: 'Technology' },
+            { id: 'business', title: 'Business' },
+        ]
+    },
+    {
+        id: 2,
+        question: "What's your education level?",
+        type: 'options',
+        options: [
+            { id: 'highschool', title: 'High School' },
+            { id: 'university', title: 'University' },
+            { id: 'professional', title: 'Professional' },
+            { id: 'lifelong', title: 'Lifelong Learner' },
+        ]
+    },
+    {
+        id: 3,
+        question: "What's your daily learning goal?",
+        type: 'options',
+        options: [
+            { id: 'casual', title: 'Casual', subtitle: '5 mins / day' },
+            { id: 'regular', title: 'Regular', subtitle: '10 mins / day' },
+            { id: 'serious', title: 'Serious', subtitle: '15 mins / day' },
+            { id: 'intense', title: 'Intense', subtitle: '30 mins / day' },
+        ]
+    },
+    {
+        id: 4,
+        question: "How do you want to get started?",
+        type: 'options',
+        options: [
+            { id: 'gold', title: 'Setorial Gold', subtitle: 'Faster progress, no ads, monetization', recommended: true },
+            { id: 'free', title: 'Learn for free', subtitle: 'Core learning features, with ads' },
+        ]
+    },
+    {
+        id: 5,
+        question: "I'll remind you to practice so it becomes a habit!",
+        type: 'notification'
+    }
+];
+
+export default function OnboardingScreen() {
+    const router = useRouter();
+    
+    const [currentStepIndex, setCurrentStepIndex] = useState(0);
+    const [selections, setSelections] = useState<Record<number, string[]>>({});
+    
+    // Progress Bar Animation
+    const progressAnim = useRef(new Animated.Value(1)).current;
+    
+    const currentStep = STEPS[currentStepIndex];
+    const totalSteps = STEPS.length;
+    
+    useEffect(() => {
+        Animated.spring(progressAnim, {
+            toValue: currentStepIndex + 1,
+            useNativeDriver: false,
+            bounciness: 0,
+            speed: 12
+        }).start();
+    }, [currentStepIndex]);
+
+    const handleNext = () => {
+        if (currentStepIndex < totalSteps - 1) {
+            setCurrentStepIndex(prev => prev + 1);
+        } else {
+            // End of onboarding! Route to register
+            router.push('/register');
+        }
+    };
+
+    const handleBack = () => {
+        if (currentStepIndex > 0) {
+            setCurrentStepIndex(prev => prev - 1);
+        } else {
+            router.back();
+        }
+    };
+
+    const handleSelectOption = (optionId: string) => {
+        setSelections(prev => {
+            const currentSelected = prev[currentStep.id] || [];
+            
+            if (currentStep.multiSelect) {
+                const isAlreadySelected = currentSelected.includes(optionId);
+                
+                if (isAlreadySelected) {
+                    // Remove it
+                    return { ...prev, [currentStep.id]: currentSelected.filter(id => id !== optionId) };
+                } else {
+                    // Add it if under max limit
+                    const max = currentStep.maxSelections || 1;
+                    if (currentSelected.length < max) {
+                        return { ...prev, [currentStep.id]: [...currentSelected, optionId] };
+                    }
+                    return prev; // Ignore if max reached
+                }
+            } else {
+                // Single select
+                return { ...prev, [currentStep.id]: [optionId] };
+            }
+        });
+    };
+
+    const isNextDisabled = currentStep.type === 'options' && (!selections[currentStep.id] || selections[currentStep.id].length === 0);
+
+    return (
+        <SafeAreaView className="flex-1 bg-white dark:bg-zinc-950">
+            {/* Header / Progress Bar */}
+            <View className="flex-row items-center px-5 pt-2 pb-4">
+                <SoundButton onPress={handleBack} className="p-2 -ml-2 mr-3" soundType="boop">
+                    <ArrowLeft size={24} color="#AFAFAF" strokeWidth={2.5} />
+                </SoundButton>
+                
+                {/* Progress Bar Track */}
+                <View className="flex-1 h-4 bg-gray-200 dark:bg-zinc-800 rounded-full overflow-hidden flex-row">
+                    <Animated.View 
+                        className="h-full bg-[#F59E0B] rounded-full"
+                        style={{
+                            flex: progressAnim.interpolate({
+                                inputRange: [0, totalSteps],
+                                outputRange: [0, 1]
+                            })
+                        }}
+                    >
+                        {/* Highlight strip for 3D effect */}
+                        <View className="h-1.5 bg-white/30 rounded-full mx-2 mt-0.5" />
+                    </Animated.View>
+                    <Animated.View 
+                        style={{
+                            flex: progressAnim.interpolate({
+                                inputRange: [0, totalSteps],
+                                outputRange: [1, 0]
+                            })
+                        }}
+                    />
+                </View>
+            </View>
+
+            <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false}>
+                
+                {/* Mascot & Chat Bubble */}
+                <View className="flex-row items-end mt-4 mb-8">
+                    <Image 
+                        source={{ uri: 'https://pub-2adf18353cc14bf899bf2827efdfec49.r2.dev/public/logo.png' }} 
+                        style={{ width: 80, height: 80, borderRadius: 20 }}
+                        resizeMode="cover"
+                    />
+                    
+                    {/* Chat Bubble */}
+                    <View className="bg-white dark:bg-zinc-900 border-2 border-gray-200 dark:border-zinc-800 rounded-2xl rounded-bl-sm p-4 ml-4 flex-1 relative justify-center min-h-[70px]">
+                        <Text className="text-gray-700 dark:text-gray-200 font-bold text-[17px] leading-6">
+                            {currentStep.question}
+                        </Text>
+                    </View>
+                </View>
+
+                {/* Content Area */}
+                {currentStep.type === 'options' && (
+                    <View className="pb-10">
+                        {currentStep.options?.map(option => {
+                            const isSelected = (selections[currentStep.id] || []).includes(option.id);
+                            return (
+                                <View key={option.id} className="relative mb-4">
+                                    {option.recommended && (
+                                        <View className="absolute -top-3 right-4 bg-[#1CB0F6] px-3 py-1 rounded-md z-10">
+                                            <Text className="text-white font-bold text-[10px] uppercase tracking-widest">Recommended</Text>
+                                        </View>
+                                    )}
+                                    <SoundButton
+                                        activeOpacity={0.8}
+                                        onPress={() => handleSelectOption(option.id)}
+                                        className={`border-2 border-b-4 rounded-2xl p-5 ${
+                                            isSelected 
+                                                ? 'border-[#F59E0B] border-b-[#D97706] bg-[#F59E0B]/10 dark:bg-[#F59E0B]/20' 
+                                                : 'border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900'
+                                        }`}
+                                    >
+                                        <Text className={`font-bold text-[17px] ${isSelected ? 'text-[#D97706] dark:text-[#F59E0B]' : 'text-gray-700 dark:text-gray-300'}`}>
+                                            {option.title}
+                                        </Text>
+                                        {option.subtitle && (
+                                            <Text className={`mt-1 font-semibold ${isSelected ? 'text-[#F59E0B]' : 'text-gray-500 dark:text-gray-400'}`}>
+                                                {option.subtitle}
+                                            </Text>
+                                        )}
+                                    </SoundButton>
+                                </View>
+                            );
+                        })}
+                    </View>
+                )}
+
+                {currentStep.type === 'notification' && (
+                    <View className="items-center justify-center py-6">
+                        {/* Mock iOS Notification Prompt */}
+                        <View className="bg-white dark:bg-[#1C1C1E] w-[270px] rounded-2xl overflow-hidden" style={{
+                            shadowColor: "#000",
+                            shadowOffset: { width: 0, height: 10 },
+                            shadowOpacity: 0.15,
+                            shadowRadius: 20,
+                            elevation: 10,
+                        }}>
+                            <View className="p-5 items-center">
+                                <Text className="text-black dark:text-white font-semibold text-[17px] text-center mb-1 leading-tight">
+                                    "Setorial" Would Like to Send You Notifications
+                                </Text>
+                                <Text className="text-gray-500 dark:text-gray-400 text-[13px] text-center leading-tight">
+                                    Notifications may include alerts, sounds, and icon badges. These can be configured in Settings.
+                                </Text>
+                            </View>
+                            <View className="flex-row border-t border-gray-200 dark:border-zinc-800">
+                                <View className="flex-1 py-3 border-r border-gray-200 dark:border-zinc-800 items-center justify-center">
+                                    <Text className="text-[#AFAFAF] dark:text-gray-500 text-[17px]">Don't Allow</Text>
+                                </View>
+                                <View className="flex-1 py-3 items-center justify-center">
+                                    <Text className="text-[#007AFF] font-semibold text-[17px]">Allow</Text>
+                                </View>
+                            </View>
+                        </View>
+                        
+                        {/* Blue Arrow Pointing Up */}
+                        <Text className="text-[#1CB0F6] text-[40px] mt-6">↑</Text>
+                    </View>
+                )}
+            </ScrollView>
+
+            {/* Bottom Action Area */}
+            <View className="px-5 pb-8 pt-4 border-t border-transparent">
+                <SoundButton
+                    soundType="pop"
+                    activeOpacity={0.8}
+                    onPress={handleNext}
+                    disabled={isNextDisabled}
+                    className={`py-4 rounded-2xl items-center border-b-4 ${isNextDisabled
+                        ? 'bg-[#E5E5E5] dark:bg-zinc-800 border-[#CECECE] dark:border-zinc-700'
+                        : 'bg-[#F59E0B] border-[#D97706] border-t-[#F59E0B] border-x-[#F59E0B]'
+                        }`}
+                >
+                    <Text className={`font-bold text-[17px] uppercase tracking-wider ${isNextDisabled ? 'text-[#AFAFAF] dark:text-zinc-500' : 'text-white'}`}>
+                        {currentStep.type === 'notification' ? 'Remind Me To Practice' : 'Continue'}
+                    </Text>
+                </SoundButton>
+            </View>
+        </SafeAreaView>
+    );
+}

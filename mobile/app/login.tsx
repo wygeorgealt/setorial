@@ -1,4 +1,5 @@
-import { View, Text, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator } from "react-native";
+import { SoundButton } from '../components/SoundButton';
+import { View, Text, TextInput, SafeAreaView, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator } from "react-native";
 import { ArrowLeft, Eye, EyeOff, ChevronDown } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -46,13 +47,13 @@ export default function LoginScreen() {
 
                     {/* Header */}
                     <View className="flex-row items-center justify-between mb-8">
-                        <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
+                        <SoundButton onPress={() => router.back()} className="p-2 -ml-2">
                             <ArrowLeft size={24} color="#000" strokeWidth={2.5} />
-                        </TouchableOpacity>
-                        <TouchableOpacity className="flex-row items-center cursor-pointer">
+                        </SoundButton>
+                        <SoundButton className="flex-row items-center cursor-pointer">
                             <Text className="text-black dark:text-white font-bold mr-1">English</Text>
                             <ChevronDown size={18} color="#000" />
-                        </TouchableOpacity>
+                        </SoundButton>
                     </View>
 
                     {/* Title Area */}
@@ -91,20 +92,20 @@ export default function LoginScreen() {
                                     className="text-black dark:text-white text-[16px] font-semibold p-0 m-0 h-6"
                                 />
                             </View>
-                            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} className="p-2 -mr-2">
+                            <SoundButton onPress={() => setShowPassword(!showPassword)} className="p-2 -mr-2">
                                 {showPassword ? (
                                     <EyeOff size={20} color="#9CA3AF" />
                                 ) : (
                                     <Eye size={20} color="#9CA3AF" />
                                 )}
-                            </TouchableOpacity>
+                            </SoundButton>
                         </View>
 
                     </View>
 
-                    <TouchableOpacity onPress={() => router.push('/forgot-password')} className="items-end mb-8">
+                    <SoundButton onPress={() => router.push('/forgot-password')} className="items-end mb-8">
                         <Text className="text-gray-500 dark:text-gray-400 font-semibold underline">Forgot Password?</Text>
-                    </TouchableOpacity>
+                    </SoundButton>
 
                     {error ? <Text className="text-red-500 text-sm mb-4">{error}</Text> : null}
 
@@ -113,13 +114,13 @@ export default function LoginScreen() {
                 {/* Bottom Action Area */}
                 <View className="px-5 pb-8 pt-4 border-t border-transparent">
                     {/* Continue Button */}
-                    <TouchableOpacity
+                    <SoundButton
                         activeOpacity={0.8}
                         onPress={handleLogin}
                         disabled={loading}
                         className={`py-4 rounded-2xl items-center border-b-4 ${loading
                             ? 'bg-[#E5E5E5] border-[#CECECE]'
-                            : 'bg-[#58CC02] border-[#58A700] border-t-[#58CC02] border-x-[#58CC02]'
+                            : 'bg-[#F59E0B] border-[#D97706] border-t-[#F59E0B] border-x-[#F59E0B]'
                             }`}
                     >
                         {loading ? (
@@ -127,7 +128,7 @@ export default function LoginScreen() {
                         ) : (
                             <Text className={`font-bold text-[17px] uppercase tracking-wider ${loading ? 'text-[#AFAFAF]' : 'text-white'}`}>Log In</Text>
                         )}
-                    </TouchableOpacity>
+                    </SoundButton>
                 </View>
             </KeyboardAvoidingView>
         </SafeAreaView>

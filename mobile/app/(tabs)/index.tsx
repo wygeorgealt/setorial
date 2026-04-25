@@ -1,3 +1,4 @@
+import { SoundButton } from '../../components/SoundButton';
 import { View, Text, ScrollView, TouchableOpacity, Image, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowUpRight, ShieldCheck, CreditCard, ChevronRight, Trophy, Star, Clock } from 'lucide-react-native';
@@ -71,22 +72,22 @@ export default function HomeScreen() {
                         </Text>
                     </View>
                     <View className="flex-row items-center">
-                        <TouchableOpacity
+                        <SoundButton
                             activeOpacity={0.7}
                             onPress={() => router.push('/achievements')}
                             className="flex-row items-center mr-6"
                         >
                             <Star size={22} color="#FF9600" fill="#FF9600" />
                             <Text className="text-[#FF9600] font-bold text-lg ml-1">{user?.streak || 0}</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
+                        </SoundButton>
+                        <SoundButton
                             activeOpacity={0.7}
                             onPress={() => router.push('/leaderboard')}
                             className="flex-row items-center"
                         >
                             <Trophy size={22} color="#1CB0F6" fill="#1CB0F6" />
                             <Text className="text-[#1CB0F6] font-bold text-lg ml-1">{user?.points || 0}</Text>
-                        </TouchableOpacity>
+                        </SoundButton>
                     </View>
                 </View>
 

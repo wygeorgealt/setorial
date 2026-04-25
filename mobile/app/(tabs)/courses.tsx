@@ -1,3 +1,4 @@
+import { SoundButton } from '../../components/SoundButton';
 import { View, Text, TouchableOpacity, ScrollView, TextInput, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, ChevronRight, PlayCircle } from 'lucide-react-native';
@@ -85,14 +86,14 @@ export default function CoursesScreen() {
                 <Text className="text-black dark:text-white font-bold text-xl tracking-tight mb-4">Categories</Text>
                 <View className="flex-row flex-wrap mb-10">
                     {subjects.slice(0, 6).map((subject, i) => (
-                        <TouchableOpacity
+                        <SoundButton
                             key={subject.id}
                             activeOpacity={0.8}
                             onPress={() => router.push(`/course-detail?id=${subject.id}`)}
                             className="bg-white dark:bg-[#1E222B] border-2 border-[#E5E5E5] dark:border-[#272B36] border-b-4 px-5 py-3 rounded-2xl mr-3 mb-3"
                         >
                             <Text className="text-[#4B4B4B] dark:text-white font-bold text-[15px]">{subject.name}</Text>
-                        </TouchableOpacity>
+                        </SoundButton>
                     ))}
                     {subjects.length === 0 && (
                         <Text className="text-[#AFAFAF] dark:text-gray-500 font-bold text-sm">No categories available</Text>
@@ -127,7 +128,7 @@ export default function CoursesScreen() {
 function CourseRow({ id, title, lessons, students, color }: { id: string, title: string, lessons: string, students: string, color: string }) {
     const router = useRouter();
     return (
-        <TouchableOpacity
+        <SoundButton
             activeOpacity={0.8}
             onPress={() => router.push(`/course-detail?id=${id}`)}
             className={`flex-row items-center p-5 rounded-2xl mb-4 border-2 border-b-4 border-[#E5E5E5] dark:border-[#272B36] bg-white dark:bg-[#1E222B]`}
@@ -142,6 +143,6 @@ function CourseRow({ id, title, lessons, students, color }: { id: string, title:
                 </View>
             </View>
             <ChevronRight size={20} color="#CECECE" />
-        </TouchableOpacity>
+        </SoundButton>
     );
 }

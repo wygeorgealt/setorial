@@ -1,3 +1,4 @@
+import { SoundButton } from '../components/SoundButton';
 import { View, Text, TouchableOpacity, SafeAreaView, TextInput, ActivityIndicator, Alert, Image } from 'react-native';
 import { ChevronLeft, Camera } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
@@ -65,17 +66,17 @@ export default function EditProfileScreen() {
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12]">
             <View className="flex-row items-center justify-between px-5 py-6">
-                <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 items-center justify-center">
+                <SoundButton onPress={() => router.back()} className="w-10 h-10 items-center justify-center">
                     <ChevronLeft size={24} color="#AFAFAF" />
-                </TouchableOpacity>
+                </SoundButton>
                 <Text className="text-black dark:text-white font-bold text-xl">Edit Profile</Text>
-                <TouchableOpacity activeOpacity={0.8} onPress={handleSave} disabled={saving} className="bg-[#1CB0F6] px-5 py-2 rounded-xl border-b-4 border-[#1899D6]">
+                <SoundButton activeOpacity={0.8} onPress={handleSave} disabled={saving} className="bg-[#1CB0F6] px-5 py-2 rounded-xl border-b-4 border-[#1899D6]">
                     {saving ? (
                         <ActivityIndicator size="small" color="#FFF" />
                     ) : (
                         <Text className="text-white font-bold text-sm tracking-widest uppercase">Save</Text>
                     )}
-                </TouchableOpacity>
+                </SoundButton>
             </View>
 
             <View className="px-5">
@@ -89,13 +90,13 @@ export default function EditProfileScreen() {
                                 <Text className="text-4xl text-black dark:text-white">{(user?.name || 'S')[0].toUpperCase()}</Text>
                             )}
                         </View>
-                        <TouchableOpacity
+                        <SoundButton
                             onPress={pickImage}
                             activeOpacity={0.8}
                             className="absolute bottom-0 right-0 bg-black w-10 h-10 rounded-full items-center justify-center border-4 border-white dark:border-[#0B0D12]"
                         >
                             <Camera size={16} color="#FFF" />
-                        </TouchableOpacity>
+                        </SoundButton>
                     </View>
                 </View>
 

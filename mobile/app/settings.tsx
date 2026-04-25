@@ -1,3 +1,4 @@
+import { SoundButton } from '../components/SoundButton';
 import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Switch } from 'react-native';
 import { ChevronLeft, User, Bell, Shield, CircleHelp, Volume2, Vibrate } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
@@ -13,9 +14,9 @@ export default function SettingsScreen() {
         <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12]">
             {/* Header */}
             <View className="flex-row items-center justify-between px-5 py-6">
-                <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 items-center justify-center">
+                <SoundButton onPress={() => router.back()} className="w-10 h-10 items-center justify-center">
                     <ChevronLeft size={24} color="#AFAFAF" />
-                </TouchableOpacity>
+                </SoundButton>
                 <Text className="text-black dark:text-white font-bold text-xl">Settings</Text>
                 <View className="w-10" />
             </View>
@@ -80,7 +81,7 @@ export default function SettingsScreen() {
 
 function SettingRow({ icon, label, children, onPress }: { icon?: any, label: string, children?: any, onPress?: () => void }) {
     return (
-        <TouchableOpacity
+        <SoundButton
             activeOpacity={0.8}
             onPress={onPress}
             disabled={!onPress && !children}
@@ -93,7 +94,7 @@ function SettingRow({ icon, label, children, onPress }: { icon?: any, label: str
             )}
             <Text className="flex-1 text-[#4B4B4B] dark:text-white font-bold text-[17px]">{label}</Text>
             {children || (onPress && <ChevronLeft size={20} color="#CECECE" style={{ transform: [{ rotate: '180deg' }] }} />)}
-        </TouchableOpacity>
+        </SoundButton>
     );
 }
 

@@ -1,3 +1,4 @@
+import { SoundButton } from '../components/SoundButton';
 import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator, Image } from "react-native";
 import { ChevronLeft, Trophy, Crown, Medal, LayoutGrid } from "lucide-react-native";
 import { useRouter } from "expo-router";
@@ -58,9 +59,9 @@ function LeaderboardScreen() {
             <View className="flex-1 px-5">
                 {/* Header */}
                 <View className="flex-row items-center justify-between py-6">
-                    <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 items-center justify-center">
+                    <SoundButton onPress={() => router.back()} className="w-10 h-10 items-center justify-center">
                         <ChevronLeft size={24} color="#AFAFAF" />
-                    </TouchableOpacity>
+                    </SoundButton>
                     <Text className="text-black dark:text-white font-bold text-xl">{selectedSubject ? subjects.find(s => s.id === selectedSubject)?.name : 'Global'} Leaderboard</Text>
                     <View className="w-10" />
                 </View>
@@ -68,20 +69,20 @@ function LeaderboardScreen() {
                 {/* Subject Selector */}
                 <View className="mb-6">
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
-                        <TouchableOpacity
+                        <SoundButton
                             onPress={() => handleSubjectSelect(null)}
                             className={`px-6 py-3 rounded-2xl mr-3 border-2 border-b-4 ${!selectedSubject ? 'bg-[#1CB0F6] border-[#1899D6]' : 'bg-white dark:bg-[#1E222B] border-[#E5E5E5] dark:border-[#272B36]'}`}
                         >
                             <Text className={`font-bold uppercase tracking-widest text-xs ${!selectedSubject ? 'text-white' : 'text-[#AFAFAF] dark:text-gray-400'}`}>Global</Text>
-                        </TouchableOpacity>
+                        </SoundButton>
                         {subjects.map((subject) => (
-                            <TouchableOpacity
+                            <SoundButton
                                 key={subject.id}
                                 onPress={() => handleSubjectSelect(subject.id)}
                                 className={`px-6 py-3 rounded-2xl mr-3 border-2 border-b-4 ${selectedSubject === subject.id ? 'bg-[#1CB0F6] border-[#1899D6]' : 'bg-white dark:bg-[#1E222B] border-[#E5E5E5] dark:border-[#272B36]'}`}
                             >
                                 <Text className={`font-bold uppercase tracking-widest text-xs ${selectedSubject === subject.id ? 'text-white' : 'text-[#AFAFAF] dark:text-gray-400'}`}>{subject.name}</Text>
-                            </TouchableOpacity>
+                            </SoundButton>
                         ))}
                     </ScrollView>
                 </View>

@@ -1,3 +1,4 @@
+import { SoundButton } from '../../components/SoundButton';
 import { View, Text, TouchableOpacity, ScrollView, Image, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Settings, LogOut, ChevronRight, BookOpen, Star, HelpCircle, ShieldCheck } from 'lucide-react-native';
@@ -43,7 +44,7 @@ export default function ProfileScreen() {
                 <Text className="text-black dark:text-white text-[28px] font-bold tracking-tight mb-8">Manage</Text>
 
                 {/* Profile Header */}
-                <TouchableOpacity
+                <SoundButton
                     onPress={() => router.push('/edit-profile')}
                     className="flex-row items-center mb-10"
                 >
@@ -76,7 +77,7 @@ export default function ProfileScreen() {
                         </View>
                     </View>
                     <ChevronRight size={20} color="#9CA3AF" />
-                </TouchableOpacity>
+                </SoundButton>
 
                 {/* Badges Section */}
                 <View className="mb-8">
@@ -138,14 +139,14 @@ export default function ProfileScreen() {
                 </View>
 
                 {/* Log Out Button */}
-                <TouchableOpacity
+                <SoundButton
                     activeOpacity={0.8}
                     onPress={handleLogout}
                     className="flex-row items-center justify-center bg-white dark:bg-[#1E222B] border-2 border-[#E5E5E5] dark:border-[#272B36] border-b-4 p-4 rounded-2xl mb-10"
                 >
                     <LogOut size={20} color="#FF4B4B" />
                     <Text className="text-[#FF4B4B] font-bold ml-2 text-[17px] uppercase tracking-wider">Log Out</Text>
-                </TouchableOpacity>
+                </SoundButton>
 
                 <View className="h-32" />
 
@@ -156,7 +157,7 @@ export default function ProfileScreen() {
 
 function ActionRow({ icon, label, onPress }: { icon: any, label: string, onPress?: () => void }) {
     return (
-        <TouchableOpacity
+        <SoundButton
             activeOpacity={0.8}
             onPress={onPress}
             disabled={!onPress}
@@ -167,6 +168,6 @@ function ActionRow({ icon, label, onPress }: { icon: any, label: string, onPress
             </View>
             <Text className="flex-1 text-[#4B4B4B] dark:text-white font-bold text-[17px]">{label}</Text>
             <ChevronRight size={20} color="#CECECE" />
-        </TouchableOpacity>
+        </SoundButton>
     );
 }

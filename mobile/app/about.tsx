@@ -1,3 +1,4 @@
+import { SoundButton } from '../components/SoundButton';
 import { View, Text, SafeAreaView, TouchableOpacity, ScrollView, useColorScheme } from "react-native";
 import { useRouter } from "expo-router";
 import { ChevronLeft, Info, HelpCircle, ShieldCheck } from "lucide-react-native";
@@ -10,9 +11,9 @@ export default function AboutScreen() {
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12]">
             <View className="flex-row items-center justify-between px-5 py-6">
-                <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 items-center justify-center">
+                <SoundButton onPress={() => router.back()} className="w-10 h-10 items-center justify-center">
                     <ChevronLeft size={24} color="#AFAFAF" />
-                </TouchableOpacity>
+                </SoundButton>
                 <Text className="text-black dark:text-white font-bold text-xl">About Setorial</Text>
                 <View className="w-10" />
             </View>
@@ -40,12 +41,12 @@ export default function AboutScreen() {
 
 function AboutLink({ icon, label }: { icon: any, label: string }) {
     return (
-        <TouchableOpacity activeOpacity={0.8} className="flex-row items-center bg-white dark:bg-[#1E222B] p-5 rounded-2xl mb-4 border-2 border-[#E5E5E5] dark:border-[#272B36] border-b-4">
+        <SoundButton activeOpacity={0.8} className="flex-row items-center bg-white dark:bg-[#1E222B] p-5 rounded-2xl mb-4 border-2 border-[#E5E5E5] dark:border-[#272B36] border-b-4">
             <View className="w-10 h-10 rounded-xl bg-[#F5F5F5] dark:bg-[#2A2E39] border-2 border-[#E5E5E5] dark:border-[#272B36] items-center justify-center mr-4">
                 {icon}
             </View>
             <Text className="flex-1 text-[#4B4B4B] dark:text-white font-bold text-[17px]">{label}</Text>
             <ChevronLeft size={20} color="#CECECE" style={{ transform: [{ rotate: '180deg' }] }} />
-        </TouchableOpacity>
+        </SoundButton>
     );
 }

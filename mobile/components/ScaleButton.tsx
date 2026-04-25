@@ -1,3 +1,4 @@
+import { SoundButton } from './SoundButton';
 import React from 'react';
 import { TouchableOpacity, Animated, Platform } from 'react-native';
 
@@ -39,7 +40,8 @@ export const ScaleButton: React.FC<ScaleButtonProps> = ({
     };
 
     return (
-        <TouchableOpacity
+        <SoundButton
+            soundType="pop"
             activeOpacity={activeOpacity}
             onPress={onPress}
             onPressIn={onPressIn}
@@ -52,6 +54,6 @@ export const ScaleButton: React.FC<ScaleButtonProps> = ({
             ]}
         >
             {children}
-        </TouchableOpacity>
+        </SoundButton>
     );
 };

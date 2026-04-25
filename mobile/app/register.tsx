@@ -1,4 +1,5 @@
-import { View, Text, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator } from "react-native";
+import { SoundButton } from '../components/SoundButton';
+import { View, Text, TextInput, SafeAreaView, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator } from "react-native";
 import { ArrowLeft, Eye, EyeOff, Check, ChevronDown } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -33,7 +34,7 @@ export default function RegisterScreen() {
             const response = await authApi.register({ email, password, name });
             // Registration doesn't return a token yet. We need to go to OTP verification.
             router.push({
-                pathname: "/verification",
+                pathname: "/verify-email",
                 params: { email: email }
             });
         } catch (err: any) {
@@ -54,13 +55,13 @@ export default function RegisterScreen() {
 
                     {/* Header */}
                     <View className="flex-row items-center justify-between mb-8">
-                        <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
+                        <SoundButton onPress={() => router.back()} className="p-2 -ml-2">
                             <ArrowLeft size={24} color="#000" strokeWidth={2.5} />
-                        </TouchableOpacity>
-                        <TouchableOpacity className="flex-row items-center">
+                        </SoundButton>
+                        <SoundButton className="flex-row items-center">
                             <Text className="text-black dark:text-white font-bold mr-1">English</Text>
                             <ChevronDown size={18} color="#000" />
-                        </TouchableOpacity>
+                        </SoundButton>
                     </View>
 
                     {/* Title Area */}
@@ -112,13 +113,13 @@ export default function RegisterScreen() {
                                     className="text-black dark:text-white text-[16px] font-semibold p-0 m-0 h-6"
                                 />
                             </View>
-                            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} className="p-2 -mr-2">
+                            <SoundButton onPress={() => setShowPassword(!showPassword)} className="p-2 -mr-2">
                                 {showPassword ? (
                                     <EyeOff size={20} color="#9CA3AF" />
                                 ) : (
                                     <Eye size={20} color="#9CA3AF" />
                                 )}
-                            </TouchableOpacity>
+                            </SoundButton>
                         </View>
 
                         {/* Referral Input (Optional styling) */}
@@ -139,7 +140,7 @@ export default function RegisterScreen() {
                 {/* Bottom Action Area */}
                 <View className="px-5 pb-8 pt-4 border-t border-transparent">
                     {/* Privacy Policy Checkbox */}
-                    <TouchableOpacity
+                    <SoundButton
                         className="flex-row items-center mb-6"
                         onPress={() => setAgreed(!agreed)}
                     >
@@ -149,16 +150,16 @@ export default function RegisterScreen() {
                         <Text className="text-black dark:text-white text-base">
                             I agree to Setorial's <Text className="font-bold">Privacy Policy</Text>
                         </Text>
-                    </TouchableOpacity>
+                    </SoundButton>
 
                     {/* Continue Button */}
-                    <TouchableOpacity
+                    <SoundButton
                         activeOpacity={0.8}
                         onPress={handleRegister}
                         disabled={loading || !agreed}
                         className={`py-4 rounded-2xl items-center border-b-4 ${loading || !agreed
                             ? 'bg-[#E5E5E5] border-[#CECECE]'
-                            : 'bg-[#58CC02] border-[#58A700] border-t-[#58CC02] border-x-[#58CC02]'
+                            : 'bg-[#F59E0B] border-[#D97706] border-t-[#F59E0B] border-x-[#F59E0B]'
                             }`}
                     >
                         {loading ? (
@@ -166,7 +167,7 @@ export default function RegisterScreen() {
                         ) : (
                             <Text className={`font-bold text-[17px] uppercase tracking-wider ${loading || !agreed ? 'text-[#AFAFAF]' : 'text-white'}`}>Continue</Text>
                         )}
-                    </TouchableOpacity>
+                    </SoundButton>
                 </View>
             </KeyboardAvoidingView>
         </SafeAreaView>

@@ -1,3 +1,4 @@
+import { SoundButton } from '../components/SoundButton';
 import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator } from 'react-native';
 import { ChevronLeft, Flame, BookOpen, Trophy, Star, Crown, Target, Zap, Award, Lock } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
@@ -43,9 +44,9 @@ export default function AchievementsScreen() {
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12]">
             <View className="flex-row items-center justify-between px-5 py-6">
-                <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 items-center justify-center">
+                <SoundButton onPress={() => router.back()} className="w-10 h-10 items-center justify-center">
                     <ChevronLeft size={24} color="#AFAFAF" />
-                </TouchableOpacity>
+                </SoundButton>
                 <Text className="text-black dark:text-white font-bold text-xl">Achievements</Text>
                 <View className="w-10" />
             </View>

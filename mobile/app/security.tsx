@@ -1,3 +1,4 @@
+import { SoundButton } from '../components/SoundButton';
 import { View, Text, TouchableOpacity, SafeAreaView, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { ChevronLeft, Eye, EyeOff } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
@@ -45,9 +46,9 @@ export default function SecurityScreen() {
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12]">
             <View className="flex-row items-center justify-between px-5 py-6">
-                <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 items-center justify-center">
+                <SoundButton onPress={() => router.back()} className="w-10 h-10 items-center justify-center">
                     <ChevronLeft size={24} color="#AFAFAF" />
-                </TouchableOpacity>
+                </SoundButton>
                 <Text className="text-black dark:text-white font-bold text-xl">Security</Text>
                 <View className="w-10" />
             </View>
@@ -66,9 +67,9 @@ export default function SecurityScreen() {
                         placeholder="••••••••"
                         placeholderTextColor="#94A3B8"
                     />
-                    <TouchableOpacity onPress={() => setShowCurrent(!showCurrent)} className="pr-5">
+                    <SoundButton onPress={() => setShowCurrent(!showCurrent)} className="pr-5">
                         {showCurrent ? <EyeOff size={20} color="#94A3B8" /> : <Eye size={20} color="#94A3B8" />}
-                    </TouchableOpacity>
+                    </SoundButton>
                 </View>
 
                 {/* New Password */}
@@ -82,9 +83,9 @@ export default function SecurityScreen() {
                         placeholder="••••••••"
                         placeholderTextColor="#94A3B8"
                     />
-                    <TouchableOpacity onPress={() => setShowNew(!showNew)} className="pr-5">
+                    <SoundButton onPress={() => setShowNew(!showNew)} className="pr-5">
                         {showNew ? <EyeOff size={20} color="#94A3B8" /> : <Eye size={20} color="#94A3B8" />}
-                    </TouchableOpacity>
+                    </SoundButton>
                 </View>
 
                 {/* Confirm Password */}
@@ -99,7 +100,7 @@ export default function SecurityScreen() {
                 />
 
                 {/* Submit */}
-                <TouchableOpacity
+                <SoundButton
                     activeOpacity={0.8}
                     onPress={handleChangePassword}
                     disabled={saving}
@@ -112,7 +113,7 @@ export default function SecurityScreen() {
                     ) : (
                         <Text className={`font-bold text-[17px] uppercase tracking-wider ${saving ? 'text-[#AFAFAF]' : 'text-white'}`}>Update Password</Text>
                     )}
-                </TouchableOpacity>
+                </SoundButton>
             </View>
         </SafeAreaView>
     );

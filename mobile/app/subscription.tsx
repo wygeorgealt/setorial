@@ -1,3 +1,4 @@
+import { SoundButton } from '../components/SoundButton';
 import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Alert, ActivityIndicator } from 'react-native';
 import { ChevronLeft, Check, Crown, Shield, Star, Zap } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
@@ -169,9 +170,9 @@ export default function SubscriptionScreen() {
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12]">
             <View className="flex-row items-center justify-between px-5 py-6">
-                <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 items-center justify-center">
+                <SoundButton onPress={() => router.back()} className="w-10 h-10 items-center justify-center">
                     <ChevronLeft size={24} color="#AFAFAF" />
-                </TouchableOpacity>
+                </SoundButton>
                 <Text className="text-black dark:text-white font-bold text-xl">Subscription</Text>
                 <View className="w-10" />
             </View>
@@ -202,12 +203,12 @@ export default function SubscriptionScreen() {
                             <Text className="text-blue-700 dark:text-blue-300 text-sm mb-4 leading-5">
                                 We detected you are likely in <Text className="font-bold">{user.detectedCountry}</Text>. Confirm this to lock your local pricing.
                             </Text>
-                            <TouchableOpacity
+                            <SoundButton
                                 onPress={handleConfirmCountry}
                                 className="bg-blue-600 py-3 rounded-xl items-center shadow-sm"
                             >
                                 <Text className="text-white font-bold">Confirm & Lock Region</Text>
-                            </TouchableOpacity>
+                            </SoundButton>
                         </View>
                     )}
 
@@ -225,13 +226,13 @@ export default function SubscriptionScreen() {
 
                     {/* Billing Toggle */}
                     <View className="flex-row items-center justify-center mb-8 bg-gray-100 dark:bg-[#1E222B] p-1.5 rounded-3xl self-center border-2 border-gray-200 dark:border-[#272B36]">
-                        <TouchableOpacity
+                        <SoundButton
                             onPress={() => setBillingCycle('MONTHLY')}
                             className={`px-8 py-3 rounded-2xl ${billingCycle === 'MONTHLY' ? 'bg-white dark:bg-black shadow-sm border-2 border-b-4 border-gray-100 dark:border-white' : ''}`}
                         >
                             <Text className={`font-black uppercase tracking-widest text-[11px] ${billingCycle === 'MONTHLY' ? 'text-black dark:text-white' : 'text-gray-400'}`}>Monthly</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
+                        </SoundButton>
+                        <SoundButton
                             onPress={() => setBillingCycle('ANNUAL')}
                             className={`px-8 py-3 rounded-2xl flex-row items-center ${billingCycle === 'ANNUAL' ? 'bg-white dark:bg-black shadow-sm border-2 border-b-4 border-gray-100 dark:border-white' : ''}`}
                         >
@@ -239,7 +240,7 @@ export default function SubscriptionScreen() {
                             <View className="ml-2 bg-green-500 px-2 py-0.5 rounded-lg">
                                 <Text className="text-white text-[9px] font-black italic">SAVE 17%</Text>
                             </View>
-                        </TouchableOpacity>
+                        </SoundButton>
                     </View>
 
                     {tiers.map((tier) => {
@@ -286,7 +287,7 @@ export default function SubscriptionScreen() {
                                 ))}
 
                                 {!isActive && tier.name !== 'Free' && (
-                                    <TouchableOpacity
+                                    <SoundButton
                                         activeOpacity={0.8}
                                         onPress={() => handleUpgrade(tier.name)}
                                         disabled={isLoading}
@@ -304,7 +305,7 @@ export default function SubscriptionScreen() {
                                         ) : (
                                             <Text className="text-white font-bold text-[17px] uppercase tracking-wider">Upgrade to {tier.name}</Text>
                                         )}
-                                    </TouchableOpacity>
+                                    </SoundButton>
                                 )}
                             </View>
                         );

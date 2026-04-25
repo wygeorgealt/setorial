@@ -42,7 +42,13 @@ export default function RootLayout() {
     useEffect(() => {
         if (isLoading || showSplash) return;
 
-        const inAuthGroup = segments[0] === '(auth)' || segments[0] === 'login' || segments[0] === 'register' || segments[0] === 'welcome';
+        const inAuthGroup = segments[0] === '(auth)' || 
+                            segments[0] === 'login' || 
+                            segments[0] === 'register' || 
+                            segments[0] === 'welcome' || 
+                            segments[0] === 'onboarding' || 
+                            segments[0] === 'verify-email' || 
+                            segments[0] === 'forgot-password';
 
         if (!token && !inAuthGroup) {
             router.replace('/welcome');

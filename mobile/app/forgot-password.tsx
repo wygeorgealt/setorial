@@ -1,3 +1,4 @@
+import { SoundButton } from '../components/SoundButton';
 import { View, Text, TextInput, TouchableOpacity, SafeAreaView, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator } from "react-native";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react-native";
 import { useRouter } from "expo-router";
@@ -83,9 +84,9 @@ export default function ForgotPasswordScreen() {
 
                     {/* Header */}
                     <View className="flex-row items-center justify-between mb-8">
-                        <TouchableOpacity onPress={() => step === 2 ? setStep(1) : router.back()} className="p-2 -ml-2">
+                        <SoundButton onPress={() => step === 2 ? setStep(1) : router.back()} className="p-2 -ml-2">
                             <ArrowLeft size={24} color="#000" strokeWidth={2.5} />
-                        </TouchableOpacity>
+                        </SoundButton>
                     </View>
 
                     {/* Title Area */}
@@ -152,13 +153,13 @@ export default function ForgotPasswordScreen() {
                                             className="text-black dark:text-white text-[16px] font-semibold p-0 m-0 h-6"
                                         />
                                     </View>
-                                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)} className="p-2 -mr-2">
+                                    <SoundButton onPress={() => setShowPassword(!showPassword)} className="p-2 -mr-2">
                                         {showPassword ? (
                                             <EyeOff size={20} color="#9CA3AF" />
                                         ) : (
                                             <Eye size={20} color="#9CA3AF" />
                                         )}
-                                    </TouchableOpacity>
+                                    </SoundButton>
                                 </View>
                             </>
                         )}
@@ -168,13 +169,13 @@ export default function ForgotPasswordScreen() {
 
                 {/* Bottom Action Area */}
                 <View className="px-5 pb-8 pt-4 border-t border-transparent">
-                    <TouchableOpacity
+                    <SoundButton
                         activeOpacity={0.8}
                         onPress={step === 1 ? handleSendOtp : handleResetPassword}
                         disabled={loading}
                         className={`py-4 rounded-2xl items-center border-b-4 ${loading
                             ? 'bg-[#E5E5E5] border-[#CECECE]'
-                            : 'bg-[#58CC02] border-[#58A700] border-t-[#58CC02] border-x-[#58CC02]'
+                            : 'bg-[#F59E0B] border-[#D97706] border-t-[#F59E0B] border-x-[#F59E0B]'
                             }`}
                     >
                         {loading ? (
@@ -184,7 +185,7 @@ export default function ForgotPasswordScreen() {
                                 {step === 1 ? "Send Code" : "Reset Password"}
                             </Text>
                         )}
-                    </TouchableOpacity>
+                    </SoundButton>
                 </View>
             </KeyboardAvoidingView>
         </SafeAreaView>

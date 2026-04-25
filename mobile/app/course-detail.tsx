@@ -1,3 +1,4 @@
+import { SoundButton } from '../components/SoundButton';
 import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator } from "react-native";
 import { ChevronLeft, Star, Lock, CheckCircle2 } from "lucide-react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
@@ -37,9 +38,9 @@ export default function CourseDetailScreen() {
         return (
             <View className="flex-1 bg-white dark:bg-zinc-950 items-center justify-center p-5">
                 <Text className="text-gray-500 dark:text-gray-400 mb-4">Subject not found</Text>
-                <TouchableOpacity onPress={() => router.back()} className="bg-black px-6 py-3 rounded-full">
+                <SoundButton onPress={() => router.back()} className="bg-black px-6 py-3 rounded-full">
                     <Text className="text-white font-bold">Go Back</Text>
-                </TouchableOpacity>
+                </SoundButton>
             </View>
         );
     }
@@ -48,9 +49,9 @@ export default function CourseDetailScreen() {
         <SafeAreaView className="flex-1 bg-[#F5F5F5] dark:bg-[#0B0D12]">
             {/* Header */}
             <View className="flex-row items-center px-6 py-5 bg-white dark:bg-[#1E222B] shadow-sm z-10 border-b-2 border-gray-100 dark:border-gray-800">
-                <TouchableOpacity onPress={() => router.back()} className="mr-4">
+                <SoundButton onPress={() => router.back()} className="mr-4">
                     <ChevronLeft size={28} color="#AFAFAF" />
-                </TouchableOpacity>
+                </SoundButton>
                 <Text className="text-2xl font-black text-gray-900 dark:text-white flex-1">{subject.name}</Text>
             </View>
 
@@ -58,7 +59,7 @@ export default function CourseDetailScreen() {
                 {subject.topics?.map((topic: any, topicIndex: number) => (
                     <View key={topic.id} className="mb-10 mt-4 px-6">
                         {/* Topic Header */}
-                        <TouchableOpacity
+                        <SoundButton
                             activeOpacity={0.9}
                             onPress={() => {
                                 const firstLesson = topic.lessons?.find((l: any) => l.status !== 'LOCKED') || topic.lessons?.[0];
@@ -72,7 +73,7 @@ export default function CourseDetailScreen() {
                         >
                             <Text className="text-white/80 font-black text-base uppercase tracking-wider">Unit {topicIndex + 1}</Text>
                             <Text className="text-white font-bold text-xl mt-1">{topic.name}</Text>
-                        </TouchableOpacity>
+                        </SoundButton>
 
                         {/* Pathway Nodes */}
                         <View className="items-center relative">
@@ -99,22 +100,22 @@ export default function CourseDetailScreen() {
                                 }
 
                                 return (
-                                    <View key={lesson.id} className="mb-6 items-center justify-center relative z-10" style={{ transform: [{ translateX: offset }] }}>
-                                        <TouchableOpacity 
+                                    <View key={lesson.id} className="mb-12 items-center justify-center relative z-10" style={{ transform: [{ translateX: offset }] }}>
+                                        <SoundButton 
                                             activeOpacity={0.8}
                                             disabled={isLocked}
                                             onPress={() => router.push(`/level?id=${lesson.id}`)}
                                         >
                                             {isCurrent && (
-                                                <View className="absolute -top-12 left-1/2 ml-[-40px] w-20 bg-white dark:bg-gray-800 rounded-xl py-2 items-center justify-center border-2 border-gray-100 dark:border-gray-700 shadow-sm z-20">
-                                                    <Text className="text-[#58CC02] font-black uppercase text-xs">Start!</Text>
+                                                <View className="absolute -top-11 -left-2 w-24 bg-white dark:bg-zinc-800 rounded-xl py-2 items-center justify-center border-2 border-b-4 border-gray-200 dark:border-zinc-700 shadow-sm z-50">
+                                                    <Text className="text-[#58CC02] font-black uppercase text-[11px] tracking-widest">START</Text>
                                                 </View>
                                             )}
 
                                             <View className={`w-20 h-20 rounded-full items-center justify-center border-b-8 ${bgColorClass} ${borderColorClass}`}>
                                                 {icon}
                                             </View>
-                                        </TouchableOpacity>
+                                        </SoundButton>
                                     </View>
                                 );
                             })}

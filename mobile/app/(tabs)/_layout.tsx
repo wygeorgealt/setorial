@@ -1,3 +1,4 @@
+import { SoundButton } from '../../components/SoundButton';
 import { Tabs } from 'expo-router';
 import { Home, Search, Wallet, MoreHorizontal, ShoppingBag } from 'lucide-react-native';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions, useColorScheme } from 'react-native';
@@ -35,8 +36,14 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         }
       ]}>
         {state.routes.map((route, index) => {
+          // Explicitly block the statistics tab for non-premium users from rendering
+          if (route.name === 'statistics') {
+            const showWallet = ['SILVER', 'GOLD'].includes(user?.tier || '');
+            if (!showWallet) return null;
+          }
+
           const focused = state.index === index;
-          const config = TAB_CONFIG[index];
+          const config = TAB_CONFIG.find(c => c.name === route.name);
           if (!config) return null;
           const { Icon } = config;
 
@@ -55,7 +62,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           const circleColor = focused ? config.color : (isDark ? '#252930' : '#E0E2E8');
 
           return (
-            <TouchableOpacity
+            <SoundButton
               key={route.key}
               onPress={onPress}
               activeOpacity={0.7}
@@ -81,7 +88,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                   {config.label}
                 </Text>
               )}
-            </TouchableOpacity>
+            </SoundButton>
           );
         })}
       </View>
@@ -90,6 +97,9 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 }
 
 export default function TabLayout() {
+  const { user } = useAuthStore();
+  const showWallet = ['SILVER', 'GOLD'].includes(user?.tier || '');
+
   return (
     <Tabs
       tabBar={(props) => <CustomTabBar {...props} />}
@@ -97,7 +107,7 @@ export default function TabLayout() {
     >
       <Tabs.Screen name="index" />
       <Tabs.Screen name="courses" />
-      <Tabs.Screen name="statistics" />
+      <Tabs.Screen name="statistics" options={{ href: showWallet ? undefined : null }} />
       <Tabs.Screen name="store" />
       <Tabs.Screen name="profile" />
     </Tabs>

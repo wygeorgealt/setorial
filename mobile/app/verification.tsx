@@ -1,3 +1,4 @@
+import { SoundButton } from '../components/SoundButton';
 import { View, Text, TouchableOpacity, SafeAreaView, ScrollView, TextInput, Alert, ActivityIndicator, Modal, FlatList } from 'react-native';
 import { ChevronLeft, ShieldCheck, Building, Globe, CheckCircle2, Clock, Search, ChevronDown, Check } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
@@ -156,9 +157,9 @@ export default function VerificationScreen() {
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12]">
             <View className="flex-row items-center justify-between px-5 py-6">
-                <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 items-center justify-center">
+                <SoundButton onPress={() => router.back()} className="w-10 h-10 items-center justify-center">
                     <ChevronLeft size={24} color="#AFAFAF" />
-                </TouchableOpacity>
+                </SoundButton>
                 <Text className="text-black dark:text-white font-bold text-xl">Monetization Setup</Text>
                 <View className="w-10" />
             </View>
@@ -193,28 +194,28 @@ export default function VerificationScreen() {
 
                         <Text className="text-[#AFAFAF] dark:text-gray-400 font-bold text-xs uppercase tracking-widest mb-3">Payout Method</Text>
                         <View className="flex-row gap-x-4 mb-8">
-                            <TouchableOpacity
+                            <SoundButton
                                 activeOpacity={0.8}
                                 onPress={() => setMethod('NGN_BANK')}
                                 className={`flex-1 p-5 rounded-2xl border-2 border-b-4 items-center ${method === 'NGN_BANK' ? 'bg-[#1CB0F6] border-[#1899D6]' : 'bg-white dark:bg-[#1E222B] border-[#E5E5E5] dark:border-[#272B36]'}`}
                             >
                                 <Building size={28} color={method === 'NGN_BANK' ? '#FFF' : '#AFAFAF'} />
                                 <Text className={`font-bold mt-2 text-sm ${method === 'NGN_BANK' ? 'text-white' : 'text-[#AFAFAF] dark:text-gray-400'}`}>NGN Bank</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
+                            </SoundButton>
+                            <SoundButton
                                 activeOpacity={0.8}
                                 onPress={() => setMethod('USD_PAYPAL')}
                                 className={`flex-1 p-5 rounded-2xl border-2 border-b-4 items-center ${method === 'USD_PAYPAL' ? 'bg-[#1CB0F6] border-[#1899D6]' : 'bg-white dark:bg-[#1E222B] border-[#E5E5E5] dark:border-[#272B36]'}`}
                             >
                                 <Globe size={28} color={method === 'USD_PAYPAL' ? '#FFF' : '#AFAFAF'} />
                                 <Text className={`font-bold mt-2 text-sm ${method === 'USD_PAYPAL' ? 'text-white' : 'text-[#AFAFAF] dark:text-gray-400'}`}>PayPal</Text>
-                            </TouchableOpacity>
+                            </SoundButton>
                         </View>
 
                         {method === 'NGN_BANK' && (
                             <>
                                 <Text className="text-[#AFAFAF] dark:text-gray-400 font-bold text-xs uppercase tracking-widest mb-2">Select Bank</Text>
-                                <TouchableOpacity
+                                <SoundButton
                                     onPress={() => setShowBankPicker(true)}
                                     className="bg-white dark:bg-[#1E222B] p-5 rounded-2xl border-2 border-b-4 border-[#E5E5E5] dark:border-[#272B36] flex-row items-center justify-between mb-5"
                                 >
@@ -225,7 +226,7 @@ export default function VerificationScreen() {
                                         </Text>
                                     </View>
                                     <ChevronDown size={20} color="#AFAFAF" />
-                                </TouchableOpacity>
+                                </SoundButton>
 
                                 <Text className="text-[#AFAFAF] dark:text-gray-400 font-bold text-xs uppercase tracking-widest mb-2">Account Number</Text>
                                 <TextInput
@@ -275,7 +276,7 @@ export default function VerificationScreen() {
                             </>
                         )}
 
-                        <TouchableOpacity
+                        <SoundButton
                             activeOpacity={0.8}
                             onPress={handleSubmit}
                             disabled={saving || (method === 'NGN_BANK' && !accountName)}
@@ -291,7 +292,7 @@ export default function VerificationScreen() {
                                     </Text>
                                 </>
                             )}
-                        </TouchableOpacity>
+                        </SoundButton>
                     </>
                 )}
             </ScrollView>
@@ -302,9 +303,9 @@ export default function VerificationScreen() {
                     <View className="bg-white dark:bg-[#1E222B] rounded-t-[32px] h-[80%] pt-6">
                         <View className="flex-row items-center justify-between px-6 mb-6">
                             <Text className="text-black dark:text-white font-black text-2xl">Select Bank</Text>
-                            <TouchableOpacity onPress={() => setShowBankPicker(false)} className="p-2">
+                            <SoundButton onPress={() => setShowBankPicker(false)} className="p-2">
                                 <Text className="text-[#1CB0F6] font-bold text-[17px]">Done</Text>
-                            </TouchableOpacity>
+                            </SoundButton>
                         </View>
 
                         <View className="px-6 mb-4">
@@ -329,7 +330,7 @@ export default function VerificationScreen() {
                                 px-6
                                 contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 40 }}
                                 renderItem={({ item }) => (
-                                    <TouchableOpacity
+                                    <SoundButton
                                         onPress={() => {
                                             setSelectedBank(item);
                                             setShowBankPicker(false);
@@ -340,7 +341,7 @@ export default function VerificationScreen() {
                                             {item.name}
                                         </Text>
                                         {selectedBank?.id === item.id && <Check size={20} color="#1CB0F6" />}
-                                    </TouchableOpacity>
+                                    </SoundButton>
                                 )}
                             />
                         )}

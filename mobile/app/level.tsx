@@ -1,3 +1,4 @@
+import { SoundButton } from '../components/SoundButton';
 import { View, Text, TouchableOpacity, SafeAreaView, ActivityIndicator, ScrollView, Dimensions, useColorScheme } from "react-native";
 import { ChevronLeft, CheckCircle2, XCircle, Trophy, ArrowRight, Home, BookOpen } from "lucide-react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
@@ -10,61 +11,10 @@ import { feedback } from "../lib/feedback";
 
 const { width } = Dimensions.get('window');
 
-// Lightweight inline markdown renderer
+// Replaces the old lightweight renderer and delegates all rendering (Markdown + LaTeX)
+// to the powerful MathText component which parses it in a single unified block
 function MarkdownText({ content }: { content: string }) {
-    const lines = content.split('\n');
-    return (
-        <View>
-            {lines.map((line, i) => {
-                const trimmed = line.trim();
-                if (!trimmed) return <View key={i} className="h-3" />;
-
-                if (trimmed.startsWith('### ')) return <Text key={i} className="text-lg font-black text-gray-900 dark:text-white mt-4 mb-1">{trimmed.slice(4)}</Text>;
-                if (trimmed.startsWith('## '))  return <Text key={i} className="text-xl font-black text-gray-900 dark:text-white mt-5 mb-1">{trimmed.slice(3)}</Text>;
-                if (trimmed.startsWith('# '))   return <Text key={i} className="text-2xl font-black text-gray-900 dark:text-white mt-5 mb-2">{trimmed.slice(2)}</Text>;
-
-                if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
-                    return (
-                        <View key={i} className="flex-row items-start mb-1.5">
-                            <Text className="text-gray-500 dark:text-gray-400 mr-2 mt-0.5 text-base">•</Text>
-                            <Text className="text-gray-700 dark:text-gray-200 text-base leading-relaxed flex-1">{parseInline(trimmed.slice(2))}</Text>
-                        </View>
-                    );
-                }
-
-                const numMatch = trimmed.match(/^(\d+)\. (.+)/);
-                if (numMatch) {
-                    return (
-                        <View key={i} className="flex-row items-start mb-1.5">
-                            <Text className="text-gray-500 dark:text-gray-400 mr-2 text-base font-bold">{numMatch[1]}.</Text>
-                            <Text className="text-gray-700 dark:text-gray-200 text-base leading-relaxed flex-1">{parseInline(numMatch[2])}</Text>
-                        </View>
-                    );
-                }
-
-                return <Text key={i} className="text-gray-700 dark:text-gray-200 text-base leading-relaxed mb-1.5">{parseInline(trimmed)}</Text>;
-            })}
-        </View>
-    );
-}
-
-function parseInline(text: string): React.ReactNode[] {
-    const parts: React.ReactNode[] = [];
-    const regex = /(\*\*(.+?)\*\*|\*(.+?)\*)/g;
-    let last = 0;
-    let match;
-    let idx = 0;
-    while ((match = regex.exec(text)) !== null) {
-        if (match.index > last) parts.push(<Text key={idx++}>{text.slice(last, match.index)}</Text>);
-        if (match[0].startsWith('**')) {
-            parts.push(<Text key={idx++} className="font-bold text-gray-900 dark:text-white">{match[2]}</Text>);
-        } else {
-            parts.push(<Text key={idx++} className="italic text-gray-800 dark:text-gray-100">{match[3]}</Text>);
-        }
-        last = match.index + match[0].length;
-    }
-    if (last < text.length) parts.push(<Text key={idx++}>{text.slice(last)}</Text>);
-    return parts;
+    return <MathText content={content} fontSize={16} />;
 }
 
 export default function LevelScreen() {
@@ -176,9 +126,9 @@ export default function LevelScreen() {
         return (
             <View className="flex-1 bg-white dark:bg-[#0B0D12] items-center justify-center p-5">
                 <Text className="text-gray-500 dark:text-gray-400 mb-4">Lesson not found</Text>
-                <TouchableOpacity onPress={() => router.back()} className="bg-black px-6 py-3 rounded-full">
+                <SoundButton onPress={() => router.back()} className="bg-black px-6 py-3 rounded-full">
                     <Text className="text-white font-bold">Go Back</Text>
-                </TouchableOpacity>
+                </SoundButton>
             </View>
         );
     }
@@ -187,9 +137,9 @@ export default function LevelScreen() {
         return (
             <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12]">
                 <View className="flex-row items-center justify-between p-5 border-b-2 border-gray-100 dark:border-gray-800">
-                    <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 flex items-center justify-center -ml-2">
+                    <SoundButton onPress={() => router.back()} className="w-10 h-10 flex items-center justify-center -ml-2">
                         <XCircle size={28} color="#AFAFAF" />
-                    </TouchableOpacity>
+                    </SoundButton>
                     <Text className="font-bold text-lg text-gray-800 dark:text-white">Learn</Text>
                     <View className="w-10 h-10" />
                 </View>
@@ -222,7 +172,7 @@ export default function LevelScreen() {
                     <View className="mb-4 items-center">
                         <Text className="text-gray-400 dark:text-gray-500 font-bold text-xs uppercase tracking-widest">Pass Requirement: 60%</Text>
                     </View>
-                    <TouchableOpacity
+                    <SoundButton
                         activeOpacity={0.8}
                         onPress={() => lesson.questions?.length > 0 ? setPhase('questions') : submitLesson([])}
                         className="bg-[#1CB0F6] p-4 rounded-2xl items-center border-b-4 border-[#1899D6] border-t-[#1CB0F6] border-x-[#1CB0F6]"
@@ -230,7 +180,7 @@ export default function LevelScreen() {
                         <Text className="text-white font-bold text-[17px] uppercase tracking-wider">
                             {lesson.questions?.length > 0 ? 'Start Exercises' : 'Complete Lesson'}
                         </Text>
-                    </TouchableOpacity>
+                    </SoundButton>
                 </View>
             </SafeAreaView>
         );
@@ -271,7 +221,7 @@ export default function LevelScreen() {
                         </View>
                     </View>
 
-                    <TouchableOpacity
+                    <SoundButton
                         activeOpacity={0.8}
                         onPress={() => result?.passed ? router.back() : setPhase('questions')}
                         className={`${result?.passed ? 'bg-[#58CC02] border-[#46A302]' : 'bg-[#1CB0F6] border-[#1899D6]'} w-full p-4 rounded-2xl items-center justify-center border-b-4`}
@@ -279,7 +229,7 @@ export default function LevelScreen() {
                         <Text className="text-white font-bold text-[17px] uppercase tracking-wider">
                             {result?.passed ? 'Continue' : 'Try Again'}
                         </Text>
-                    </TouchableOpacity>
+                    </SoundButton>
                 </Animated.View>
                 </View>
             </SafeAreaView>
@@ -293,9 +243,9 @@ export default function LevelScreen() {
         <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12]">
             <View className="flex-1 px-5 pt-5 pb-2">
                 <View className="flex-row items-center justify-between mb-8">
-                    <TouchableOpacity onPress={() => router.back()} className="w-10 h-10 flex items-center justify-center -ml-2">
+                    <SoundButton onPress={() => router.back()} className="w-10 h-10 flex items-center justify-center -ml-2">
                         <XCircle size={28} color="#AFAFAF" />
-                    </TouchableOpacity>
+                    </SoundButton>
                     <View className="h-4 bg-[#E5E5E5] dark:bg-[#272B36] rounded-full flex-1 mx-4 overflow-hidden relative">
                         <View
                             style={{ width: `${progressPercent}%` }}
@@ -339,7 +289,7 @@ export default function LevelScreen() {
 
                         return (
                             <Animated.View key={index} className="mb-4">
-                                <TouchableOpacity
+                                <SoundButton
                                     activeOpacity={0.8}
                                     onPress={() => handleOptionSelect(index)}
                                     disabled={showNext}
@@ -361,7 +311,7 @@ export default function LevelScreen() {
                                     <View style={{ flex: 1 }}>
                                         <MathText content={option} color={textColor} fontSize={17} />
                                     </View>
-                                </TouchableOpacity>
+                                </SoundButton>
                             </Animated.View>
                         );
                     })}
@@ -388,7 +338,7 @@ export default function LevelScreen() {
                 )}
 
                 <Animated.View style={buttonStyle}>
-                    <TouchableOpacity
+                    <SoundButton
                         onPress={showNext ? handleNext : handleCheck}
                         activeOpacity={0.9}
                         disabled={selectedOption === null || submitting}
@@ -404,7 +354,7 @@ export default function LevelScreen() {
                                 {showNext ? (currentIndex === lesson.questions.length - 1 ? 'Finish' : 'Continue') : 'Check'}
                             </Text>
                         )}
-                    </TouchableOpacity>
+                    </SoundButton>
                 </Animated.View>
             </View>
         </SafeAreaView>

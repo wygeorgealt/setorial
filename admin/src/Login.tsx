@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Mail, Lock, Loader2 } from 'lucide-react';
+import { Mail, Lock, Loader2 } from 'lucide-react';
 import { adminApi } from './api';
 
 export default function Login({ onLoginSuccess }: { onLoginSuccess: () => void }) {
@@ -32,9 +32,7 @@ export default function Login({ onLoginSuccess }: { onLoginSuccess: () => void }
         <div className="min-h-screen flex items-center justify-center p-6 bg-zinc-50 relative overflow-hidden">
             <div className="card w-full max-w-sm relative z-10 px-8 py-10">
                 <div className="text-center mb-8 flex flex-col items-center">
-                    <div className="inline-flex items-center justify-center w-12 h-12 bg-white rounded-xl shadow-sm ring-1 ring-zinc-950/10 mb-5">
-                        <ShieldCheck size={24} className="text-zinc-900" />
-                    </div>
+                    <img src="/logo.png" alt="Setorial" className="w-16 h-16 rounded-2xl shadow-sm mb-5" />
                     <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
                         Sign in to admin
                     </h1>

@@ -7,6 +7,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import AnimatedSplash from "../components/AnimatedSplash";
 import { registerForPushNotificationsAsync } from "../services/notifications";
 import { useColorScheme as useTailwindColorScheme } from 'nativewind';
+import { StyleSheet, View } from "react-native";
 
 // Prevent the native splash from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -26,7 +27,7 @@ export default function RootLayout() {
         SecureStore.deleteItemAsync('theme').catch(() => {});
     }, []);
 
-    // Tell NativeWind to follow the system theme — exactly how student-app does it
+    // Tell NativeWind to follow the system theme
     useEffect(() => {
         setTailwindScheme('system');
     }, [setTailwindScheme]);
@@ -52,16 +53,21 @@ export default function RootLayout() {
         }
     }, [token, isLoading, segments, showSplash]);
 
-    if (showSplash) {
-        return <AnimatedSplash onFinish={() => setShowSplash(false)} />;
-    }
-
     return (
-        <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="login" />
-            <Stack.Screen name="register" />
-        </Stack>
+        <View style={StyleSheet.absoluteFill}>
+            {/* Stack always mounted so NavigationContainer always exists */}
+            <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="login" />
+                <Stack.Screen name="register" />
+            </Stack>
+
+            {/* Splash overlaid on top — disappears when video finishes */}
+            {showSplash && (
+                <View style={[StyleSheet.absoluteFill, { zIndex: 999 }]}>
+                    <AnimatedSplash onFinish={() => setShowSplash(false)} />
+                </View>
+            )}
+        </View>
     );
 }
-

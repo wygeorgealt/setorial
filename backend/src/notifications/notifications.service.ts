@@ -70,20 +70,20 @@ export class NotificationsService {
         return `
         <!DOCTYPE html>
         <html>
-        <body style="margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background-color: #f4f4f5; text-align: center;">
-            <div style="background-color: #f4f4f5; padding: 40px 20px;">
-                <div style="max-w-2xl; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); text-align: left;">
-                    <div style="background-color: #18181b; padding: 32px 40px; text-align: center;">
-                        <h1 style="color: #ffffff; font-size: 24px; font-weight: 800; margin: 0; letter-spacing: -0.5px;">SETORIAL</h1>
+        <body style="margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background-color: #FFF8E1; text-align: center;">
+            <div style="background-color: #FFF8E1; padding: 40px 20px;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); text-align: left;">
+                    <div style="background: linear-gradient(135deg, #F59E0B, #F97316); padding: 32px 40px; text-align: center;">
+                        <h1 style="color: #ffffff; font-size: 24px; font-weight: 800; margin: 0; letter-spacing: -0.5px;">🦁 SETORIAL</h1>
                     </div>
                     <div style="padding: 40px;">
-                        <h2 style="color: #18181b; font-size: 20px; font-weight: 700; margin-top: 0; margin-bottom: 24px;">${title}</h2>
+                        <h2 style="color: #92400E; font-size: 20px; font-weight: 700; margin-top: 0; margin-bottom: 24px;">${title}</h2>
                         <div style="color: #52525b; font-size: 16px; line-height: 1.6;">
                             ${messageHtml}
                         </div>
                     </div>
-                    <div style="background-color: #fafafa; padding: 24px 40px; border-top: 1px solid #f4f4f5; text-align: center;">
-                        <p style="color: #a1a1aa; font-size: 12px; margin: 0;">© ${new Date().getFullYear()} Setorial Platform. All rights reserved.</p>
+                    <div style="background-color: #FFFBEB; padding: 24px 40px; border-top: 1px solid #FDE68A; text-align: center;">
+                        <p style="color: #B45309; font-size: 12px; margin: 0;">© ${new Date().getFullYear()} Setorial Platform. All rights reserved.</p>
                     </div>
                 </div>
             </div>
@@ -97,8 +97,8 @@ export class NotificationsService {
         const content = `
             <p>Hi ${name},</p>
             <p>Welcome to Setorial! To complete your registration and unlock your account, please enter the following 6-digit verification code in the app:</p>
-            <div style="background-color: #f4f4f5; border-radius: 8px; padding: 20px; text-align: center; margin: 32px 0;">
-                <span style="font-size: 32px; font-weight: 800; color: #18181b; letter-spacing: 8px;">${otpCode}</span>
+            <div style="background-color: #FFFBEB; border: 2px solid #FDE68A; border-radius: 8px; padding: 20px; text-align: center; margin: 32px 0;">
+                <span style="font-size: 32px; font-weight: 800; color: #92400E; letter-spacing: 8px;">${otpCode}</span>
             </div>
             <p>This code will expire in 15 minutes.</p>
         `;
@@ -119,8 +119,8 @@ export class NotificationsService {
         const content = `
             <p>Hi ${name},</p>
             <p>We received a request to reset your Setorial password. Enter the following 6-digit code in the app to proceed:</p>
-            <div style="background-color: #f4f4f5; border-radius: 8px; padding: 20px; text-align: center; margin: 32px 0;">
-                <span style="font-size: 32px; font-weight: 800; color: #18181b; letter-spacing: 8px;">${otpCode}</span>
+            <div style="background-color: #FFFBEB; border: 2px solid #FDE68A; border-radius: 8px; padding: 20px; text-align: center; margin: 32px 0;">
+                <span style="font-size: 32px; font-weight: 800; color: #92400E; letter-spacing: 8px;">${otpCode}</span>
             </div>
             <p>If you didn't request this, you can safely ignore this email.</p>
             <p>This code will expire in 15 minutes.</p>

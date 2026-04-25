@@ -31,7 +31,7 @@ function ParticleField() {
       <Points ref={ref} positions={positions} stride={3} frustumCulled={false}>
         <PointMaterial
           transparent
-          color="#7c3aed"
+          color="#F59E0B"
           size={0.05}
           sizeAttenuation={true}
           depthWrite={false}

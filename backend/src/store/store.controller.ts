@@ -18,7 +18,12 @@ export class StoreController {
     }
 
     @Post('buy/:type')
-    purchasePowerUp(@Request() req: any, @Param('type') type: string) {
-        return this.storeService.purchasePowerUp(req.user.userId, type);
+    initializePurchase(@Request() req: any, @Param('type') type: string) {
+        return this.storeService.initializePurchase(req.user.userId, type);
+    }
+
+    @Get('verify/:reference')
+    verifyPurchase(@Param('reference') reference: string) {
+        return this.storeService.verifyPurchase(reference);
     }
 }

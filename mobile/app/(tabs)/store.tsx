@@ -1,15 +1,16 @@
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, Snowflake, Zap, ShoppingBag, CheckCircle } from 'lucide-react-native';
+import { Snowflake, Zap, ShoppingBag, CheckCircle } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useState, useEffect } from 'react';
-import { storeApi, walletApi } from '../../services/api';
+import { storeApi } from '../../services/api';
+import * as Linking from 'expo-linking';
+import { feedback } from '../../lib/feedback';
 
 export default function StoreScreen() {
     const router = useRouter();
     const [items, setItems] = useState<any[]>([]);
     const [myPowerUps, setMyPowerUps] = useState<any[]>([]);
-    const [balance, setBalance] = useState(0);
     const [loading, setLoading] = useState(true);
     const [buying, setBuying] = useState('');
 
@@ -19,14 +20,12 @@ export default function StoreScreen() {
 
     const fetchData = async () => {
         try {
-            const [storeRes, powerUpsRes, walletRes] = await Promise.all([
+            const [storeRes, powerUpsRes] = await Promise.all([
                 storeApi.getStore(),
                 storeApi.getMyPowerUps(),
-                walletApi.getBalance()
             ]);
             setItems(storeRes.data);
             setMyPowerUps(powerUpsRes.data);
-            setBalance(walletRes.data.balance);
         } catch (error) {
             console.error(error);
         } finally {
@@ -37,7 +36,7 @@ export default function StoreScreen() {
     const handleBuy = (item: any) => {
         Alert.alert(
             `Buy ${item.name}?`,
-            `This costs ₦${item.price} from your wallet balance (₦${balance}).`,
+            `This costs ₦${item.price} via Paystack checkout.`,
             [
                 { text: "Cancel", style: "cancel" },
                 {
@@ -45,9 +44,29 @@ export default function StoreScreen() {
                     onPress: async () => {
                         setBuying(item.type);
                         try {
-                            await storeApi.buy(item.type);
-                            Alert.alert('Success!', `${item.name} activated!`);
-                            fetchData();
+                            // Initialize Paystack transaction
+                            const res = await storeApi.buy(item.type);
+                            const { authorization_url, reference } = res.data;
+
+                            // Open Paystack checkout in browser
+                            await Linking.openURL(authorization_url);
+
+                            // After returning, verify the transaction
+                            setTimeout(async () => {
+                                try {
+                                    const verifyRes = await storeApi.verify(reference);
+                                    if (verifyRes.data.status === 'success') {
+                                        feedback.victory();
+                                        Alert.alert('Success!', `${item.name} activated!`);
+                                        fetchData();
+                                    } else {
+                                        Alert.alert('Pending', 'Payment is being processed. Check back shortly.');
+                                    }
+                                } catch (err) {
+                                    console.log('Verification pending - webhook will handle activation');
+                                    Alert.alert('Processing', 'Your payment is being verified. The power-up will appear shortly.');
+                                }
+                            }, 3000);
                         } catch (error: any) {
                             Alert.alert('Error', error.response?.data?.message || 'Purchase failed');
                         } finally {
@@ -78,12 +97,8 @@ export default function StoreScreen() {
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12]">
             <View className="flex-row items-center px-5 py-4 border-b-2 border-[#E5E5E5] dark:border-[#272B36]">
-
                 <View className="flex-1">
                     <Text className="text-black dark:text-white text-xl font-bold">Power-Up Store</Text>
-                </View>
-                <View className="bg-[#FFC800] px-4 py-2 rounded-xl">
-                    <Text className="text-white font-bold text-sm">₦{balance}</Text>
                 </View>
             </View>
 
@@ -141,7 +156,7 @@ export default function StoreScreen() {
                                     style={{ backgroundColor: colors.border, borderBottomColor: colors.text }}
                                 >
                                     <Text className="text-white font-bold text-[15px] uppercase tracking-wider">
-                                        {buying === item.type ? 'Purchasing...' : `Buy for ₦${item.price}`}
+                                        {buying === item.type ? 'Processing...' : `Buy for ₦${item.price}`}
                                     </Text>
                                 </TouchableOpacity>
                             </View>

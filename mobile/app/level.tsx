@@ -5,6 +5,8 @@ import { useState, useEffect, useCallback } from "react";
 import { Video, ResizeMode } from 'expo-av';
 import Animated, { FadeIn, FadeOut, SlideInDown, useSharedValue, useAnimatedStyle, withSpring, withSequence, withTiming } from 'react-native-reanimated';
 import { learningApi } from "../services/api";
+import { MathText } from "../components/MathText";
+import { feedback } from "../lib/feedback";
 
 const { width } = Dimensions.get('window');
 
@@ -107,6 +109,7 @@ export default function LevelScreen() {
     const handleOptionSelect = (index: number) => {
         if (showNext) return;
         setSelectedOption(index);
+        feedback.optionSelect();
         checkScale.value = withSequence(withSpring(1.05), withSpring(1));
     };
 
@@ -116,6 +119,12 @@ export default function LevelScreen() {
         setIsCorrect(correct);
         setShowNext(true);
         checkScale.value = withSequence(withSpring(1.1, { damping: 10, stiffness: 200 }), withSpring(1));
+        // Duolingo-style feedback
+        if (correct) {
+            feedback.correctAnswer();
+        } else {
+            feedback.wrongAnswer();
+        }
     };
 
     const handleNext = () => {
@@ -141,6 +150,12 @@ export default function LevelScreen() {
             });
             setResult(res.data);
             setPhase('finished');
+            // Celebration or retry feedback
+            if (res.data.passed) {
+                feedback.victory();
+            } else {
+                feedback.tryAgain();
+            }
         } catch (error) {
             console.error('Failed to submit lesson:', error);
             alert('Failed to submit lesson. Please try again.');
@@ -293,9 +308,7 @@ export default function LevelScreen() {
                 </View>
 
                 <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
-                    <Text className="text-2xl font-black text-[#4B4B4B] dark:text-white mb-8 leading-tight">
-                        {currentQuestion.text}
-                    </Text>
+                    <MathText content={currentQuestion.text} fontSize={22} containerStyle={{ marginBottom: 32 }} />
 
                     {currentQuestion.options.map((option: string, index: number) => {
                         const isSelected = selectedOption === index;
@@ -345,9 +358,9 @@ export default function LevelScreen() {
                                             <Text className="text-[#AFAFAF] font-bold text-sm">{index + 1}</Text>
                                         )}
                                     </View>
-                                    <Text style={{ color: textColor }} className="flex-1 font-bold text-[17px]">
-                                        {option}
-                                    </Text>
+                                    <View style={{ flex: 1 }}>
+                                        <MathText content={option} color={textColor} fontSize={17} />
+                                    </View>
                                 </TouchableOpacity>
                             </Animated.View>
                         );
@@ -367,9 +380,7 @@ export default function LevelScreen() {
                             </Text>
                             {!isCorrect && (
                                 <View className="mt-1">
-                                    <Text className="text-[#FF4B4B] font-bold text-sm">
-                                        Correct: {currentQuestion.options[currentQuestion.correctOption]}
-                                    </Text>
+                                    <MathText content={`Correct: ${currentQuestion.options[currentQuestion.correctOption]}`} color="#FF4B4B" fontSize={14} />
                                 </View>
                             )}
                         </View>

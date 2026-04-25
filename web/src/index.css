@@ -1,5 +1,5 @@
 :root {
-  /* Colors */
+  /* Colors — Warm amber/gold to match lion mascot */
   --bg-dark: #07070a;
   --bg-surface: #111116;
   --bg-surface-elevated: #1a1a24;
@@ -8,17 +8,17 @@
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
   
-  --primary: #7c3aed;
-  --primary-glow: rgba(124, 58, 237, 0.4);
-  --primary-hover: #8b5cf6;
+  --primary: #F59E0B;
+  --primary-glow: rgba(245, 158, 11, 0.4);
+  --primary-hover: #FBBF24;
   
-  --accent: #f59e0b;
-  --accent-glow: rgba(245, 158, 11, 0.4);
+  --accent: #F97316;
+  --accent-glow: rgba(249, 115, 22, 0.4);
   
   --success: #10b981;
   
   --border-light: rgba(255, 255, 255, 0.08);
-  --border-glow: rgba(124, 58, 237, 0.2);
+  --border-glow: rgba(245, 158, 11, 0.2);
 
   /* Typography */
   --font-sans: 'Outfit', system-ui, -apple-system, sans-serif;
@@ -71,21 +71,21 @@ body {
 
 /* Gradients */
 .text-gradient {
-  background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+  background: linear-gradient(135deg, #fff 0%, #FBBF24 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .text-gradient-primary {
-  background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .text-gradient-accent {
-  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

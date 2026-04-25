@@ -1,13 +1,11 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { WalletService } from '../wallet/wallet.service';
 import { GamificationService } from '../gamification/gamification.service';
 
 @Injectable()
 export class StoreService {
     constructor(
         private prisma: PrismaService,
-        private wallet: WalletService,
         private gamification: GamificationService,
     ) { }
 
@@ -46,42 +44,97 @@ export class StoreService {
         return this.prisma.powerUp.findMany();
     }
 
-    async purchasePowerUp(userId: string, powerUpType: string) {
+    /**
+     * Initialize a Paystack transaction for a power-up purchase.
+     * Returns authorization_url and reference for the client to open Paystack checkout.
+     */
+    async initializePurchase(userId: string, powerUpType: string) {
         await this.seedPowerUps();
+
+        const secret = process.env.PAYSTACK_SECRET_KEY;
+        if (!secret) throw new BadRequestException('Paystack not configured');
 
         const powerUp = await this.prisma.powerUp.findUnique({
             where: { type: powerUpType as any },
         });
         if (!powerUp) throw new NotFoundException('Power-up not found');
 
-        const price = Number(powerUp.price);
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user) throw new BadRequestException('User not found');
 
-        // Deduct from wallet
-        const success = await this.wallet.deductBalance(userId, price, `Power-up: ${powerUp.name}`);
-        if (!success) {
-            throw new BadRequestException('Insufficient wallet balance');
-        }
+        const amount = Math.round(Number(powerUp.price) * 100); // Convert to kobo
 
-        // Create the user's power-up with expiration
-        const expiresAt = powerUp.durationDays
-            ? new Date(Date.now() + powerUp.durationDays * 24 * 60 * 60 * 1000)
-            : null;
-
-        const userPowerUp = await this.prisma.userPowerUp.create({
-            data: {
-                userId,
-                powerUpId: powerUp.id,
-                expiresAt,
+        const response = await fetch('https://api.paystack.co/transaction/initialize', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${secret}`,
+                'Content-Type': 'application/json',
             },
-            include: { powerUp: true },
+            body: JSON.stringify({
+                email: user.email,
+                amount,
+                metadata: {
+                    userId: user.id,
+                    powerUpType: powerUp.type,
+                    purchaseType: 'POWERUP',
+                },
+                callback_url: `setorial://payment-callback`,
+            }),
         });
 
-        // If it's a streak freeze, apply it immediately in Redis
-        if (powerUp.type === 'STREAK_FREEZE') {
-            await this.gamification.applyStreakFreeze(userId);
+        const data = await response.json();
+        if (!data.status) throw new BadRequestException(data.message || 'Payment initialization failed');
+
+        return {
+            authorization_url: data.data.authorization_url,
+            access_code: data.data.access_code,
+            reference: data.data.reference,
+        };
+    }
+
+    /**
+     * Verify a Paystack transaction and activate the power-up if successful.
+     */
+    async verifyPurchase(reference: string) {
+        const secret = process.env.PAYSTACK_SECRET_KEY;
+        if (!secret) throw new BadRequestException('Paystack not configured');
+
+        const response = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
+            headers: { 'Authorization': `Bearer ${secret}` },
+        });
+
+        const data = await response.json();
+        if (!data.status || data.data.status !== 'success') {
+            return { status: 'failed', message: 'Payment not verified' };
         }
 
-        return userPowerUp;
+        const metadata = data.data.metadata;
+        if (metadata?.purchaseType === 'POWERUP' && metadata?.userId && metadata?.powerUpType) {
+            const powerUp = await this.prisma.powerUp.findUnique({
+                where: { type: metadata.powerUpType as any },
+            });
+
+            if (powerUp) {
+                const expiresAt = powerUp.durationDays
+                    ? new Date(Date.now() + powerUp.durationDays * 24 * 60 * 60 * 1000)
+                    : null;
+
+                await this.prisma.userPowerUp.create({
+                    data: {
+                        userId: metadata.userId,
+                        powerUpId: powerUp.id,
+                        expiresAt,
+                    },
+                });
+
+                // If it's a streak freeze, apply it immediately
+                if (powerUp.type === 'STREAK_FREEZE') {
+                    await this.gamification.applyStreakFreeze(metadata.userId);
+                }
+            }
+        }
+
+        return { status: 'success', powerUpType: metadata?.powerUpType };
     }
 
     async getMyPowerUps(userId: string) {

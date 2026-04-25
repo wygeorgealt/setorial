@@ -1,13 +1,13 @@
 import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Switch } from 'react-native';
-import { ChevronLeft, User, Bell, Shield, CircleHelp } from 'lucide-react-native';
+import { ChevronLeft, User, Bell, Shield, CircleHelp, Volume2, Vibrate } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
+import { useAuthStore } from '../store/authStore';
 
 export default function SettingsScreen() {
     const router = useRouter();
+    const { hapticsEnabled, soundEnabled, setHapticsEnabled, setSoundEnabled } = useAuthStore();
     const [notifications, setNotifications] = useState(true);
-
-
 
     return (
         <SafeAreaView className="flex-1 bg-white dark:bg-[#0B0D12]">
@@ -33,6 +33,20 @@ export default function SettingsScreen() {
                         value={notifications}
                         onValueChange={setNotifications}
                         trackColor={{ false: '#E2E8F0', true: '#000' }}
+                    />
+                </SettingRow>
+                <SettingRow icon={<Vibrate size={20} color="#000" />} label="Haptic Feedback">
+                    <Switch
+                        value={hapticsEnabled}
+                        onValueChange={setHapticsEnabled}
+                        trackColor={{ false: '#E2E8F0', true: '#58CC02' }}
+                    />
+                </SettingRow>
+                <SettingRow icon={<Volume2 size={20} color="#000" />} label="Sound Effects">
+                    <Switch
+                        value={soundEnabled}
+                        onValueChange={setSoundEnabled}
+                        trackColor={{ false: '#E2E8F0', true: '#58CC02' }}
                     />
                 </SettingRow>
                 <SettingRow

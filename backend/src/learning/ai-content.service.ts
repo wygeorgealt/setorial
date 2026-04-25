@@ -81,6 +81,11 @@ Chapter Title: "${lessonName}".
 Provide high-depth textbook-style content (~800-1200 words). Include sections like "Introduction", "Core Principles", "Detailed Analysis", "Practical Examples", and "Summary". 
 Also generate 5 challenging multiple-choice questions based on this specific content.
 
+IMPORTANT MATH FORMATTING: All mathematical expressions MUST use LaTeX wrapped in dollar-sign delimiters.
+Use $...$ for inline math and $$...$$ for display equations.
+Examples: $\\frac{a}{b}$, $\\sqrt{x}$, $\\sec^2(x)$, $$E = mc^2$$
+NEVER use plain Unicode superscripts (like x² or √x) or raw carets (like x^2). Always use LaTeX.
+
 Respond ONLY with valid JSON:
 {
   "content": "Full textbook markdown...",
@@ -129,6 +134,11 @@ Respond ONLY with valid JSON:
         const prompt = `Create a professional standardized mock exam for the subject "${subject.name}".
 Title: "${title}".
 Generate exactly ${numQuestions} diverse, high-quality multiple choice questions covering various topics in this subject.
+
+IMPORTANT MATH FORMATTING: All mathematical expressions MUST use LaTeX wrapped in dollar-sign delimiters.
+Use $...$ for inline math and $$...$$ for display equations.
+Examples: $\\frac{a}{b}$, $\\sqrt{x}$, $\\sec^2(x)$, $$E = mc^2$$
+NEVER use plain Unicode superscripts (like x² or √x) or raw carets (like x^2). Always use LaTeX.
 
 Respond ONLY with valid JSON:
 {

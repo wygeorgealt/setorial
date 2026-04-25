@@ -14,7 +14,8 @@
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/adaptive-icon.png"
-      }
+      },
+      "package": "com.yeezykng_dom.setorial"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -28,11 +29,12 @@
           "image": "./assets/splash-icon.png",
           "dark": {
             "image": "./assets/splash-icon-dark.png",
-            "backgroundColor": "#000000"
+            "backgroundColor": "#FFFFFF"
           },
           "imageWidth": 450
         }
-      ]
+      ],
+      "expo-video"
     ],
     "extra": {
       "eas": {

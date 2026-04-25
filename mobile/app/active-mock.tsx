@@ -1,13 +1,17 @@
-import { View, Text, TouchableOpacity, ScrollView, AppState, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, AppState, Alert, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Clock, ArrowLeft, CheckCircle2 } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState, useEffect, useRef } from 'react';
 import { mockApi } from '../services/api';
+import { MathText } from '../components/MathText';
+import { feedback } from '../lib/feedback';
 
 export default function ActiveMockScreen() {
     const { attemptId, mockId } = useLocalSearchParams();
     const router = useRouter();
+    const colorScheme = useColorScheme();
+    const isDark = colorScheme === 'dark';
 
     const [mock, setMock] = useState<any>(null);
     const [answers, setAnswers] = useState<number[]>([]);
@@ -58,6 +62,7 @@ export default function ActiveMockScreen() {
             ) {
                 // Return to App
                 setTabSwitches((prev) => prev + 1);
+                feedback.warning();
                 Alert.alert(
                     "Warning: App Switched",
                     "Switching apps or closing the exam window is treated as an anti-cheat violation. Doing this too many times will nullify your score."
@@ -72,6 +77,7 @@ export default function ActiveMockScreen() {
     }, []);
 
     const handleSelectOption = (qIndex: number, optIndex: number) => {
+        feedback.optionSelect();
         setAnswers((prev) => {
             const newAnswers = [...prev];
             newAnswers[qIndex] = optIndex;
@@ -139,9 +145,7 @@ export default function ActiveMockScreen() {
             <ScrollView className="flex-1 px-5 pt-6 pb-20">
                 {mock.questions.map((q: any, qIndex: number) => (
                     <View key={q.id} className="mb-10">
-                        <Text className="text-black dark:text-white text-xl font-bold mb-4 leading-relaxed">
-                            {qIndex + 1}. {q.text}
-                        </Text>
+                        <MathText content={`${qIndex + 1}. ${q.text}`} fontSize={20} containerStyle={{ marginBottom: 16 }} />
 
                         {q.options.map((opt: string, optIndex: number) => {
                             const isSelected = answers[qIndex] === optIndex;
@@ -159,9 +163,9 @@ export default function ActiveMockScreen() {
                                         ${isSelected ? 'border-[#1CB0F6] bg-[#1CB0F6]' : 'border-[#E5E5E5] dark:border-[#4B4B4B]'}`}>
                                         {isSelected && <View className="w-2 h-2 rounded-full bg-white dark:bg-zinc-950" />}
                                     </View>
-                                    <Text className={`font-bold flex-1 ${isSelected ? 'text-[#1CB0F6]' : 'text-[#4B4B4B] dark:text-gray-300'}`}>
-                                        {opt}
-                                    </Text>
+                                    <View style={{ flex: 1 }}>
+                                        <MathText content={opt} color={isSelected ? '#1CB0F6' : (isDark ? '#D1D5DB' : '#4B4B4B')} fontSize={16} />
+                                    </View>
                                 </TouchableOpacity>
                             );
                         })}

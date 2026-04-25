@@ -90,4 +90,5 @@ export const storeApi = {
     getStore: () => api.get('/store'),
     getMyPowerUps: () => api.get('/store/my-powerups'),
     buy: (type: string) => api.post(`/store/buy/${type}`),
+    verify: (reference: string) => api.get(`/store/verify/${reference}`),
 };

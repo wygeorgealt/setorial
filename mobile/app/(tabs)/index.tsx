@@ -161,7 +161,7 @@ export default function HomeScreen() {
                     {subjects.length > 0 ? (
                         subjects.map((subject, index) => {
                             const colors = [
-                                { bg: '#58CC02', border: '#58A700' }, // Green
+                                { bg: '#F59E0B', border: '#D97706' }, // Amber
                                 { bg: '#1CB0F6', border: '#1899D6' }, // Blue
                                 { bg: '#CE82FF', border: '#A552DE' }, // Purple
                                 { bg: '#FF4B4B', border: '#EA2B2B' }, // Red

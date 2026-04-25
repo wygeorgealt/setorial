@@ -106,7 +106,7 @@ export default function SecurityScreen() {
                     disabled={saving}
                     className={`py-4 rounded-2xl items-center border-b-4 ${saving
                         ? 'bg-[#E5E5E5] border-[#CECECE]'
-                        : 'bg-[#58CC02] border-[#58A700] border-t-[#58CC02] border-x-[#58CC02]'}`}
+                        : 'bg-[#F59E0B] border-[#D97706] border-t-[#F59E0B] border-x-[#F59E0B]'}`}
                 >
                     {saving ? (
                         <ActivityIndicator color="#FFF" />

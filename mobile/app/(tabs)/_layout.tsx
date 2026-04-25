@@ -11,7 +11,7 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 const ICON_SIZE = 20;
 
 const TAB_CONFIG = [
-  { name: 'index', label: 'Home', Icon: Home, color: '#58CC02' },
+  { name: 'index', label: 'Home', Icon: Home, color: '#F59E0B' },
   { name: 'courses', label: 'Discover', Icon: Search, color: '#1CB0F6' },
   { name: 'statistics', label: 'Wallet', Icon: Wallet, color: '#FFC800' },
   { name: 'store', label: 'Store', Icon: ShoppingBag, color: '#CE82FF' },

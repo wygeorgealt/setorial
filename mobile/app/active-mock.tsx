@@ -176,7 +176,7 @@ export default function ActiveMockScreen() {
                 <SoundButton
                     onPress={confirmSubmit}
                     disabled={isSubmitting}
-                    className="bg-[#58CC02] border-b-4 border-[#58A700] rounded-2xl py-4 flex-row items-center justify-center mb-10"
+                    className="bg-[#F59E0B] border-b-4 border-[#D97706] rounded-2xl py-4 flex-row items-center justify-center mb-10"
                 >
                     <CheckCircle2 size={24} color="#FFF" style={{ marginRight: 8 }} />
                     <Text className="text-white font-bold text-lg uppercase tracking-wider">

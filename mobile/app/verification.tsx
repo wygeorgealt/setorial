@@ -241,7 +241,7 @@ export default function VerificationScreen() {
 
                                 {resolvingAccount && (
                                     <View className="flex-row items-center mb-5 px-1">
-                                        <ActivityIndicator size="small" color="#1CB0F6" />
+                                        <ActivityIndicator size="small" color="#F59E0B" />
                                         <Text className="text-[#1CB0F6] font-bold ml-2">Identifying account name...</Text>
                                     </View>
                                 )}
@@ -322,7 +322,7 @@ export default function VerificationScreen() {
                         </View>
 
                         {loadingBanks ? (
-                            <ActivityIndicator size="large" color="#1CB0F6" className="mt-10" />
+                            <ActivityIndicator size="large" color="#F59E0B" className="mt-10" />
                         ) : (
                             <FlatList
                                 data={filteredBanks}

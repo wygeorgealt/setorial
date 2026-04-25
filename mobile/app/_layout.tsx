@@ -66,6 +66,27 @@ export default function RootLayout() {
                 <Stack.Screen name="(tabs)" />
                 <Stack.Screen name="login" />
                 <Stack.Screen name="register" />
+                <Stack.Screen name="welcome" />
+                <Stack.Screen name="onboarding" />
+                <Stack.Screen name="verify-email" />
+                <Stack.Screen name="forgot-password" />
+                <Stack.Screen name="subscription" />
+                <Stack.Screen name="level" />
+                <Stack.Screen name="course-detail" />
+                <Stack.Screen name="active-mock" />
+                <Stack.Screen name="mock-exams" />
+                <Stack.Screen name="learning-path" />
+                <Stack.Screen name="leaderboard" />
+                <Stack.Screen name="achievements" />
+                <Stack.Screen name="edit-profile" />
+                <Stack.Screen name="security" />
+                <Stack.Screen name="payout-history" />
+                <Stack.Screen name="settings" />
+                <Stack.Screen name="help" />
+                <Stack.Screen name="about" />
+                <Stack.Screen name="privacy" />
+                <Stack.Screen name="terms" />
+                <Stack.Screen name="verification" />
             </Stack>
 
             {/* Splash overlaid on top — disappears when video finishes */}

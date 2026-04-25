@@ -46,7 +46,7 @@ function LeaderboardScreen() {
     if (loading && leaderboard.length === 0) {
         return (
             <View className="flex-1 bg-white dark:bg-[#0B0D12] items-center justify-center">
-                <ActivityIndicator size="large" color="#1CB0F6" />
+                <ActivityIndicator size="large" color="#F59E0B" />
             </View>
         );
     }

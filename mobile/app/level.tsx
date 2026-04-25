@@ -117,7 +117,7 @@ export default function LevelScreen() {
     if (loading) {
         return (
             <View className="flex-1 bg-white dark:bg-[#0B0D12] items-center justify-center">
-                <ActivityIndicator size="large" color="#58CC02" />
+                <ActivityIndicator size="large" color="#F59E0B" />
             </View>
         );
     }
@@ -249,7 +249,7 @@ export default function LevelScreen() {
                     <View className="h-4 bg-[#E5E5E5] dark:bg-[#272B36] rounded-full flex-1 mx-4 overflow-hidden relative">
                         <View
                             style={{ width: `${progressPercent}%` }}
-                            className="h-full bg-[#58CC02] rounded-full absolute left-0 top-0 transition-all duration-300 ease-out"
+                            className="h-full bg-[#F59E0B] rounded-full absolute left-0 top-0 transition-all duration-300 ease-out"
                         >
                             <View className="absolute top-1 left-2 right-2 h-[4px] bg-white dark:bg-zinc-950/30 rounded-full" />
                         </View>
@@ -344,7 +344,7 @@ export default function LevelScreen() {
                         disabled={selectedOption === null || submitting}
                         className={`p-4 rounded-2xl items-center justify-center border-b-4 ${selectedOption === null || submitting
                             ? 'bg-[#E5E5E5] dark:bg-[#272B36] border-[#CECECE] dark:border-[#1E222B]'
-                            : isCorrect === true ? 'bg-[#58CC02] border-[#46A302]' : isCorrect === false ? 'bg-[#FF4B4B] border-[#EA2B2B]' : 'bg-[#58CC02] border-[#46A302]'
+                            : isCorrect === true ? 'bg-[#58CC02] border-[#46A302]' : isCorrect === false ? 'bg-[#FF4B4B] border-[#EA2B2B]' : 'bg-[#F59E0B] border-[#D97706]'
                             }`}
                     >
                         {submitting ? (

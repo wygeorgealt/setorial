@@ -73,7 +73,7 @@ export default function MockExamsScreen() {
                 </View>
 
                 {loading ? (
-                    <ActivityIndicator size="large" color="#1CB0F6" className="mt-10" />
+                    <ActivityIndicator size="large" color="#F59E0B" className="mt-10" />
                 ) : mocks.length > 0 ? (
                     mocks.map((mock) => (
                         <View key={mock.id} className="bg-white dark:bg-[#1E222B] border-2 border-[#E5E5E5] dark:border-[#272B36] border-b-4 rounded-2xl p-5 mb-4">

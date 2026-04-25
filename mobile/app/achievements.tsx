@@ -36,7 +36,7 @@ export default function AchievementsScreen() {
     if (loading) {
         return (
             <View className="flex-1 bg-white dark:bg-[#0B0D12] items-center justify-center">
-                <ActivityIndicator size="large" color="#58CC02" />
+                <ActivityIndicator size="large" color="#F59E0B" />
             </View>
         );
     }

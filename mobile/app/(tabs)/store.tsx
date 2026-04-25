@@ -110,7 +110,7 @@ export default function StoreScreen() {
                         <Text className="text-black dark:text-white font-bold text-lg mb-3">Active Power-Ups</Text>
                         {myPowerUps.map((up: any) => (
                             <View key={up.id} className="bg-green-50 dark:bg-green-900/20 border-2 border-green-300 dark:border-green-700 rounded-2xl p-4 mb-3 flex-row items-center">
-                                <CheckCircle size={20} color="#58CC02" />
+                                <CheckCircle size={20} color="#F59E0B" />
                                 <Text className="text-green-700 dark:text-green-300 font-bold ml-3 flex-1">{up.powerUp.name}</Text>
                                 {up.expiresAt && (
                                     <Text className="text-green-500 text-xs font-bold">
@@ -126,7 +126,7 @@ export default function StoreScreen() {
                 <Text className="text-black dark:text-white font-bold text-lg mb-4">Available</Text>
 
                 {loading ? (
-                    <ActivityIndicator size="large" color="#1CB0F6" className="mt-10" />
+                    <ActivityIndicator size="large" color="#F59E0B" className="mt-10" />
                 ) : (
                     items.map((item: any) => {
                         const colors = getGradientColors(item.type);

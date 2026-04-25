@@ -40,14 +40,14 @@ export default function SettingsScreen() {
                     <Switch
                         value={hapticsEnabled}
                         onValueChange={setHapticsEnabled}
-                        trackColor={{ false: '#E2E8F0', true: '#58CC02' }}
+                        trackColor={{ false: '#E2E8F0', true: '#F59E0B' }}
                     />
                 </SettingRow>
                 <SettingRow icon={<Volume2 size={20} color="#000" />} label="Sound Effects">
                     <Switch
                         value={soundEnabled}
                         onValueChange={setSoundEnabled}
-                        trackColor={{ false: '#E2E8F0', true: '#58CC02' }}
+                        trackColor={{ false: '#E2E8F0', true: '#F59E0B' }}
                     />
                 </SettingRow>
                 <SettingRow

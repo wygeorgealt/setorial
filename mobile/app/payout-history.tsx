@@ -49,7 +49,7 @@ export default function PayoutHistoryScreen() {
                 </View>
 
                 {loading ? (
-                    <ActivityIndicator size="large" color="#1CB0F6" className="mt-10" />
+                    <ActivityIndicator size="large" color="#F59E0B" className="mt-10" />
                 ) : transactions.length > 0 ? (
                     transactions.map((tx: any) => (
                         <View key={tx.id} className="flex-row justify-between items-center bg-gray-50 dark:bg-[#1E222B] p-5 rounded-2xl border-2 border-gray-200 dark:border-[#272B36] mb-4 border-b-4">

@@ -8,7 +8,10 @@ export class WalletService {
 
     async getBalanceData(userId: string): Promise<{ balance: number, exchangeRate: number }> {
         const result = await this.prisma.walletLedger.aggregate({
-            where: { userId },
+            where: { 
+                userId,
+                type: { not: 'EARN' } 
+            },
             _sum: { amount: true },
         });
 
@@ -54,7 +57,10 @@ export class WalletService {
 
             if (type === 'PAYOUT') {
                 const result = await tx.walletLedger.aggregate({
-                    where: { userId },
+                    where: { 
+                        userId,
+                        type: { not: 'EARN' }
+                    },
                     _sum: { amount: true },
                 });
                 const currentBalance = result._sum.amount ? Number(result._sum.amount) : 0;
@@ -69,7 +75,10 @@ export class WalletService {
 
     async getTransactions(userId: string) {
         return this.prisma.walletLedger.findMany({
-            where: { userId },
+            where: { 
+                userId,
+                type: { not: 'EARN' }
+            },
             orderBy: { createdAt: 'desc' },
             take: 20,
         });
@@ -78,7 +87,10 @@ export class WalletService {
     async deductBalance(userId: string, amount: number, reference: string): Promise<boolean> {
         return this.prisma.$transaction(async (tx) => {
             const result = await tx.walletLedger.aggregate({
-                where: { userId },
+                where: { 
+                    userId,
+                    type: { not: 'EARN' }
+                },
                 _sum: { amount: true },
             });
             const currentBalance = result._sum.amount ? Number(result._sum.amount) : 0;

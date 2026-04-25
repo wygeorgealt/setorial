@@ -150,6 +150,35 @@ export class GamificationService implements OnModuleDestroy, OnModuleInit {
 
     async getLeaderboard(limit: number = 10, subjectId?: string) {
         const key = subjectId ? `leaderboard:subject:${subjectId}` : 'leaderboard:global';
-        return this.redis.zrevrange(key, 0, limit - 1, 'WITHSCORES');
+        const rawData = await this.redis.zrevrange(key, 0, limit - 1, 'WITHSCORES');
+        
+        // rawData is an array of alternating values: ['userId1', '100', 'userId2', '50']
+        const userIds = [];
+        const scoresMap = new Map();
+        
+        for (let i = 0; i < rawData.length; i += 2) {
+            const userId = rawData[i];
+            const score = parseInt(rawData[i + 1], 10);
+            userIds.push(userId);
+            scoresMap.set(userId, score);
+        }
+
+        if (userIds.length === 0) return [];
+
+        const users = await this.prisma.user.findMany({
+            where: { id: { in: userIds } },
+            select: { id: true, name: true, avatarUrl: true }
+        });
+
+        // Map and sort back to the Redis sorted order
+        return userIds.map(id => {
+            const user = users.find(u => u.id === id);
+            return {
+                id,
+                points: scoresMap.get(id),
+                name: user?.name || 'Student',
+                avatarUrl: user?.avatarUrl || null
+            };
+        });
     }
 }

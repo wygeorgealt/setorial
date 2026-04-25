@@ -29,7 +29,7 @@ export default function CourseDetailScreen() {
     if (loading) {
         return (
             <View className="flex-1 bg-white dark:bg-[#0B0D12] items-center justify-center">
-                <ActivityIndicator size="large" color="#58CC02" />
+                <ActivityIndicator size="large" color="#F59E0B" />
             </View>
         );
     }
@@ -69,7 +69,7 @@ export default function CourseDetailScreen() {
                                     alert("No lessons available in this unit yet.");
                                 }
                             }}
-                            className="bg-[#58CC02] p-6 rounded-[24px] mb-8 shadow-sm border-b-4 border-[#46A302]"
+                            className="bg-[#F59E0B] p-6 rounded-[24px] mb-8 shadow-sm border-b-4 border-[#D97706]"
                         >
                             <Text className="text-white/80 font-black text-base uppercase tracking-wider">Unit {topicIndex + 1}</Text>
                             <Text className="text-white font-bold text-xl mt-1">{topic.name}</Text>
@@ -94,7 +94,7 @@ export default function CourseDetailScreen() {
                                     borderColorClass = "border-[#E5B400]";
                                     icon = <CheckCircle2 size={32} color="#FFF" />;
                                 } else if (isCurrent) {
-                                    bgColorClass = "bg-[#58CC02]";
+                                    bgColorClass = "bg-[#F59E0B]";
                                     borderColorClass = "border-[#46A302]";
                                     icon = <Star size={36} color="#FFF" fill="#FFF" />;
                                 }
@@ -108,7 +108,7 @@ export default function CourseDetailScreen() {
                                         >
                                             {isCurrent && (
                                                 <View className="absolute -top-11 -left-2 w-24 bg-white dark:bg-zinc-800 rounded-xl py-2 items-center justify-center border-2 border-b-4 border-gray-200 dark:border-zinc-700 shadow-sm z-50">
-                                                    <Text className="text-[#58CC02] font-black uppercase text-[11px] tracking-widest">START</Text>
+                                                    <Text className="text-[#F59E0B] font-black uppercase text-[11px] tracking-widest">START</Text>
                                                 </View>
                                             )}
 

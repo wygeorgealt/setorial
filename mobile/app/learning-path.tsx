@@ -28,7 +28,7 @@ export default function LearningPathScreen() {
     if (loading) {
         return (
             <View className="flex-1 bg-white dark:bg-zinc-950 items-center justify-center">
-                <ActivityIndicator size="large" color="#000" />
+                <ActivityIndicator size="large" color="#F59E0B" />
             </View>
         );
     }
@@ -60,14 +60,14 @@ export default function LearningPathScreen() {
                                     <Text className="text-[#AFAFAF] dark:text-gray-400 font-bold text-xs uppercase tracking-wider">{subject.totalTopics} topics · {subject.totalLessons} lessons</Text>
                                 </View>
                             </View>
-                            <Text className="text-[#58CC02] font-black text-2xl">{subject.progress}%</Text>
+                            <Text className="text-[#F59E0B] font-black text-2xl">{subject.progress}%</Text>
                         </View>
 
                         {/* Progress Bar */}
                         <View className="h-4 bg-[#F5F5F5] dark:bg-[#0B0D12] rounded-full overflow-hidden border-2 border-[#E5E5E5] dark:border-[#272B36]">
                             <View
                                 style={{ width: `${subject.progress}%` }}
-                                className="h-full bg-[#58CC02] rounded-full"
+                                className="h-full bg-[#F59E0B] rounded-full"
                             />
                         </View>
 

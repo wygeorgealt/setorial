@@ -1,5 +1,5 @@
 import { SoundButton } from '../components/SoundButton';
-import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, SafeAreaView, Alert, ActivityIndicator } from 'react-native';
 import { ChevronLeft, Check, Crown, Shield, Star, Zap } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../store/authStore';
@@ -51,8 +51,6 @@ export default function SubscriptionScreen() {
 
     const fetchPricing = async () => {
         try {
-            // If user has a locked billing country, use it, else default to NG or trigger fallback on backend
-            // For now, we simulate by sending 'NG' if it's not set (or we can hit /pricing without it to get fallback)
             const targetCountry = user?.billingCountry || 'NG';
             const res = await subscriptionApi.getPricing(targetCountry);
             setPricingData(res.data);
@@ -72,10 +70,8 @@ export default function SubscriptionScreen() {
             });
             const { authorization_url, reference } = res.data;
 
-            // Open Paystack checkout page in browser
             await Linking.openURL(authorization_url);
 
-            // After returning, verify the transaction
             setTimeout(async () => {
                 try {
                     const verifyRes = await subscriptionApi.verify(reference);
@@ -96,7 +92,6 @@ export default function SubscriptionScreen() {
     };
 
     const formatCurrency = (amount: number, currency: string) => {
-        // Basic formatter, will default to local currency symbol if known or code
         if (!currency) return `₦${amount}`;
         const formatter = new Intl.NumberFormat('en-US', {
             style: 'currency',
@@ -107,7 +102,6 @@ export default function SubscriptionScreen() {
         return formatter.format(amount);
     };
 
-    // Combine remote pricing with local metadata
     const getMergedTiers = () => {
         const currency = pricingData?.currency || 'NGN';
         const isAnnual = billingCycle === 'ANNUAL';
@@ -127,6 +121,7 @@ export default function SubscriptionScreen() {
                         ? `${formatCurrency(pricingData.bronzeAnnual, currency)}/yr`
                         : `${formatCurrency(pricingData.bronzeMonthly, currency)}/mo`)
                     : 'Loading...',
+                originalPrice: isAnnual && pricingData ? `${formatCurrency(pricingData.bronzeMonthly * 12, currency)}/yr` : null,
                 ...TIER_META.BRONZE,
             },
             {
@@ -137,6 +132,7 @@ export default function SubscriptionScreen() {
                         ? `${formatCurrency(pricingData.silverAnnual, currency)}/yr`
                         : `${formatCurrency(pricingData.silverMonthly, currency)}/mo`)
                     : 'Loading...',
+                originalPrice: isAnnual && pricingData ? `${formatCurrency(pricingData.silverMonthly * 12, currency)}/yr` : null,
                 ...TIER_META.SILVER,
             },
             {
@@ -147,6 +143,7 @@ export default function SubscriptionScreen() {
                         ? `${formatCurrency(pricingData.goldAnnual, currency)}/yr`
                         : `${formatCurrency(pricingData.goldMonthly, currency)}/mo`)
                     : 'Loading...',
+                originalPrice: isAnnual && pricingData ? `${formatCurrency(pricingData.goldMonthly * 12, currency)}/yr` : null,
                 ...TIER_META.GOLD,
             },
         ];
@@ -179,7 +176,7 @@ export default function SubscriptionScreen() {
 
             {fetchingPricing ? (
                 <View className="flex-1 justify-center items-center">
-                    <ActivityIndicator size="large" color="#8B5CF6" />
+                    <ActivityIndicator size="large" color="#F59E0B" />
                     <Text className="text-gray-500 dark:text-gray-400 mt-4 font-bold">Loading local pricing...</Text>
                 </View>
             ) : (
@@ -228,17 +225,54 @@ export default function SubscriptionScreen() {
                     <View className="flex-row items-center justify-center mb-8 bg-gray-100 dark:bg-[#1E222B] p-1.5 rounded-3xl self-center border-2 border-gray-200 dark:border-[#272B36]">
                         <SoundButton
                             onPress={() => setBillingCycle('MONTHLY')}
-                            className={`px-8 py-3 rounded-2xl ${billingCycle === 'MONTHLY' ? 'bg-white dark:bg-black shadow-sm border-2 border-b-4 border-gray-100 dark:border-white' : ''}`}
+                            className="px-8 py-3 rounded-2xl"
+                            style={billingCycle === 'MONTHLY' ? {
+                                backgroundColor: '#FFF', 
+                                shadowColor: '#000',
+                                shadowOpacity: 0.05,
+                                shadowRadius: 3,
+                                elevation: 1,
+                                borderWidth: 2,
+                                borderBottomWidth: 4,
+                                borderColor: '#F3F4F6'
+                            } : {}}
                         >
-                            <Text className={`font-black uppercase tracking-widest text-[11px] ${billingCycle === 'MONTHLY' ? 'text-black dark:text-white' : 'text-gray-400'}`}>Monthly</Text>
+                            <Text style={{ 
+                                fontWeight: '900', 
+                                textTransform: 'uppercase', 
+                                letterSpacing: 1, 
+                                fontSize: 11, 
+                                color: billingCycle === 'MONTHLY' ? '#000' : '#9CA3AF' 
+                            }}>
+                                Monthly
+                            </Text>
                         </SoundButton>
+                        
                         <SoundButton
                             onPress={() => setBillingCycle('ANNUAL')}
-                            className={`px-8 py-3 rounded-2xl flex-row items-center ${billingCycle === 'ANNUAL' ? 'bg-white dark:bg-black shadow-sm border-2 border-b-4 border-gray-100 dark:border-white' : ''}`}
+                            className="px-8 py-3 rounded-2xl flex-row items-center"
+                            style={billingCycle === 'ANNUAL' ? {
+                                backgroundColor: '#FFF',
+                                shadowColor: '#000',
+                                shadowOpacity: 0.05,
+                                shadowRadius: 3,
+                                elevation: 1,
+                                borderWidth: 2,
+                                borderBottomWidth: 4,
+                                borderColor: '#F3F4F6'
+                            } : {}}
                         >
-                            <Text className={`font-black uppercase tracking-widest text-[11px] ${billingCycle === 'ANNUAL' ? 'text-black dark:text-white' : 'text-gray-400'}`}>Yearly</Text>
-                            <View className="ml-2 bg-green-500 px-2 py-0.5 rounded-lg">
-                                <Text className="text-white text-[9px] font-black italic">SAVE 17%</Text>
+                            <Text style={{ 
+                                fontWeight: '900', 
+                                textTransform: 'uppercase', 
+                                letterSpacing: 1, 
+                                fontSize: 11, 
+                                color: billingCycle === 'ANNUAL' ? '#000' : '#9CA3AF' 
+                            }}>
+                                Yearly
+                            </Text>
+                            <View style={{ marginLeft: 8, backgroundColor: '#22C55E', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
+                                <Text style={{ color: '#FFF', fontSize: 9, fontWeight: '900', fontStyle: 'italic' }}>SAVE 17%</Text>
                             </View>
                         </SoundButton>
                     </View>
@@ -265,9 +299,18 @@ export default function SubscriptionScreen() {
                                             <Text className={`font-bold text-xl ${isActive ? 'text-white' : 'text-black dark:text-white'}`}>
                                                 {tier.name}
                                             </Text>
-                                            <Text className={`font-bold ${isActive ? 'text-gray-400' : 'text-gray-500 dark:text-gray-400'}`}>
-                                                {tier.price}
-                                            </Text>
+                                            <View className="flex-row items-center mt-0.5">
+                                                <Text className={`font-bold ${isActive ? 'text-gray-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                                                    {tier.price}
+                                                </Text>
+                                                {tier.originalPrice && (
+                                                    <View className="ml-2 bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 rounded">
+                                                        <Text className="text-red-500 dark:text-red-400 text-[10px] line-through font-bold">
+                                                            {tier.originalPrice}
+                                                        </Text>
+                                                    </View>
+                                                )}
+                                            </View>
                                         </View>
                                     </View>
                                     {isActive && (

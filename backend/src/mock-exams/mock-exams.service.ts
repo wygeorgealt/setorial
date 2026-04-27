@@ -128,6 +128,14 @@ export class MockExamsService {
             await this.gamificationService.awardPoints(userId, pointsEarned, 'Mock Exam Completion');
         }
 
-        return { score, maxScore: questions.length, pointsEarned, status: updatedAttempt.status };
+        const corrections = questions.map((q, index) => ({
+            text: q.text,
+            options: q.options,
+            userOption: answers[index],
+            correctOption: q.correctOption,
+            explanation: q.explanation,
+        }));
+
+        return { score, maxScore: questions.length, pointsEarned, status: updatedAttempt.status, corrections };
     }
 }

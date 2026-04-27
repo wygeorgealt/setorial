@@ -95,9 +95,11 @@ export default function ActiveMockScreen() {
             if (res.data.status === 'CHEATED') {
                 Alert.alert('Exam Nullified', `Your exam was flagged for cheating due to excessive app switches. Score: 0.`);
             } else {
-                Alert.alert('Exam Completed', `You scored ${res.data.score}/${res.data.maxScore} and earned ${res.data.pointsEarned} Points!`);
+                router.replace({
+                    pathname: '/mock-result',
+                    params: { data: JSON.stringify(res.data) }
+                });
             }
-            router.replace('/(tabs)');
         } catch (error: any) {
             Alert.alert('Error', error.response?.data?.message || 'Failed to submit exam');
             router.replace('/(tabs)');

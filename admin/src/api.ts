@@ -80,7 +80,13 @@ export const adminApi = {
     getMocks: () => api.get('/mocks'),
     getMockDetails: (id: string) => api.get(`/mocks/${id}`),
     createMock: (data: any) => api.post('/admin/mocks', data), 
+    updateMock: (id: string, data: any) => api.patch(`/admin/mocks/${id}`, data),
     deleteMock: (id: string) => api.delete(`/admin/mocks/${id}`),
+
+    // Support
+    getSupportMessages: () => api.get('/admin/support'),
+    replyToSupport: (id: string, reply: string, adminName: string) => 
+        api.post(`/admin/support/${id}/reply`, { reply, adminName }),
 
     // Notifications
     sendNotification: (data: { userId?: string, title: string, body: string, data?: any }) => 

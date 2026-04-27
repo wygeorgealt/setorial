@@ -1,85 +1,26 @@
-import { Audio, AVPlaybackSource } from 'expo-av';
-import { Platform } from 'react-native';
-import { useAuthStore } from '../store/authStore';
+import { Audio } from 'expo-av';
 
-type SoundName = 'correct' | 'incorrect' | 'victory' | 'complete' | 'tap' | 'pop' | 'boop';
-
-// Sound asset mapping — preloaded on first use
-const SOUND_SOURCES: Record<SoundName, AVPlaybackSource> = {
-    correct: require('../assets/sounds/correct.mp3'),
-    incorrect: require('../assets/sounds/incorrect.mp3'),
-    victory: require('../assets/sounds/victory.mp3'),
-    complete: require('../assets/sounds/complete.mp3'),
-    tap: require('../assets/sounds/tap.wav'),
-    pop: require('../assets/sounds/pop.wav'),
-    boop: require('../assets/sounds/boop.wav'),
+const SOUNDS = {
+  click: 'https://cdn.pixabay.com/audio/2022/03/15/audio_7314271813.mp3', // Soft UI click
+  success: 'https://cdn.pixabay.com/audio/2022/03/10/audio_c3e666a7b1.mp3', // Level up / Success
+  error: 'https://cdn.pixabay.com/audio/2022/03/10/audio_55a29c6691.mp3', // Subtle error
+  correct: 'https://cdn.pixabay.com/audio/2021/08/04/audio_0624a04033.mp3', // Ding for correct
+  streak: 'https://cdn.pixabay.com/audio/2022/01/18/audio_d0a13f69d2.mp3', // Fire / streak sound
 };
 
-// Cache loaded Audio.Sound instances for reuse
-const soundCache: Partial<Record<SoundName, Audio.Sound>> = {};
-
-/**
- * Preload all sounds into cache.
- * Call once on app start for instant playback.
- */
-export async function preloadSounds(): Promise<void> {
-    if (Platform.OS === 'web') return;
-
-    try {
-        await Audio.setAudioModeAsync({
-            playsInSilentModeIOS: false,
-            staysActiveInBackground: false,
-            shouldDuckAndroid: true,
-        });
-
-        for (const [name, source] of Object.entries(SOUND_SOURCES)) {
-            try {
-                const { sound } = await Audio.Sound.createAsync(source, { volume: 0.6 });
-                soundCache[name as SoundName] = sound;
-            } catch (e) {
-                if (__DEV__) console.warn(`Failed to preload sound: ${name}`, e);
-            }
-        }
-    } catch (e) {
-        if (__DEV__) console.warn('Failed to configure audio mode', e);
-    }
-}
-
-/**
- * Play a named sound effect.
- * Respects `soundEnabled` preference from authStore.
- */
-export async function playSound(name: SoundName): Promise<void> {
-    if (Platform.OS === 'web') return;
-    if (!useAuthStore.getState().soundEnabled) return;
-
-    try {
-        let sound = soundCache[name];
-
-        // Lazy-load if not preloaded
-        if (!sound) {
-            const source = SOUND_SOURCES[name];
-            if (!source) return;
-            const { sound: loaded } = await Audio.Sound.createAsync(source, { volume: 0.6 });
-            soundCache[name] = loaded;
-            sound = loaded;
-        }
-
-        // Reset to beginning and play
-        await sound.setPositionAsync(0);
-        await sound.playAsync();
-    } catch (e) {
-        if (__DEV__) console.warn(`Failed to play sound: ${name}`, e);
-    }
-}
-
-/**
- * Cleanup sounds on app unmount.
- */
-export async function unloadSounds(): Promise<void> {
-    for (const sound of Object.values(soundCache)) {
-        try {
-            if (sound) await sound.unloadAsync();
-        } catch { }
-    }
+export async function playSound(name: keyof typeof SOUNDS) {
+  try {
+    const { sound } = await Audio.Sound.createAsync(
+      { uri: SOUNDS[name] },
+      { shouldPlay: true, volume: 0.5 }
+    );
+    
+    sound.setOnPlaybackStatusUpdate((status) => {
+      if (status.isLoaded && status.didJustFinish) {
+        sound.unloadAsync();
+      }
+    });
+  } catch (error) {
+    console.log('Error playing sound:', error);
+  }
 }

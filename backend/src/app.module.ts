@@ -18,6 +18,8 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { BullModule } from '@nestjs/bullmq';
 import { CacheModule } from '@nestjs/cache-manager';
 import { redisStore } from 'cache-manager-redis-yet';
+import { SupportController } from './support/support.controller';
+import { PrismaService } from './prisma.service';
 
 @Module({
   imports: [
@@ -68,7 +70,7 @@ import { redisStore } from 'cache-manager-redis-yet';
     StoreModule,
     NotificationsModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController, SupportController],
+  providers: [AppService, PrismaService],
 })
 export class AppModule { }

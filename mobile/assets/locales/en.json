@@ -1,0 +1,31 @@
+{
+  "common": {
+    "welcome": "Welcome Back",
+    "points": "Points",
+    "streak": "Streak",
+    "history": "History",
+    "upgrade": "Upgrade Now",
+    "loading": "Loading..."
+  },
+  "home": {
+    "gold_status": "Premium Status",
+    "gold_member": "Gold Member",
+    "gold_desc": "You have full access to everything! Your Personal AI Tutor is ready.",
+    "open_tutor": "Open AI Tutor",
+    "silver_tier": "Silver Tier",
+    "silver_desc": "Monetization & Mock Exams Unlocked! Want a Personal AI Tutor?",
+    "upgrade_to_gold": "Upgrade to Gold",
+    "bronze_tier": "Bronze Tier",
+    "bronze_desc": "Unlimited Quizzes Unlocked! Ready to start earning real money?",
+    "upgrade_to_silver": "Upgrade to Silver",
+    "free_plan": "Free Plan",
+    "free_desc": "You are limited to 5 quizzes per day. Unlock unlimited learning!",
+    "upgrade_to_bronze": "Upgrade to Bronze",
+    "wallet_balance": "Wallet Balance",
+    "prep": "Preparation",
+    "mock_exams": "Standardized Mocks",
+    "mock_desc": "Take timed, full-length simulation exams to earn huge points.",
+    "explore": "Explore Subjects",
+    "topics": "Topics"
+  }
+}

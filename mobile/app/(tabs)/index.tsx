@@ -1,20 +1,25 @@
 import { SoundButton } from '../../components/SoundButton';
+import { MascotInteraction } from '../../components/MascotInteraction';
+import { Languages } from 'lucide-react-native';
 import { View, Text, ScrollView, TouchableOpacity, Image, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowUpRight, ShieldCheck, CreditCard, ChevronRight, Trophy, Star, Clock } from 'lucide-react-native';
+import { ArrowUpRight, ShieldCheck, CreditCard, ChevronRight, Trophy, Star, Clock, Sparkles } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
 import { useState, useEffect, useCallback } from 'react';
 import { authApi, walletApi, learningApi } from '../../services/api';
 import { getTierColors } from '../../utils/theme';
 import { ScaleButton } from '../../components/ScaleButton';
+import { useTranslation } from 'react-i18next';
 
 export default function HomeScreen() {
+    const { t } = useTranslation();
     const router = useRouter();
-    const { user, token, updateUser } = useAuthStore();
+    const { user, token, updateUser, setLangModalOpen } = useAuthStore();
     const [balance, setBalance] = useState({ ngn: 0, usd: 0 });
     const [subjects, setSubjects] = useState<any[]>([]);
     const [refreshing, setRefreshing] = useState(false);
+    const [mascotMessage, setMascotMessage] = useState("Do you think you can pass this level? 🤨");
 
     const fetchData = async () => {
         if (!useAuthStore.getState().token) return;
@@ -46,6 +51,18 @@ export default function HomeScreen() {
         setRefreshing(false);
     }, []);
 
+    useEffect(() => {
+        const messages = [
+            "Do you think you can pass this level? 🤨",
+            "Hey, let's get started! 🚀",
+            "Mastering this leads to Gold tier! ✨",
+            "Are you feeling smart today? 🧠",
+            "Don't let your streak break! 🔥",
+            "Someone just overtook you on the leaderboard! 🏃‍♂️"
+        ];
+        setMascotMessage(messages[Math.floor(Math.random() * messages.length)]);
+    }, []);
+
     const theme = getTierColors(user?.tier);
 
     return (
@@ -58,8 +75,11 @@ export default function HomeScreen() {
             >
 
                 {/* Header Section (Duolingo Style Top Bar) */}
-                <View className="flex-row items-center justify-between mb-8 pb-4 border-b-2 border-[#E5E5E5] dark:border-[#272B36]">
+                <View className="flex-row items-center justify-between mb-6 pb-4 border-b-2 border-[#E5E5E5] dark:border-[#272B36]">
                     <View className="flex-row items-center flex-1">
+                        <SoundButton onPress={() => setLangModalOpen(true)} className="mr-3">
+                            <Languages size={24} color={theme.primary} />
+                        </SoundButton>
                         <ShieldCheck
                             size={28}
                             color={theme.primary}
@@ -91,11 +111,83 @@ export default function HomeScreen() {
                     </View>
                 </View>
 
+                {/* Mascot Interaction */}
+                <View className="mb-6">
+                    <MascotInteraction state="happy" message={mascotMessage} />
+                </View>
+
+                {/* Tier Dashboard Widget */}
+                <View className={`mb-8 border-2 border-b-8 p-6 rounded-[24px] overflow-hidden relative ${
+                    user?.tier === 'GOLD' ? 'bg-[#FEF9C3] dark:bg-[#422006] border-[#FDE047] dark:border-[#854D0E]' :
+                    user?.tier === 'SILVER' ? 'bg-[#F0F9FF] dark:bg-[#082F49] border-[#BAE6FD] dark:border-[#0369A1]' :
+                    user?.tier === 'BRONZE' ? 'bg-[#FFF7ED] dark:bg-[#431407] border-[#FED7AA] dark:border-[#9A3412]' :
+                    'bg-[#F5F3FF] dark:bg-[#2E1065] border-[#DDD6FE] dark:border-[#5B21B6]'
+                }`}>
+                    {/* Tier Icon / Background Element */}
+                    <View className="absolute right-[-20] top-[-20] opacity-10">
+                        {user?.tier === 'GOLD' ? <Star size={180} color="#EAB308" /> :
+                         user?.tier === 'SILVER' ? <Trophy size={180} color="#0EA5E9" /> :
+                         user?.tier === 'BRONZE' ? <ShieldCheck size={180} color="#CD7F32" /> :
+                         <Sparkles size={180} color="#8B5CF6" />}
+                    </View>
+
+                    {user?.tier === 'GOLD' ? (
+                        <View className="z-10">
+                            <View className="flex-row items-center mb-2">
+                                <View className="w-3 h-3 rounded-full bg-[#EAB308] mr-2" />
+                                <Text className="text-[#854D0E] dark:text-[#FDE047] font-black text-xs uppercase tracking-widest">{t('home.gold_status')}</Text>
+                            </View>
+                            <Text className="text-[#854D0E] dark:text-[#FDE047] font-black text-2xl mb-2">{t('home.gold_member')}</Text>
+                            <Text className="text-[#854D0E] dark:text-[#FEF9C3] font-bold text-[16px] mb-6 leading-5">{t('home.gold_desc')}</Text>
+                            <SoundButton onPress={() => router.push('/tutor')} className="bg-[#EAB308] flex-row justify-center items-center py-4 rounded-2xl border-b-4 border-[#CA8A04] shadow-lg shadow-yellow-500/40">
+                                <Sparkles size={20} color="#FFF" style={{ marginRight: 8 }} />
+                                <Text className="text-white font-bold text-[18px] tracking-wider uppercase">{t('home.open_tutor')}</Text>
+                            </SoundButton>
+                        </View>
+                    ) : user?.tier === 'SILVER' ? (
+                        <View className="z-10">
+                            <View className="flex-row items-center mb-2">
+                                <View className="w-3 h-3 rounded-full bg-[#0EA5E9] mr-2" />
+                                <Text className="text-[#0369A1] dark:text-[#BAE6FD] font-black text-xs uppercase tracking-widest">{t('home.silver_tier')}</Text>
+                            </View>
+                            <Text className="text-[#0369A1] dark:text-[#BAE6FD] font-black text-2xl mb-2">{t('home.silver_tier')}</Text>
+                            <Text className="text-[#0369A1] dark:text-[#F0F9FF] font-bold text-[16px] mb-6 leading-5">{t('home.silver_desc')}</Text>
+                            <SoundButton onPress={() => router.push('/subscription')} className="bg-[#0EA5E9] flex-row justify-center items-center py-4 rounded-2xl border-b-4 border-[#0284C7] shadow-lg shadow-blue-500/40">
+                                <Text className="text-white font-bold text-[18px] tracking-wider uppercase">{t('home.upgrade_to_gold')}</Text>
+                            </SoundButton>
+                        </View>
+                    ) : user?.tier === 'BRONZE' ? (
+                        <View className="z-10">
+                            <View className="flex-row items-center mb-2">
+                                <View className="w-3 h-3 rounded-full bg-[#CD7F32] mr-2" />
+                                <Text className="text-[#9A3412] dark:text-[#FED7AA] font-black text-xs uppercase tracking-widest">{t('home.bronze_tier')}</Text>
+                            </View>
+                            <Text className="text-[#9A3412] dark:text-[#FED7AA] font-black text-2xl mb-2">{t('home.bronze_tier')}</Text>
+                            <Text className="text-[#9A3412] dark:text-[#FFF7ED] font-bold text-[16px] mb-6 leading-5">{t('home.bronze_desc')}</Text>
+                            <SoundButton onPress={() => router.push('/subscription')} className="bg-[#CD7F32] flex-row justify-center items-center py-4 rounded-2xl border-b-4 border-[#A0522D] shadow-lg shadow-orange-500/40">
+                                <Text className="text-white font-bold text-[18px] tracking-wider uppercase">{t('home.upgrade_to_silver')}</Text>
+                            </SoundButton>
+                        </View>
+                    ) : (
+                        <View className="z-10">
+                            <View className="flex-row items-center mb-2">
+                                <View className="w-3 h-3 rounded-full bg-[#8B5CF6] mr-2" />
+                                <Text className="text-[#5B21B6] dark:text-[#DDD6FE] font-black text-xs uppercase tracking-widest">{t('home.free_plan')}</Text>
+                            </View>
+                            <Text className="text-[#5B21B6] dark:text-[#DDD6FE] font-black text-2xl mb-2">{t('home.free_plan')}</Text>
+                            <Text className="text-[#5B21B6] dark:text-[#F5F3FF] font-bold text-[16px] mb-6 leading-5">{t('home.free_desc')}</Text>
+                            <SoundButton onPress={() => router.push('/subscription')} className="bg-[#8B5CF6] flex-row justify-center items-center py-4 rounded-2xl border-b-4 border-[#7C3AED] shadow-lg shadow-purple-500/40">
+                                <Text className="text-white font-bold text-[18px] tracking-wider uppercase">{t('home.upgrade_to_bronze')}</Text>
+                            </SoundButton>
+                        </View>
+                    )}
+                </View>
+
                 {/* Buying Power / Monetizable Balance */}
                 {['SILVER', 'GOLD'].includes(user?.tier || '') && (
                     <View className="flex-row items-center justify-between mb-8 bg-white dark:bg-[#1E222B] border-2 border-[#E5E5E5] dark:border-[#272B36] p-5 rounded-2xl border-b-4">
                         <View>
-                            <Text className="text-[#AFAFAF] dark:text-gray-400 font-bold text-xs uppercase tracking-widest mb-1">Wallet Balance</Text>
+                            <Text className="text-[#AFAFAF] dark:text-gray-400 font-bold text-xs uppercase tracking-widest mb-1">{t('home.wallet_balance')}</Text>
                             <View className="flex-row items-center">
                                 <Text className="text-[#4B4B4B] dark:text-white font-bold text-lg">₦{balance.ngn.toLocaleString()}</Text>
                                 <Text className="text-gray-300 dark:text-gray-600 mx-2">|</Text>
@@ -107,7 +199,7 @@ export default function HomeScreen() {
                             className="py-3 px-6 rounded-xl border-b-4 border-opacity-80"
                             style={{ backgroundColor: theme.primary, borderColor: theme.primaryDark }}
                         >
-                            <Text className="text-white font-bold text-[13px] tracking-widest uppercase">History</Text>
+                            <Text className="text-white font-bold text-[13px] tracking-widest uppercase">{t('common.history')}</Text>
                         </ScaleButton>
                     </View>
                 )}
@@ -126,7 +218,7 @@ export default function HomeScreen() {
                                 Upgrade to Silver or Gold tier to monetize your points.
                             </Text>
                             <View className="bg-white dark:bg-zinc-950 px-5 py-3 rounded-xl self-start border-b-4 border-gray-200 dark:border-zinc-800">
-                                <Text className="text-[#FFC800] font-bold text-[15px] uppercase tracking-wider">Upgrade now</Text>
+                                <Text className="text-[#FFC800] font-bold text-[15px] uppercase tracking-wider">{t('common.upgrade')}</Text>
                             </View>
                         </View>
                         <View className="absolute right-[-10px] bottom-[-20px] opacity-70">
@@ -137,14 +229,14 @@ export default function HomeScreen() {
 
                 {/* Mock Exams Access */}
                 <View className="mb-10">
-                    <Text className="text-black dark:text-white font-bold text-xl tracking-tight mb-4">Preparation</Text>
+                    <Text className="text-black dark:text-white font-bold text-xl tracking-tight mb-4">{t('home.prep')}</Text>
                     <ScaleButton
                         onPress={() => router.push('/mock-exams')}
                         className="bg-white dark:bg-[#1E222B] border-2 border-[#E5E5E5] dark:border-[#272B36] p-5 rounded-2xl border-b-4 flex-row items-center justify-between"
                     >
                         <View className="flex-1 mr-4">
-                            <Text className="text-[#4B4B4B] dark:text-white font-bold text-lg mb-1">Standardized Mocks</Text>
-                            <Text className="text-gray-500 dark:text-gray-400">Take timed, full-length simulation exams to earn huge points.</Text>
+                            <Text className="text-[#4B4B4B] dark:text-white font-bold text-lg mb-1">{t('home.mock_exams')}</Text>
+                            <Text className="text-gray-500 dark:text-gray-400">{t('home.mock_desc')}</Text>
                         </View>
                         <View className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 items-center justify-center border-2 border-[#1CB0F6]">
                             <Clock size={24} color="#1CB0F6" />
@@ -155,7 +247,7 @@ export default function HomeScreen() {
 
                 {/* Popular on Stake / Top Subjects */}
                 <View className="mb-6">
-                    <Text className="text-black dark:text-white font-bold text-xl tracking-tight mb-6">Explore Subjects</Text>
+                    <Text className="text-black dark:text-white font-bold text-xl tracking-tight mb-6">{t('home.explore')}</Text>
 
                     {/* Dynamic Subjects */}
                     {subjects.length > 0 ? (
@@ -184,7 +276,7 @@ export default function HomeScreen() {
                                     <View>
                                         <Text className="text-white font-bold text-2xl mb-1">{subject.name}</Text>
                                         <Text className="text-white/80 font-bold text-sm tracking-wider uppercase">
-                                            {subject.topics?.length || 0} Topics
+                                            {subject.topics?.length || 0} {t('home.topics')}
                                         </Text>
                                     </View>
                                     <View className="w-12 h-12 bg-black/10 dark:bg-black/20 rounded-full items-center justify-center">
@@ -194,7 +286,7 @@ export default function HomeScreen() {
                             )
                         })
                     ) : (
-                        <Text className="text-[#AFAFAF] font-bold text-[17px] text-center py-10">Loading subjects...</Text>
+                        <Text className="text-[#AFAFAF] font-bold text-[17px] text-center py-10">{t('common.loading')}</Text>
                     )}
                 </View>
             </ScrollView>

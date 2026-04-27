@@ -26,7 +26,9 @@ import {
     Ticket,
     Bell,
     Percent,
-    X
+    X,
+    LifeBuoy,
+    Send
 } from 'lucide-react';
 import { adminApi } from './api';
 
@@ -97,6 +99,15 @@ export default function AdminDashboard() {
     const [discounts, setDiscounts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [generatingSyllabus, setGeneratingSyllabus] = useState(false);
+    const [isMockModalOpen, setIsMockModalOpen] = useState(false);
+    const [editingMock, setEditingMock] = useState<any>(null);
+    const [mockForm, setMockForm] = useState({
+        title: '',
+        description: '',
+        durationMinutes: 60,
+        price: 100,
+        questions: [{ text: '', options: ['', '', '', ''], correctOption: 0, explanation: '' }]
+    });
 
     // Lesson Modal State
     const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
@@ -140,6 +151,57 @@ export default function AdminDashboard() {
         isActive: true
     });
 
+    const handleSaveMock = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            if (editingMock) {
+                await adminApi.updateMock(editingMock.id, mockForm);
+            } else {
+                await adminApi.createMock(mockForm);
+            }
+            setIsMockModalOpen(false);
+            fetchData();
+        } catch (err) { alert('Operation failed'); }
+        finally { setLoading(false); }
+    };
+
+    const addQuestionField = () => {
+        setMockForm({
+            ...mockForm,
+            questions: [...mockForm.questions, { text: '', options: ['', '', '', ''], correctOption: 0, explanation: '' }]
+        });
+    };
+
+    const updateQuestion = (idx: number, field: string, value: any) => {
+        const newQs = [...mockForm.questions];
+        (newQs[idx] as any)[field] = value;
+        setMockForm({ ...mockForm, questions: newQs });
+    };
+
+    const updateOption = (qIdx: number, oIdx: number, value: string) => {
+        const newQs = [...mockForm.questions];
+        newQs[qIdx].options[oIdx] = value;
+        setMockForm({ ...mockForm, questions: newQs });
+    };
+
+    const [supportMessages, setSupportMessages] = useState<any[]>([]);
+    const [replyingTo, setReplyingTo] = useState<any>(null);
+    const [supportReply, setSupportReply] = useState('');
+
+    const handleReplySupport = async () => {
+        if (!supportReply.trim()) return;
+        setLoading(true);
+        try {
+            await adminApi.replyToSupport(replyingTo.id, supportReply, 'Admin');
+            setReplyingTo(null);
+            setSupportReply('');
+            const res = await adminApi.getSupportMessages();
+            setSupportMessages(res.data);
+        } catch (err) { alert('Reply failed'); }
+        finally { setLoading(false); }
+    };
+
     // Topic Modal State
     const [isTopicModalOpen, setIsTopicModalOpen] = useState(false);
     const [editingTopic, setEditingTopic] = useState<any>(null);
@@ -182,6 +244,9 @@ export default function AdminDashboard() {
             } else if (activeTab === 'discounts') {
                 const res = await adminApi.getDiscounts();
                 setDiscounts(res.data);
+            } else if (activeTab === 'support') {
+                const res = await adminApi.getSupportMessages();
+                setSupportMessages(res.data);
             }
         } catch (error) {
             console.error('Fetch error:', error);
@@ -1152,13 +1217,29 @@ export default function AdminDashboard() {
                     <div className="space-y-10">
                         <div className="flex justify-between items-end">
                             <div>
-                                <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">Mock Exam Management</h2>
-                                <p className="text-sm text-zinc-500 mt-1">Create and manage standardized practice exams.</p>
+                                <h2 className="text-2xl font-bold tracking-tight text-zinc-900">Standardized Mocks</h2>
+                                <p className="text-sm text-zinc-500 mt-1">Manage CBT simulations with AI or manual questions.</p>
                             </div>
-                            <button className="btn-primary h-10 px-6 text-sm" onClick={handleCreateMock}>
-                                <Plus size={18} className="mr-2" />
-                                Create Mock Exam
-                            </button>
+                            <div className="flex space-x-3">
+                                <button onClick={() => setIsMockAiModalOpen(true)} className="btn-primary bg-purple-600 hover:bg-purple-700 flex items-center space-x-2">
+                                    <Wand2 size={16} />
+                                    <span>AI Generator</span>
+                                </button>
+                                <button onClick={() => {
+                                    setEditingMock(null);
+                                    setMockForm({
+                                        title: '',
+                                        description: '',
+                                        durationMinutes: 60,
+                                        price: 100,
+                                        questions: [{ text: '', options: ['', '', '', ''], correctOption: 0, explanation: '' }]
+                                    });
+                                    setIsMockModalOpen(true);
+                                }} className="btn-secondary flex items-center space-x-2">
+                                    <Plus size={16} />
+                                    <span>Create Manual</span>
+                                </button>
+                            </div>
                         </div>
                         <div className="space-y-4">
                             {mocks.map((mock: any) => (
@@ -1172,12 +1253,31 @@ export default function AdminDashboard() {
                                             <p className="text-sm text-zinc-500">{mock.durationMinutes} mins • ₦{Number(mock.price).toLocaleString()} • {mock._count?.questions ?? 0} Questions</p>
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={() => handleDeleteMock(mock.id, mock.title)}
-                                        className="h-9 w-9 flex items-center justify-center rounded-lg bg-red-50 hover:bg-red-100 text-red-500 transition-colors ring-1 ring-red-200"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
+                                    <div className="flex items-center space-x-3">
+                                        <button
+                                            onClick={() => {
+                                                setEditingMock(mock);
+                                                setMockForm({
+                                                    title: mock.title,
+                                                    description: mock.description || '',
+                                                    durationMinutes: mock.durationMinutes,
+                                                    price: Number(mock.price),
+                                                    questions: mock.questions || []
+                                                });
+                                                setIsMockModalOpen(true);
+                                            }}
+                                            className="h-9 px-4 flex items-center justify-center rounded-lg bg-zinc-50 hover:bg-zinc-100 text-zinc-600 hover:text-zinc-900 transition-colors ring-1 ring-zinc-200 text-xs font-bold uppercase tracking-wider"
+                                        >
+                                            <Edit2 size={14} className="mr-2" />
+                                            Edit
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteMock(mock.id, mock.title)}
+                                            className="h-9 w-9 flex items-center justify-center rounded-lg bg-red-50 hover:bg-red-100 text-red-500 transition-colors ring-1 ring-red-200"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -1287,6 +1387,98 @@ export default function AdminDashboard() {
                     </div>
                 );
 
+            /* ── SUPPORT ───────────────────────────────────────────────── */
+            case 'support':
+                return (
+                    <div className="space-y-10">
+                        <div className="flex justify-between items-end">
+                            <div>
+                                <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">Support Tickets</h2>
+                                <p className="text-sm text-zinc-500 mt-1">Manage user inquiries and technical support requests.</p>
+                            </div>
+                        </div>
+
+                        <div className="grid gap-4">
+                            {supportMessages.length === 0 ? (
+                                <div className="card py-20 text-center">
+                                    <p className="text-zinc-500">No support messages found.</p>
+                                </div>
+                            ) : (
+                                supportMessages.map((msg: any) => (
+                                    <div key={msg.id} className={`card border-l-4 ${msg.status === 'OPEN' ? 'border-amber-500 bg-amber-50/10' : 'border-zinc-200'}`}>
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div>
+                                                <div className="flex items-center space-x-2">
+                                                    <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${msg.status === 'OPEN' ? 'bg-amber-100 text-amber-700' : 'bg-zinc-100 text-zinc-500'}`}>
+                                                        {msg.status}
+                                                    </span>
+                                                    <h3 className="font-bold text-zinc-900">{msg.subject}</h3>
+                                                </div>
+                                                <p className="text-xs text-zinc-500 mt-1">From: {msg.user?.name} ({msg.user?.email}) • {new Date(msg.createdAt).toLocaleString()}</p>
+                                            </div>
+                                            {msg.status === 'OPEN' && (
+                                                <button 
+                                                    onClick={() => setReplyingTo(msg)}
+                                                    className="btn-primary h-8 px-4 text-xs"
+                                                >
+                                                    Reply
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="bg-white p-4 rounded-xl ring-1 ring-zinc-200 text-sm text-zinc-700 whitespace-pre-wrap">
+                                            {msg.message}
+                                        </div>
+                                        
+                                        {msg.adminReply && (
+                                            <div className="mt-4 pl-4 border-l-2 border-zinc-200">
+                                                <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Admin Reply • {new Date(msg.repliedAt).toLocaleDateString()}</p>
+                                                <div className="text-sm text-zinc-600 italic">
+                                                    "{msg.adminReply}"
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))
+                            )}
+                        </div>
+
+                        {/* Reply Modal */}
+                        {replyingTo && (
+                            <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-zinc-950/20 backdrop-blur-sm">
+                                <div className="bg-white rounded-2xl shadow-xl ring-1 ring-zinc-950/5 w-full max-w-xl overflow-hidden">
+                                    <div className="px-8 py-6 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50">
+                                        <h3 className="text-lg font-semibold text-zinc-900">Reply to: {replyingTo.subject}</h3>
+                                        <button onClick={() => setReplyingTo(null)} className="text-zinc-400 hover:text-zinc-600">
+                                            <XCircle size={20} />
+                                        </button>
+                                    </div>
+                                    <div className="p-8 space-y-6">
+                                        <div className="bg-zinc-50 p-4 rounded-xl text-sm text-zinc-600 italic">
+                                            "{replyingTo.message}"
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider ml-1">Your Response</label>
+                                            <textarea 
+                                                className="input-field min-h-[150px] py-4"
+                                                placeholder="Type your resolution or answer here..."
+                                                value={supportReply}
+                                                onChange={(e) => setSupportReply(e.target.value)}
+                                            />
+                                        </div>
+                                        <button 
+                                            onClick={handleReplySupport}
+                                            disabled={loading || !supportReply.trim()}
+                                            className="w-full btn-primary h-12 text-sm"
+                                        >
+                                            {loading ? 'Sending...' : 'Send Reply & Resolve'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                );
+
             /* ── CONFIG ─────────────────────────────────────────────────── */
             case 'configs':
                 return (
@@ -1330,6 +1522,7 @@ export default function AdminDashboard() {
                     <SidebarItem icon={Map} label="Region Pools" active={activeTab === 'regions'} onClick={() => setActiveTab('regions')} />
                     <SidebarItem icon={CreditCard} label="Payouts" active={activeTab === 'payouts'} onClick={() => setActiveTab('payouts')} />
                     <SidebarItem icon={RefreshCcw} label="Config" active={activeTab === 'configs'} onClick={() => setActiveTab('configs')} />
+                    <SidebarItem icon={LifeBuoy} label="Support" active={activeTab === 'support'} onClick={() => setActiveTab('support')} badge={supportMessages.filter((m: any) => m.status === 'OPEN').length} />
                 </nav>
 
                 <button onClick={() => { localStorage.removeItem('admin_token'); window.location.reload(); }} className="mt-auto w-full flex items-center space-x-3 px-3 py-2 rounded-lg font-medium text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 transition-all">
@@ -1673,6 +1866,90 @@ export default function AdminDashboard() {
                         <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce"></div>
                     </div>
                     <p className="mt-12 text-zinc-500 text-sm font-medium uppercase tracking-widest">Please do not close this tab</p>
+                </div>
+            )}
+            {/* Manual Mock Modal */}
+            {isMockModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-zinc-950/40 backdrop-blur-md">
+                    <div className="bg-white rounded-[32px] shadow-2xl ring-1 ring-zinc-950/5 w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+                        <div className="px-10 py-8 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/50">
+                            <div>
+                                <h3 className="text-2xl font-black text-zinc-900 tracking-tight">{editingMock ? 'Edit Mock Exam' : 'Create Manual Mock'}</h3>
+                                <p className="text-sm text-zinc-500 mt-1">Set the standard for excellence. Manually craft every question.</p>
+                            </div>
+                            <button onClick={() => setIsMockModalOpen(false)} className="w-10 h-10 rounded-full hover:bg-zinc-100 flex items-center justify-center text-zinc-400 hover:text-zinc-900 transition-all">
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSaveMock} className="flex-1 overflow-hidden flex flex-col">
+                            <div className="flex-1 overflow-y-auto p-10 space-y-10">
+                                {/* Basic Info */}
+                                <div className="grid grid-cols-2 gap-8">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">Exam Title</label>
+                                        <input type="text" className="input-field" value={mockForm.title} onChange={(e) => setMockForm({ ...mockForm, title: e.target.value })} required />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">Duration (Minutes)</label>
+                                        <input type="number" className="input-field" value={mockForm.durationMinutes} onChange={(e) => setMockForm({ ...mockForm, durationMinutes: Number(e.target.value) })} required />
+                                    </div>
+                                </div>
+
+                                {/* Questions */}
+                                <div className="space-y-8">
+                                    <div className="flex items-center justify-between">
+                                        <h4 className="text-lg font-bold text-zinc-900">Exam Questions ({mockForm.questions.length})</h4>
+                                        <button type="button" onClick={addQuestionField} className="btn-secondary py-2 px-4 text-xs flex items-center space-x-2">
+                                            <Plus size={14} />
+                                            <span>Add Question</span>
+                                        </button>
+                                    </div>
+
+                                    {mockForm.questions.map((q, qIdx) => (
+                                        <div key={qIdx} className="p-8 rounded-[24px] border-2 border-zinc-100 bg-zinc-50/30 space-y-6">
+                                            <div className="flex items-center justify-between">
+                                                <span className="w-8 h-8 rounded-full bg-zinc-900 text-white flex items-center justify-center text-xs font-bold">{qIdx + 1}</span>
+                                                <button type="button" onClick={() => {
+                                                    const newQs = mockForm.questions.filter((_, i) => i !== qIdx);
+                                                    setMockForm({ ...mockForm, questions: newQs });
+                                                }} className="text-red-500 hover:text-red-700 text-xs font-bold uppercase tracking-widest">Remove</button>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">Question Text (LaTeX Support)</label>
+                                                <textarea className="input-field min-h-[80px] py-4" value={q.text} onChange={(e) => updateQuestion(qIdx, 'text', e.target.value)} required />
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-4">
+                                                {q.options.map((opt, oIdx) => (
+                                                    <div key={oIdx} className="space-y-1.5">
+                                                        <div className="flex items-center justify-between px-1">
+                                                            <label className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">Option {String.fromCharCode(65 + oIdx)}</label>
+                                                            <input type="radio" name={`correct-${qIdx}`} checked={q.correctOption === oIdx} onChange={() => updateQuestion(qIdx, 'correctOption', oIdx)} />
+                                                        </div>
+                                                        <input type="text" className="input-field h-10 text-sm" value={opt} onChange={(e) => updateOption(qIdx, oIdx, e.target.value)} required />
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <label className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] ml-1">Explanation (CBT Correction)</label>
+                                                <textarea className="input-field min-h-[60px] py-3 text-sm italic bg-blue-50/30 border-blue-100" value={q.explanation} onChange={(e) => updateQuestion(qIdx, 'explanation', e.target.value)} placeholder="Explain why the correct option is right..." />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="px-10 py-8 border-t border-zinc-100 bg-zinc-50/50 flex justify-end space-x-4">
+                                <button type="button" onClick={() => setIsMockModalOpen(false)} className="btn-secondary h-12 px-8 text-sm font-bold uppercase tracking-widest">Cancel</button>
+                                <button type="submit" className="btn-primary h-12 px-12 text-sm font-bold uppercase tracking-[0.2em] shadow-xl shadow-zinc-900/10" disabled={loading}>
+                                    {loading ? 'Saving...' : 'Publish Mock Exam'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             )}
         </div>

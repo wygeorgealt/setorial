@@ -1,0 +1,31 @@
+{
+  "common": {
+    "welcome": "Bienvenido de nuevo",
+    "points": "Puntos",
+    "streak": "Racha",
+    "history": "Historial",
+    "upgrade": "Actualizar ahora",
+    "loading": "Cargando..."
+  },
+  "home": {
+    "gold_status": "Estado Premium",
+    "gold_member": "Miembro Gold",
+    "gold_desc": "¡Tienes acceso total a todo! Tu tutor personal de IA está listo.",
+    "open_tutor": "Abrir tutor de IA",
+    "silver_tier": "Nivel Silver",
+    "silver_desc": "¡Monetización y exámenes de simulacro desbloqueados! ¿Quieres un tutor personal de IA?",
+    "upgrade_to_gold": "Mejorar a Gold",
+    "bronze_tier": "Nivel Bronze",
+    "bronze_desc": "¡Quizzes ilimitados desbloqueados! ¿Listo para empezar a ganar dinero real?",
+    "upgrade_to_silver": "Mejorar a Silver",
+    "free_plan": "Plan Gratuito",
+    "free_desc": "Estás limitado a 5 quizzes por día. ¡Desbloquea el aprendizaje ilimitado!",
+    "upgrade_to_bronze": "Mejorar a Bronze",
+    "wallet_balance": "Saldo de la billetera",
+    "prep": "Preparación",
+    "mock_exams": "Simulacros estándar",
+    "mock_desc": "Realiza exámenes de simulación cronometrados para ganar grandes puntos.",
+    "explore": "Explorar temas",
+    "topics": "Temas"
+  }
+}

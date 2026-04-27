@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Delete, Param, Query, UseGuards, ParseFloatPipe, Body } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Query, UseGuards, ParseFloatPipe, Body } from '@nestjs/common';
 import { PayoutsService } from '../payouts/payouts.service';
 import { PrismaService } from '../prisma.service';
 import { MockExamsService } from '../mock-exams/mock-exams.service';
@@ -280,6 +280,7 @@ export class AdminController {
                         text: q.text,
                         options: q.options,
                         correctOption: q.correctOption,
+                        explanation: q.explanation,
                     })),
                 },
             },
@@ -287,9 +288,72 @@ export class AdminController {
         });
     }
 
+    @Post('mocks/:id') // Using POST for some older axios setups, but PATCH is better
+    async legacyUpdateMock(@Param('id') id: string, @Body() data: any) {
+        return this.patchMock(id, data);
+    }
+
+    @Get('mocks/:id')
+    async getMock(@Param('id') id: string) {
+        return this.prisma.mockExam.findUnique({
+            where: { id },
+            include: { questions: true }
+        });
+    }
+
     @Delete('mocks/:id')
     async deleteMock(@Param('id') id: string) {
+        // Delete questions first if necessary, but schema has onDelete: Cascade
         return this.prisma.mockExam.delete({ where: { id } });
+    }
+
+    @Patch('mocks/:id')
+    async patchMock(@Param('id') id: string, @Body() data: any) {
+        // Delete existing questions and recreate
+        await this.prisma.question.deleteMany({ where: { mockExamId: id } });
+        
+        return this.prisma.mockExam.update({
+            where: { id },
+            data: {
+                title: data.title,
+                description: data.description,
+                durationMinutes: data.durationMinutes,
+                price: data.price,
+                isActive: data.isActive ?? true,
+                questions: {
+                    create: data.questions.map((q: any) => ({
+                        text: q.text,
+                        options: q.options,
+                        correctOption: q.correctOption,
+                        explanation: q.explanation,
+                    })),
+                },
+            },
+            include: { questions: true },
+        });
+    }
+
+    // ─── Support Management (Admin) ──────────────────────────────────────────
+
+    @Get('support')
+    async getSupportMessages() {
+        return this.prisma.supportMessage.findMany({
+            include: { user: { select: { name: true, email: true } } },
+            orderBy: { createdAt: 'desc' },
+        });
+    }
+
+    @Post('support/:id/reply')
+    async replyToSupport(@Param('id') id: string, @Body() data: { reply: string, adminName: string }) {
+        return this.prisma.supportMessage.update({
+            where: { id },
+            data: {
+                adminReply: data.reply,
+                repliedBy: data.adminName,
+                repliedAt: new Date(),
+                status: 'RESOLVED',
+            },
+        });
     }
 
     // ─── Notifications (Admin) ───────────────────────────────────────────────

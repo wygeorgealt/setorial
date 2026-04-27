@@ -1,4 +1,5 @@
 import "../global.css";
+import "./lib/i18n";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "../store/authStore";
@@ -7,7 +8,13 @@ import * as SplashScreen from 'expo-splash-screen';
 import AnimatedSplash from "../components/AnimatedSplash";
 import { registerForPushNotificationsAsync } from "../services/notifications";
 import { useColorScheme as useTailwindColorScheme } from 'nativewind';
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View, Text, TouchableOpacity, Modal } from "react-native";
+import NetInfo from "@react-native-community/netinfo";
+import { MascotInteraction } from "../components/MascotInteraction";
+import Animated, { FadeIn, FadeOut, SlideInDown } from "react-native-reanimated";
+import { useTranslation } from "react-i18next";
+import { Globe, X, Check } from "lucide-react-native";
+import { SoundButton } from "../components/SoundButton";
 
 // Prevent the native splash from auto-hiding
 SplashScreen.preventAutoHideAsync();
@@ -16,10 +23,20 @@ export default function RootLayout() {
     const router = useRouter();
     const segments = useSegments();
     const [showSplash, setShowSplash] = useState(true);
+    const [isOffline, setIsOffline] = useState(false);
+    const { t, i18n } = useTranslation();
+    const { isLangModalOpen, setLangModalOpen } = useAuthStore();
 
     const { setColorScheme: setTailwindScheme } = useTailwindColorScheme();
 
     const { isLoading, token, checkSession } = useAuthStore();
+
+    useEffect(() => {
+        const unsubscribe = NetInfo.addEventListener(state => {
+            setIsOffline(!state.isConnected);
+        });
+        return () => unsubscribe();
+    }, []);
 
     useEffect(() => {
         checkSession();
@@ -87,7 +104,22 @@ export default function RootLayout() {
                 <Stack.Screen name="privacy" />
                 <Stack.Screen name="terms" />
                 <Stack.Screen name="verification" />
+                <Stack.Screen name="mock-result" />
             </Stack>
+
+            {/* Offline Guardian */}
+            {isOffline && (
+                <Animated.View 
+                    entering={FadeIn}
+                    exiting={FadeOut}
+                    className="absolute inset-0 z-[1000] bg-white dark:bg-[#0B0D12] items-center justify-center p-8"
+                >
+                    <MascotInteraction 
+                        state="sad" 
+                        message="Oops! The Pride needs a signal. Please check your internet connection." 
+                    />
+                </Animated.View>
+            )}
 
             {/* Splash overlaid on top — disappears when video finishes */}
             {showSplash && (
@@ -95,6 +127,54 @@ export default function RootLayout() {
                     <AnimatedSplash onFinish={() => setShowSplash(false)} />
                 </View>
             )}
+            {/* Global Language Picker Modal */}
+            <Modal
+                visible={isLangModalOpen}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setLangModalOpen(false)}
+            >
+                <View className="flex-1 bg-black/60 items-center justify-center p-6">
+                    <Animated.View 
+                        entering={SlideInDown}
+                        className="bg-white dark:bg-[#1E222B] w-full rounded-[40px] p-8 items-center"
+                    >
+                        <TouchableOpacity 
+                            onPress={() => setLangModalOpen(false)}
+                            className="absolute right-6 top-6 w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 items-center justify-center"
+                        >
+                            <X size={20} color="#AFAFAF" />
+                        </TouchableOpacity>
+
+                        <View className="mb-6 mt-4">
+                            <MascotInteraction state="happy" message={t('common.select_language')} />
+                        </View>
+
+                        <View className="w-full space-y-4">
+                            {[
+                                { name: 'English', code: 'en' },
+                                { name: 'Français', code: 'fr' },
+                                { name: 'Español', code: 'es' }
+                            ].map((lang) => {
+                                const active = i18n.language === lang.code;
+                                return (
+                                    <TouchableOpacity 
+                                        key={lang.code}
+                                        onPress={() => {
+                                            i18n.changeLanguage(lang.code);
+                                            setLangModalOpen(false);
+                                        }}
+                                        className={`flex-row items-center justify-between p-5 rounded-2xl border-2 ${active ? 'border-[#1CB0F6] bg-blue-50 dark:bg-blue-900/20' : 'border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/40'}`}
+                                    >
+                                        <Text className={`font-bold text-lg ${active ? 'text-[#1CB0F6]' : 'text-black dark:text-white'}`}>{lang.name}</Text>
+                                        {active && <Check size={20} color="#1CB0F6" />}
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
+                    </Animated.View>
+                </View>
+            </Modal>
         </View>
     );
 }

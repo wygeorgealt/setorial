@@ -29,6 +29,8 @@ interface AuthState {
     checkSession: () => Promise<void>;
     setHapticsEnabled: (enabled: boolean) => Promise<void>;
     setSoundEnabled: (enabled: boolean) => Promise<void>;
+    isLangModalOpen: boolean;
+    setLangModalOpen: (open: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -37,6 +39,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     isLoading: true,
     hapticsEnabled: true,
     soundEnabled: true,
+    isLangModalOpen: false,
 
     setAuth: async (user, token) => {
         await SecureStore.setItemAsync('userToken', token);
@@ -98,4 +101,5 @@ export const useAuthStore = create<AuthState>((set) => ({
             await SecureStore.setItemAsync('soundEnabled', String(enabled));
         } catch (e) { }
     },
+    setLangModalOpen: (open: boolean) => set({ isLangModalOpen: open }),
 }));

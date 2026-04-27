@@ -93,3 +93,7 @@ export const storeApi = {
     buy: (type: string) => api.post(`/store/buy/${type}`),
     verify: (reference: string) => api.get(`/store/verify/${reference}`),
 };
+export const supportApi = {
+    sendMessage: (data: { subject: string, message: string }) => api.post('/support/message', data),
+    getMyMessages: () => api.get('/support/my-messages'),
+};
